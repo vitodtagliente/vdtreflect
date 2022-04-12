@@ -1,2 +1,2 @@
-# vdtreflex
+# vdtreflect
  C++ reflection library
