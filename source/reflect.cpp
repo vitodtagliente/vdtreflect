@@ -1,6 +1,6 @@
-#include <vdtreflex/reflex.h>
+#include <vdtreflect/reflect.h>
 
-namespace reflex
+namespace reflect
 {
 	std::map<std::string, std::set<std::string>>& TypeFactoryImp::categories()
 	{

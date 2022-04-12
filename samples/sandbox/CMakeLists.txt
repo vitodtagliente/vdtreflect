@@ -21,7 +21,7 @@ add_executable(
 
 target_link_libraries(
     ${PROJECT_NAME} 
-    vdtreflex
+    vdtreflect
 )
 
-add_subdirectory(../../ vdtreflex)
+add_subdirectory(../../ vdtreflect)

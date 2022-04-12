@@ -5,7 +5,7 @@
 #include <map>
 #include <set>
 
-namespace reflex
+namespace reflect
 {
 	typedef std::function<void* ()> factory_constructor_t;
 

@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.2)
-if(TARGET vdtreflex)
+if(TARGET vdtreflect)
 	return()
 endif()
-project(vdtreflex)
+project(vdtreflect)
 
 set(CMAKE_CXX_STANDARD 17)
 
-file(GLOB PROJECT_HEADERS "include/vdtreflex/*.h") 
+file(GLOB PROJECT_HEADERS "include/vdtreflect/*.h") 
 file(GLOB PROJECT_SOURCES "source/*.cpp")
 
 source_group("Headers" FILES ${PROJECT_HEADERS})

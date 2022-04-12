@@ -1,8 +1,8 @@
 #include <iostream>
-#include <vdtreflex/reflex.h>
+#include <vdtreflect/reflect.h>
 
 using namespace std;
-using namespace reflex;
+using namespace reflect;
 
 struct Foo
 {
