@@ -29,6 +29,8 @@ struct Knight : public Pawn
 
 REFLECT_IMP_CATEGORY(Knight, PAWN)
 
+REFLECT_ENUM(AssetType, None, Image = 4, Sprite)
+
 int main()
 {
 	cout << TypeDescriptor::get<Foo>().name << std::endl;
@@ -37,5 +39,26 @@ int main()
 		cout << name << " ";
 	}
 	cout << endl;
+
+	cout << enumToString(AssetType::None) << endl;
+	cout << enumToString(AssetType::Image) << endl;
+
+	AssetType type;
+
+	if (stringToEnum<AssetType>("Image", type))
+	{
+		cout << static_cast<int>(type) << endl;
+	}
+
+	if (stringToEnum<AssetType>("Sprite", type))
+	{
+		cout << static_cast<int>(type) << endl;
+	}
+
+	if (stringToEnum<AssetType>("Foo", type))
+	{
+		cout << static_cast<int>(type) << endl;
+	}
+
 	return 0;
 }
