@@ -76,4 +76,17 @@ namespace reflect
 		}
 		return false;
 	}
+
+	template <class T>
+	bool stringToEnum(const std::string& name, T& t)
+	{
+		for (const auto& pair : EnumReflect<T>::translate(EnumReflect<T>::describe()))
+		{
+			if (pair.first == name)
+			{
+				return t = static_cast<T>(pair.second), true;
+			}
+		}
+		return false;
+	}
 }
