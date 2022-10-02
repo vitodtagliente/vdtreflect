@@ -14,6 +14,11 @@ TypeEnum* const TypeCollection::addEnum(const std::string& name)
 	return e->name = name, e;
 }
 
+bool TypeCollection::empty() const
+{
+	return m_entities.empty();
+}
+
 TypeEnum* const TypeEnum::addOption(const std::string& optionName)
 {
 	options.push_back(optionName);

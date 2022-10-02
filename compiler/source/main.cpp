@@ -42,6 +42,12 @@ int main(int argc, char** argv)
 		return COMPILER_ERROR;
 	}
 
+	if (collection.empty())
+	{
+		// Nothing to generate
+		return COMPILER_SUCCESS;
+	}
+
 	Encoder encoder;
 	if (!encoder.encode(collection, in))
 	{

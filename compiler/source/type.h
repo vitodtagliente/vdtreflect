@@ -61,6 +61,8 @@ public:
 	TypeClass* const addClass(const std::string& name);
 	TypeEnum* const addEnum(const std::string& name);
 
+	bool empty() const;
+
 private:
 	std::vector<TypePtr> m_entities;
 };
