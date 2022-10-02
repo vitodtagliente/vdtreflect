@@ -6,17 +6,11 @@ project(vdtreflect)
 
 set(CMAKE_CXX_STANDARD 17)
 
-file(GLOB PROJECT_HEADERS "include/vdtreflect/*.h") 
-file(GLOB PROJECT_SOURCES "source/*.cpp")
+add_library(${PROJECT_NAME} INTERFACE)
 
-source_group("Headers" FILES ${PROJECT_HEADERS})
-source_group("Sources" FILES ${PROJECT_SOURCES})
-
-add_library(
-    ${PROJECT_NAME} 
-	STATIC
-    ${PROJECT_HEADERS}
-    ${PROJECT_SOURCES} 
+target_include_directories(
+    ${PROJECT_NAME}
+    INTERFACE 
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
 )
-
-target_include_directories(${PROJECT_NAME} PUBLIC include)
