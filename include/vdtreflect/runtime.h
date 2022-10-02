@@ -188,7 +188,7 @@ struct TypeFactory final
 #define PROPERTY(...)
 #define FUNCTION(...)
 
-#define GENERATED_CLASS_BODY() \
+#define GENERATED_BODY() \
 	virtual const char* getTypeName() const; \
 	virtual const meta_t& getTypeMeta() const ; \
 	virtual const properties_t getTypeProperties() const; \

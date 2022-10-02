@@ -12,6 +12,17 @@ const std::map<const char*, int>  EnumType<TestEnum>::values()
     return s_values;
 }
 
+const char* EnumType<ApplicationMode>::name() { return "ApplicationMode"; }
+const std::map<const char*, int>  EnumType<ApplicationMode>::values()
+{
+    static std::map<const char*, int> s_values{
+        { "Editor", static_cast<int>(ApplicationMode::Editor) }, 
+        { "Server", static_cast<int>(ApplicationMode::Server) }, 
+        { "Standalone", static_cast<int>(ApplicationMode::Standalone) }, 
+    };
+    return s_values;
+}
+
 const meta_t& Foo::getTypeMeta() const { return FooType::meta(); }
 const char* Foo::getTypeName() const { return FooType::name(); }
 const properties_t Foo::getTypeProperties() const { return FooType::properties(this); }

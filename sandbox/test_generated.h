@@ -11,6 +11,13 @@ struct EnumType<enum class TestEnum>
     static const std::map<const char*, int> values();
 };
 
+template <>
+struct EnumType<enum class ApplicationMode>
+{
+    static const char* name();
+    static const std::map<const char*, int> values();
+};
+
 struct FooType
 {
     FooType();

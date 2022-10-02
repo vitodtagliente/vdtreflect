@@ -17,7 +17,7 @@ public:
 	PROPERTY(JsonExport = true) int a{ 4 };
 	PROPERTY() int b = 5;
 
-	GENERATED_CLASS_BODY()
+	GENERATED_BODY()
 };
 
 CLASS()
@@ -26,5 +26,13 @@ class Poo : public Foo
 public:
 	PROPERTY() int c{ 14 };
 
-	GENERATED_CLASS_BODY()
+	GENERATED_BODY()
+};
+
+ENUM()
+enum class ApplicationMode : int
+{
+	Editor = 0,
+	Server = 1,
+	Standalone = 2,
 };

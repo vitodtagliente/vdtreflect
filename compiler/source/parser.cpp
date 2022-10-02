@@ -177,7 +177,6 @@ bool Parser::parseEnum(TypeCollection& collection, const std::vector<std::string
 		if (tokens[index] == "class")
 		{
 			element = collection.addEnum(tokens[++index]);
-			if (tokens[(++index)++] != "{") return false;
 			break;
 		}
 		++index;
@@ -185,10 +184,15 @@ bool Parser::parseEnum(TypeCollection& collection, const std::vector<std::string
 
 	if (element == nullptr) return false;
 
+	while (index + 1 < tokens.size())
+	{
+		if (tokens[++index] == "{") break;
+	}
+
 	bool lookingForNextOptionName = true;
 	while (index < tokens.size())
 	{
-		std::string token = tokens[index];
+		std::string token = tokens[++index];
 		if (token == "}")
 		{
 			parseMeta(tokens, startingIndex, element->meta);
@@ -198,7 +202,6 @@ bool Parser::parseEnum(TypeCollection& collection, const std::vector<std::string
 		if (token == ",")
 		{
 			lookingForNextOptionName = true;
-			++index;
 			continue;
 		}
 
@@ -207,7 +210,6 @@ bool Parser::parseEnum(TypeCollection& collection, const std::vector<std::string
 			element->addOption(token);
 			lookingForNextOptionName = false;
 		}
-		++index;
 	}
 	return false;
 }
