@@ -50,7 +50,7 @@ class Encoder
 public:
 	Encoder() = default;
 
-	bool encode(TypeCollection& collection, const std::filesystem::path& file);
+	bool encode(TypeCollection& collection, const std::filesystem::path& path, const std::string& filename);
 
 private:
 	bool encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, TypeClass& type);

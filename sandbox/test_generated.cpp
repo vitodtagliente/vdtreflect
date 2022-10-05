@@ -25,8 +25,17 @@ const std::map<const char*, int>  EnumType<ApplicationMode>::values()
 
 const meta_t& Foo::getTypeMeta() const { return FooType::meta(); }
 const char* Foo::getTypeName() const { return FooType::name(); }
-const properties_t Foo::getTypeProperties() const { return FooType::properties(this); }
-std::size_t Foo::getTypeSize() const { return FooType::size(); }
+const properties_t Foo::getTypeProperties() const {
+    member_address_t origin = reinterpret_cast<member_address_t>(this);
+    properties_t properties;
+    properties.insert(std::make_pair<std::string, Property>("a", Property("a", NativeType::NT_int, "int", sizeof(int), origin + offsetof(Foo, a), {
+        std::make_pair("JsonExport", "true"),
+    })));
+    properties.insert(std::make_pair<std::string, Property>("b", Property("b", NativeType::NT_int, "int", sizeof(int), origin + offsetof(Foo, b), {
+    })));
+    return properties;
+}
+std::size_t Foo::getTypeSize() const { return sizeof(Foo); }
 
 FooType::FooType()
 {
@@ -47,30 +56,18 @@ const meta_t& FooType::meta()
     return s_meta;
 }
 
-std::size_t FooType::size()
-{
-    return sizeof(Foo);
-}
-
 const char* FooType::name() { return "Foo"; }
-properties_t FooType::properties(const Foo* const pointer)
-{
-    member_address_t origin = reinterpret_cast<member_address_t>(pointer);
-    properties_t properties;
-    properties.insert(std::make_pair<std::string, Property>("a", Property("a", NativeType::NT_int, "int", sizeof(int), origin + offsetof(Foo, a), {
-        std::make_pair("JsonExport", "true"),
-    })));
-    properties.insert(std::make_pair<std::string, Property>("b", Property("b", NativeType::NT_int, "int", sizeof(int), origin + offsetof(Foo, b), {
-    })));
-    return properties;
-}
-
-FooType __foo_type;
 
 const meta_t& Poo::getTypeMeta() const { return PooType::meta(); }
 const char* Poo::getTypeName() const { return PooType::name(); }
-const properties_t Poo::getTypeProperties() const { return PooType::properties(this); }
-std::size_t Poo::getTypeSize() const { return PooType::size(); }
+const properties_t Poo::getTypeProperties() const {
+    member_address_t origin = reinterpret_cast<member_address_t>(this);
+    properties_t properties = Foo::getTypeProperties();
+    properties.insert(std::make_pair<std::string, Property>("c", Property("c", NativeType::NT_int, "int", sizeof(int), origin + offsetof(Poo, c), {
+    })));
+    return properties;
+}
+std::size_t Poo::getTypeSize() const { return sizeof(Poo); }
 
 PooType::PooType()
 {
@@ -89,20 +86,5 @@ const meta_t& PooType::meta()
     return s_meta;
 }
 
-std::size_t PooType::size()
-{
-    return sizeof(Poo);
-}
-
 const char* PooType::name() { return "Poo"; }
-properties_t PooType::properties(const Poo* const pointer)
-{
-    member_address_t origin = reinterpret_cast<member_address_t>(pointer);
-    properties_t properties = FooType::properties(pointer);
-    properties.insert(std::make_pair<std::string, Property>("c", Property("c", NativeType::NT_int, "int", sizeof(int), origin + offsetof(Poo, c), {
-    })));
-    return properties;
-}
-
-PooType __poo_type;
 

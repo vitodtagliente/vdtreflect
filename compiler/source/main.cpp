@@ -5,13 +5,14 @@
 #include "parser.h"
 #include "string_util.h"
 
-#define COMPILER_SUCCESS 1;
-#define COMPILER_ERROR 0;
+#define COMPILER_SUCCESS 0;
+#define COMPILER_ERROR 1;
 
 int main(int argc, char** argv)
 {
 	// input and output files
-	std::string in; // = "C:/Users/vitod/Desktop/vdtproto/test/test1.h";
+	std::filesystem::path in; // = "C:/Users/vitod/Desktop/vdtproto/test/test1.h";
+	std::filesystem::path path;
 
 	if (argc == 0)
 	{
@@ -25,12 +26,21 @@ int main(int argc, char** argv)
 		{
 			in = argv[i];
 		}
+		else if (i == 2)
+		{
+			path = argv[i];
+		}
 	}
 
 	if (!std::filesystem::exists(in))
 	{
 		std::cout << "Invalid input file" << std::endl;
 		return COMPILER_ERROR;
+	}
+
+	if (path.empty())
+	{
+		path = std::filesystem::path(in).parent_path();
 	}
 
 	TypeCollection collection;
@@ -49,7 +59,7 @@ int main(int argc, char** argv)
 	}
 
 	Encoder encoder;
-	if (!encoder.encode(collection, in))
+	if (!encoder.encode(collection, path, in.filename().string()))
 	{
 		std::cout << "Failed to encode the generated code" << std::endl;
 		return COMPILER_ERROR;

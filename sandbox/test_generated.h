@@ -18,27 +18,23 @@ struct EnumType<enum class ApplicationMode>
     static const std::map<const char*, int> values();
 };
 
-struct FooType
+struct FooType : RegisteredInTypeFactory<FooType>
 {
     FooType();
 
     static const meta_t& meta();
     static const char* name();
-    static properties_t properties(const class Foo* const pointer);
     static class Foo* const instantiate();
-    static std::size_t size();
+    static bool registered() { return value; };
 };
-extern FooType __foo_type;
 
-struct PooType
+struct PooType : RegisteredInTypeFactory<PooType>
 {
     PooType();
 
     static const meta_t& meta();
     static const char* name();
-    static properties_t properties(const class Poo* const pointer);
     static class Poo* const instantiate();
-    static std::size_t size();
+    static bool registered() { return value; };
 };
-extern PooType __poo_type;
 

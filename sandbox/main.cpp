@@ -27,7 +27,7 @@ int main()
 
 	const Foo* const f = TypeFactory::instantiate<Foo>("Foo");
 
-	for (const std::string& typeName : TypeFactory::list("Category", "MyClass"))
+	for (const std::string& typeName : TypeFactory::list())
 	{
 		cout << typeName << endl;
 	}

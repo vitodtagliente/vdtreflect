@@ -129,10 +129,11 @@ struct TypeFactoryRegister
 		return s_register;
 	}
 
-	static void load(const std::string& name, const factory_meta_t& meta_handler, const factory_constructor_t& constructor_handler)
+	static bool load(const std::string& name, const factory_meta_t& meta_handler, const factory_constructor_t& constructor_handler)
 	{
 		meta().insert(std::make_pair(name, meta_handler));
 		constructors().insert(std::make_pair(name, constructor_handler));
+		return true;
 	}
 };
 
@@ -161,6 +162,16 @@ struct TypeFactory final
 		return reinterpret_cast<T*>(instantiate(name));
 	}
 
+	static std::vector<std::string> list()
+	{
+		std::vector<std::string> result;
+		for (const auto& [typeName, constructor] : TypeFactoryRegister::constructors())
+		{
+			result.push_back(typeName);
+		}
+		return result;
+	}
+
 	static std::vector<std::string> list(const std::string& metaOption)
 	{
 		return TypeFactory::list(metaOption, "");
@@ -182,6 +193,15 @@ struct TypeFactory final
 		return result;
 	}
 };
+
+template <typename T>
+struct RegisteredInTypeFactory
+{
+	static bool value;
+};
+
+template <typename T>
+bool RegisteredInTypeFactory<T>::value{ TypeFactoryRegister::load(T::name(), []() -> const meta_t& { return T::meta(); }, []() -> IType* { return T::instantiate(); }) };
 
 #define ENUM(...)
 #define CLASS(...)
