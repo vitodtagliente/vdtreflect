@@ -20,21 +20,17 @@ struct EnumType<enum class ApplicationMode>
 
 struct FooType : RegisteredInTypeFactory<FooType>
 {
-    FooType();
+    FooType() = delete;
 
-    static const meta_t& meta();
-    static const char* name();
-    static class Foo* const instantiate();
+    static const Type& type();
     static bool registered() { return value; };
 };
 
 struct PooType : RegisteredInTypeFactory<PooType>
 {
-    PooType();
+    PooType() = delete;
 
-    static const meta_t& meta();
-    static const char* name();
-    static class Poo* const instantiate();
+    static const Type& type();
     static bool registered() { return value; };
 };
 

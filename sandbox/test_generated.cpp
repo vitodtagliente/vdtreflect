@@ -23,8 +23,8 @@ const std::map<const char*, int>  EnumType<ApplicationMode>::values()
     return s_values;
 }
 
-const meta_t& Foo::getTypeMeta() const { return FooType::meta(); }
-const char* Foo::getTypeName() const { return FooType::name(); }
+const meta_t& Foo::getTypeMeta() const { return FooType::type().meta; }
+const std::string& Foo::getTypeName() const { return FooType::type().name; }
 const properties_t Foo::getTypeProperties() const {
     member_address_t origin = reinterpret_cast<member_address_t>(this);
     properties_t properties;
@@ -35,31 +35,18 @@ const properties_t Foo::getTypeProperties() const {
     })));
     return properties;
 }
-std::size_t Foo::getTypeSize() const { return sizeof(Foo); }
+std::size_t Foo::getTypeSize() const { return FooType::type().size; }
 
-FooType::FooType()
+const Type& FooType::type()
 {
-    TypeFactoryRegister::load(FooType::name(), []() -> const meta_t& { return FooType::meta(); }, []() -> IType* { return FooType::instantiate(); });
-}
-
-Foo* const FooType::instantiate()
-{
-    return new Foo();
-}
-
-const meta_t& FooType::meta()
-{
-    static meta_t s_meta{
+    static const Type s_type([]() -> IType* { return new Foo(); }, "Foo", {
         std::make_pair("Category", "MyClass"),
         std::make_pair("Serializable", "true"),
-    };
-    return s_meta;
+    }, sizeof(Foo));
+    return s_type;
 }
-
-const char* FooType::name() { return "Foo"; }
-
-const meta_t& Poo::getTypeMeta() const { return PooType::meta(); }
-const char* Poo::getTypeName() const { return PooType::name(); }
+const meta_t& Poo::getTypeMeta() const { return PooType::type().meta; }
+const std::string& Poo::getTypeName() const { return PooType::type().name; }
 const properties_t Poo::getTypeProperties() const {
     member_address_t origin = reinterpret_cast<member_address_t>(this);
     properties_t properties = Foo::getTypeProperties();
@@ -67,24 +54,11 @@ const properties_t Poo::getTypeProperties() const {
     })));
     return properties;
 }
-std::size_t Poo::getTypeSize() const { return sizeof(Poo); }
+std::size_t Poo::getTypeSize() const { return PooType::type().size; }
 
-PooType::PooType()
+const Type& PooType::type()
 {
-    TypeFactoryRegister::load(PooType::name(), []() -> const meta_t& { return PooType::meta(); }, []() -> IType* { return PooType::instantiate(); });
+    static const Type s_type([]() -> IType* { return new Poo(); }, "Poo", {
+    }, sizeof(Poo));
+    return s_type;
 }
-
-Poo* const PooType::instantiate()
-{
-    return new Poo();
-}
-
-const meta_t& PooType::meta()
-{
-    static meta_t s_meta{
-    };
-    return s_meta;
-}
-
-const char* PooType::name() { return "Poo"; }
-

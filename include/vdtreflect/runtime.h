@@ -107,45 +107,41 @@ struct IType
 	IType() = default;
 	virtual ~IType() = default;
 
-	virtual const char* getTypeName() const = 0;
+	virtual const std::string& getTypeName() const = 0;
 	virtual const meta_t& getTypeMeta() const = 0;
 	virtual const properties_t getTypeProperties() const = 0;
 	virtual std::size_t getTypeSize() const = 0;
 };
 typedef std::function<IType* ()> factory_constructor_t;
+typedef std::function<IType* ()> type_constructor_t;
 typedef std::function<const meta_t& ()> factory_meta_t;
 
-struct TypeFactoryRegister
+struct Type
 {
-	static std::map<std::string, factory_constructor_t>& constructors()
-	{
-		static std::map<std::string, factory_constructor_t> s_register;
-		return s_register;
-	}
+	Type(const type_constructor_t& constructor, const std::string& name, const meta_t& meta, const std::size_t size)
+		: constructor(constructor)
+		, name(name)
+		, meta(meta)
+		, size(size)
+	{}
 
-	static std::map<std::string, factory_meta_t>& meta()
-	{
-		static std::map<std::string, factory_meta_t> s_register;
-		return s_register;
-	}
-
-	static bool load(const std::string& name, const factory_meta_t& meta_handler, const factory_constructor_t& constructor_handler)
-	{
-		meta().insert(std::make_pair(name, meta_handler));
-		constructors().insert(std::make_pair(name, constructor_handler));
-		return true;
-	}
+	type_constructor_t constructor;
+	std::string name;
+	meta_t meta;
+	std::size_t size;
 };
 
-struct TypeFactory final
+class TypeFactory final
 {
+public:
+	TypeFactory() = delete;
+
 	static IType* instantiate(const std::string& name)
 	{
-		const std::map<std::string, factory_constructor_t>& constructors = TypeFactoryRegister::constructors();
-		const auto& it = constructors.find(name);
-		if (it != constructors.end())
+		const auto& it = collection().find(name);
+		if (it != collection().end())
 		{
-			return it->second();
+			return it->second.constructor();
 		}
 		return nullptr;
 	}
@@ -165,7 +161,7 @@ struct TypeFactory final
 	static std::vector<std::string> list()
 	{
 		std::vector<std::string> result;
-		for (const auto& [typeName, constructor] : TypeFactoryRegister::constructors())
+		for (const auto& [typeName, type] : collection())
 		{
 			result.push_back(typeName);
 		}
@@ -180,17 +176,28 @@ struct TypeFactory final
 	static std::vector<std::string> list(const std::string& metaOption, const std::string& metaValue)
 	{
 		std::vector<std::string> result;
-		const std::map<std::string, factory_meta_t>& typeMeta = TypeFactoryRegister::meta();
-		for (const auto& [typeName, metaHandler] : typeMeta)
+		for (const auto& [typeName, type] : collection())
 		{
-			const meta_t& meta = metaHandler();
-			const auto& it = meta.find(metaOption);
-			if (it != meta.end() && (metaValue.empty() || it->second == metaValue))
+			const auto& it = type.meta.find(metaOption);
+			if (it != type.meta.end() && (metaValue.empty() || it->second == metaValue))
 			{
 				result.push_back(typeName);
 			}
 		}
 		return result;
+	}
+
+	static bool registerType(const Type& type)
+	{
+		collection().insert(std::make_pair(type.name, type));
+		return true;
+	}
+
+private:
+	static std::map<std::string, Type>& collection()
+	{
+		static std::map<std::string, Type> s_types;
+		return s_types;
 	}
 };
 
@@ -201,7 +208,7 @@ struct RegisteredInTypeFactory
 };
 
 template <typename T>
-bool RegisteredInTypeFactory<T>::value{ TypeFactoryRegister::load(T::name(), []() -> const meta_t& { return T::meta(); }, []() -> IType* { return T::instantiate(); }) };
+bool RegisteredInTypeFactory<T>::value{ TypeFactory::registerType(T::type()) };
 
 #define ENUM(...)
 #define CLASS(...)
@@ -209,7 +216,7 @@ bool RegisteredInTypeFactory<T>::value{ TypeFactoryRegister::load(T::name(), [](
 #define FUNCTION(...)
 
 #define GENERATED_BODY() \
-	virtual const char* getTypeName() const; \
+	virtual const std::string& getTypeName() const; \
 	virtual const meta_t& getTypeMeta() const ; \
 	virtual const properties_t getTypeProperties() const; \
 	virtual std::size_t getTypeSize() const;
