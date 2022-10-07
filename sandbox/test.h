@@ -30,6 +30,31 @@ public:
 };
 
 ENUM()
+enum class UserRole : int
+{
+	Guest,
+	Admin
+};
+
+CLASS()
+class User : public IType
+{
+public:
+	PROPERTY() std::string name;
+	PROPERTY() std::string surname;
+	PROPERTY() int age;
+	PROPERTY() float height;
+	PROPERTY() double borntime;
+	PROPERTY() char sex;
+	PROPERTY() bool active;
+	PROPERTY(IsEnum) UserRole role;
+	PROPERTY(IsType) Foo foo;
+	PROPERTY(IsType) Foo* foo_ptr;
+
+	GENERATED_BODY()
+};
+
+ENUM()
 enum class ApplicationMode : int
 {
 	Editor = 0,

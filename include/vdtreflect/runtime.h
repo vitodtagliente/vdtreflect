@@ -59,27 +59,40 @@ bool stringToEnum(const std::string& name, T& t)
 
 typedef unsigned long long member_address_t;
 
-enum class NativeType
+enum class PropertyType
 {
-	NT_invalid,
-	NT_bool,
-	NT_char,
-	NT_double,
-	NT_enum,
-	NT_float,
-	NT_int,
-	NT_string,
-	NT_void
+	T_unknown,
+
+	T_bool,
+	T_char,
+	T_double,
+	T_float,
+	T_int,
+	T_void,
+
+	T_container_array,
+	T_container_list,
+	T_container_map,
+	T_container_queue,
+	T_container_set,
+	T_container_stack,
+	T_container_string,
+	T_container_vector,
+	T_container_unordered_map,
+
+	T_custom_enum,
+	T_custom_type
 };
 
 typedef std::map<std::string, std::string> meta_t;
 
 struct Property
 {
-	Property(const std::string& name, const NativeType type, const std::string& typeStr, const std::size_t size, const member_address_t address, const meta_t& meta)
+	Property(const std::string& name, const PropertyType type, const std::string& typeStr, const bool isNormal, const std::size_t size, const member_address_t address, const meta_t& meta)
 		: name(name)
 		, type(type)
 		, typeStr(typeStr)
+		, isNormal(isNormal)
 		, size(size)
 		, address(address)
 		, meta(meta)
@@ -88,8 +101,9 @@ struct Property
 	}
 
 	const std::string name;
-	const NativeType type{ NativeType::NT_invalid };
+	const PropertyType type{ PropertyType::T_unknown };
 	const std::string typeStr;
+	const bool isNormal;
 	const std::size_t size;
 	const member_address_t address{ 0 };
 	const meta_t meta;

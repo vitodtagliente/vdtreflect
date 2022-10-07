@@ -12,6 +12,16 @@ const std::map<const char*, int>  EnumType<TestEnum>::values()
     return s_values;
 }
 
+const char* EnumType<UserRole>::name() { return "UserRole"; }
+const std::map<const char*, int>  EnumType<UserRole>::values()
+{
+    static std::map<const char*, int> s_values{
+        { "Guest", static_cast<int>(UserRole::Guest) }, 
+        { "Admin", static_cast<int>(UserRole::Admin) }, 
+    };
+    return s_values;
+}
+
 const char* EnumType<ApplicationMode>::name() { return "ApplicationMode"; }
 const std::map<const char*, int>  EnumType<ApplicationMode>::values()
 {
@@ -28,10 +38,10 @@ const std::string& Foo::getTypeName() const { return FooType::type().name; }
 const properties_t Foo::getTypeProperties() const {
     member_address_t origin = reinterpret_cast<member_address_t>(this);
     properties_t properties;
-    properties.insert(std::make_pair<std::string, Property>("a", Property("a", NativeType::NT_int, "int", sizeof(int), origin + offsetof(Foo, a), {
+    properties.insert(std::make_pair<std::string, Property>("a", Property("a", PropertyType::T_int, "int", true, sizeof(int), origin + offsetof(Foo, a), {
         std::make_pair("JsonExport", "true"),
     })));
-    properties.insert(std::make_pair<std::string, Property>("b", Property("b", NativeType::NT_int, "int", sizeof(int), origin + offsetof(Foo, b), {
+    properties.insert(std::make_pair<std::string, Property>("b", Property("b", PropertyType::T_int, "int", true, sizeof(int), origin + offsetof(Foo, b), {
     })));
     return properties;
 }
@@ -50,7 +60,7 @@ const std::string& Poo::getTypeName() const { return PooType::type().name; }
 const properties_t Poo::getTypeProperties() const {
     member_address_t origin = reinterpret_cast<member_address_t>(this);
     properties_t properties = Foo::getTypeProperties();
-    properties.insert(std::make_pair<std::string, Property>("c", Property("c", NativeType::NT_int, "int", sizeof(int), origin + offsetof(Poo, c), {
+    properties.insert(std::make_pair<std::string, Property>("c", Property("c", PropertyType::T_int, "int", true, sizeof(int), origin + offsetof(Poo, c), {
     })));
     return properties;
 }
@@ -60,5 +70,43 @@ const Type& PooType::type()
 {
     static const Type s_type([]() -> IType* { return new Poo(); }, "Poo", {
     }, sizeof(Poo));
+    return s_type;
+}
+const meta_t& User::getTypeMeta() const { return UserType::type().meta; }
+const std::string& User::getTypeName() const { return UserType::type().name; }
+const properties_t User::getTypeProperties() const {
+    member_address_t origin = reinterpret_cast<member_address_t>(this);
+    properties_t properties;
+    properties.insert(std::make_pair<std::string, Property>("name", Property("name", PropertyType::T_container_string, "std::string", true, sizeof(std::string), origin + offsetof(User, name), {
+    })));
+    properties.insert(std::make_pair<std::string, Property>("surname", Property("surname", PropertyType::T_container_string, "std::string", true, sizeof(std::string), origin + offsetof(User, surname), {
+    })));
+    properties.insert(std::make_pair<std::string, Property>("age", Property("age", PropertyType::T_int, "int", true, sizeof(int), origin + offsetof(User, age), {
+    })));
+    properties.insert(std::make_pair<std::string, Property>("height", Property("height", PropertyType::T_float, "float", true, sizeof(float), origin + offsetof(User, height), {
+    })));
+    properties.insert(std::make_pair<std::string, Property>("borntime", Property("borntime", PropertyType::T_double, "double", true, sizeof(double), origin + offsetof(User, borntime), {
+    })));
+    properties.insert(std::make_pair<std::string, Property>("sex", Property("sex", PropertyType::T_char, "char", true, sizeof(char), origin + offsetof(User, sex), {
+    })));
+    properties.insert(std::make_pair<std::string, Property>("active", Property("active", PropertyType::T_bool, "bool", true, sizeof(bool), origin + offsetof(User, active), {
+    })));
+    properties.insert(std::make_pair<std::string, Property>("role", Property("role", PropertyType::T_custom_enum, "UserRole", true, sizeof(UserRole), origin + offsetof(User, role), {
+        std::make_pair("IsEnum", ""),
+    })));
+    properties.insert(std::make_pair<std::string, Property>("foo", Property("foo", PropertyType::T_custom_type, "Foo", true, sizeof(Foo), origin + offsetof(User, foo), {
+        std::make_pair("IsType", ""),
+    })));
+    properties.insert(std::make_pair<std::string, Property>("foo_ptr", Property("foo_ptr", PropertyType::T_custom_type, "Foo*", false, sizeof(Foo*), origin + offsetof(User, foo_ptr), {
+        std::make_pair("IsType", ""),
+    })));
+    return properties;
+}
+std::size_t User::getTypeSize() const { return UserType::type().size; }
+
+const Type& UserType::type()
+{
+    static const Type s_type([]() -> IType* { return new User(); }, "User", {
+    }, sizeof(User));
     return s_type;
 }

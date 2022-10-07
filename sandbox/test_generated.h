@@ -12,6 +12,13 @@ struct EnumType<enum class TestEnum>
 };
 
 template <>
+struct EnumType<enum class UserRole>
+{
+    static const char* name();
+    static const std::map<const char*, int> values();
+};
+
+template <>
 struct EnumType<enum class ApplicationMode>
 {
     static const char* name();
@@ -29,6 +36,14 @@ struct FooType : RegisteredInTypeFactory<FooType>
 struct PooType : RegisteredInTypeFactory<PooType>
 {
     PooType() = delete;
+
+    static const Type& type();
+    static bool registered() { return value; };
+};
+
+struct UserType : RegisteredInTypeFactory<UserType>
+{
+    UserType() = delete;
 
     static const Type& type();
     static bool registered() { return value; };

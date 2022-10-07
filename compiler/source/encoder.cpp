@@ -115,7 +115,10 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, Typ
 	sourceBuffer.push_line("const meta_t& ", type.name, "::getTypeMeta() const { return ", type.name, "Type::type().meta; }");
 	sourceBuffer.push_line("const std::string& ", type.name, "::getTypeName() const { return ", type.name, "Type::type().name; }");
 	sourceBuffer.push_line("const properties_t ", type.name, "::getTypeProperties() const {");
-	sourceBuffer.push_line("    member_address_t origin = reinterpret_cast<member_address_t>(this);");
+	if (!type.properties.empty())
+	{
+		sourceBuffer.push_line("    member_address_t origin = reinterpret_cast<member_address_t>(this);");
+	}
 	if (type.parent != "IType")
 	{
 		sourceBuffer.push_line("    properties_t properties = ", type.parent, "::getTypeProperties();");
@@ -126,7 +129,8 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, Typ
 	}
 	for (const Property& prop : type.properties)
 	{
-		sourceBuffer.push_line("    properties.insert(std::make_pair<std::string, Property>(\"", prop.name, "\", Property(\"", prop.name, "\", NativeType::NT_int, \"int\", sizeof(int), origin + offsetof(", type.name, ", ", prop.name, "), {");
+		sourceBuffer.push_line("    properties.insert(std::make_pair<std::string, Property>(\"", prop.name, "\", Property(\"", prop.name, "\", ", encodeToTypeEnum(prop),
+			", \"", prop.type, "\", ", encodeIsNormalType(prop.type), ", sizeof(", prop.type, "), origin + offsetof(", type.name, ", ", prop.name, "), {");
 		for (const auto& [key, value] : prop.meta)
 		{
 			sourceBuffer.push_line("        std::make_pair(\"", key, "\", \"", value, "\"),");
@@ -177,4 +181,40 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, Typ
 	sourceBuffer.push_line("");
 
 	return true;
+}
+
+std::string Encoder::encodeToTypeEnum(const Property& prop)
+{
+	std::string type = prop.type;
+	if (type.empty()) return "PropertyType::T_unknown";
+
+	while (!type.empty() && (type[type.length() - 1] == '*' || type[type.length() - 1] == '&' || type[type.length() - 1] == ' '))
+	{
+		type.pop_back();
+	}
+
+	if (prop.type == "bool") return "PropertyType::T_bool";
+	if (prop.type == "char") return "PropertyType::T_char";
+	if (prop.type == "double") return "PropertyType::T_double";
+	if (prop.type == "float") return "PropertyType::T_float";
+	if (prop.type == "int") return "PropertyType::T_int";
+	if (prop.type == "void") return "PropertyType::T_void";
+	if (prop.type == "std::array" || prop.type == "array") return "PropertyType::T_container_array";
+	if (prop.type == "std::list" || prop.type == "list") return "PropertyType::T_container_list";
+	if (prop.type == "std::map" || prop.type == "map") return "PropertyType::T_container_map";
+	if (prop.type == "std::queue" || prop.type == "queue") return "PropertyType::T_container_queue";
+	if (prop.type == "std::set" || prop.type == "set") return "PropertyType::NT_container_set";
+	if (prop.type == "std::stack" || prop.type == "stack") return "PropertyType::T_container_stack";
+	if (prop.type == "std::string" || prop.type == "string") return "PropertyType::T_container_string";
+	if (prop.type == "std::vector" || prop.type == "vector") return "PropertyType::T_container_vector";
+	if (prop.type == "std::unordered_map" || prop.type == "unordered_map") return "PropertyType::T_container_unordered_map";
+	if (prop.meta.find("IsEnum") != prop.meta.end()) return "PropertyType::T_custom_enum";
+	if (prop.meta.find("IsType") != prop.meta.end()) return "PropertyType::T_custom_type";
+	return "PropertyType::T_unknown";
+}
+
+std::string Encoder::encodeIsNormalType(const std::string& type)
+{
+	if (StringUtil::contains(type, "*") || StringUtil::contains(type, "&")) return "false";
+	return "true";
 }

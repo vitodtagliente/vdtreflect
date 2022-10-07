@@ -55,4 +55,6 @@ public:
 private:
 	bool encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, TypeClass& type);
 	bool encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, TypeEnum& type);
+	static std::string encodeToTypeEnum(const Property& prop);
+	static std::string encodeIsNormalType(const std::string& type);
 };
