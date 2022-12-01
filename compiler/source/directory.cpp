@@ -1,5 +1,7 @@
 #include "directory.h"
 
+#include "string_util.h"
+
 std::vector<std::filesystem::path> Directory::scan(const std::filesystem::path& path, const std::vector<std::string>& extensions, const bool recursive)
 {
 	std::vector<std::filesystem::path> result;
@@ -8,6 +10,9 @@ std::vector<std::filesystem::path> Directory::scan(const std::filesystem::path& 
 	for (const auto& entry : std::filesystem::directory_iterator(path))
 	{
 		const std::filesystem::path& file = entry.path();
+		
+		if (StringUtil::contains(file.string(), "generated.h")) continue;
+
 		if (std::filesystem::is_directory(file) && recursive)
 		{
 			const auto& childFiles = scan(file, extensions, recursive);
