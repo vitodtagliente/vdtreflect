@@ -97,7 +97,7 @@ struct Property
 
 	struct TypeDescriptor
 	{
-		TypeDescriptor(const std::string& name, const Property::Type type, const Property::DecoratorType decorator, const std::vector<TypeDescriptor>& children)
+		TypeDescriptor(const std::string& name, const Property::Type type, const Property::DecoratorType decoratorType, const std::vector<TypeDescriptor>& children)
 			: name(name)
 			, type(type)
 			, decoratorType(decoratorType)
