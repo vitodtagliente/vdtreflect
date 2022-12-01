@@ -1,16 +1,20 @@
 #include "type.h"
 
+TypeCollection::~TypeCollection()
+{
+}
+
 TypeClass* const TypeCollection::addClass(const std::string& name)
 {
-	m_entities.push_back(std::make_unique<TypeClass>());
-	TypeClass* const e = dynamic_cast<TypeClass*>(m_entities.back().get());
+	TypeClass* const e = new TypeClass();
+	m_entities.push_back(e);
 	return e->name = name, e;
 }
 
 TypeEnum* const TypeCollection::addEnum(const std::string& name)
 {
-	m_entities.push_back(std::make_unique<TypeEnum>());
-	TypeEnum* const e = dynamic_cast<TypeEnum*>(m_entities.back().get());
+	TypeEnum* const e = new TypeEnum();
+	m_entities.push_back(e);
 	return e->name = name, e;
 }
 

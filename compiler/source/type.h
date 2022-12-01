@@ -3,8 +3,6 @@
 
 #include <filesystem>
 #include <map>
-#include <memory>
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -16,8 +14,6 @@ public:
 	Type() = default;
 	virtual ~Type() = default;
 };
-
-typedef std::unique_ptr<Type> TypePtr;
 
 struct Property
 {
@@ -57,6 +53,7 @@ public:
 	friend class Encoder;
 
 	TypeCollection() = default;
+	~TypeCollection();
 
 	TypeClass* const addClass(const std::string& name);
 	TypeEnum* const addEnum(const std::string& name);
@@ -64,5 +61,5 @@ public:
 	bool empty() const;
 
 private:
-	std::vector<TypePtr> m_entities;
+	std::vector<Type*> m_entities;
 };

@@ -21,8 +21,26 @@ void EncodeBuffer::push_line(const std::string& line)
 	m_lines.push_back(line);
 }
 
-bool Encoder::encode(TypeCollection& collection, const std::filesystem::path& path, const std::string& filename)
+std::string EncodeBuffer::string() const
 {
+	std::string content;
+	for (const std::string& line : m_lines)
+	{
+		content += line + "\n";
+	}
+	return content;
+}
+
+bool Encoder::encode(const TypeCollection& collection, const SymbolTable& symbolTable, const std::filesystem::path& path, const std::string& filename)
+{
+	static const auto read = [](const std::filesystem::path& filename) -> std::string
+	{
+		std::ostringstream buf;
+		std::ifstream input(filename.c_str());
+		buf << input.rdbuf();
+		return buf.str();
+	};
+
 	std::filesystem::path outHeaderFilename = path / StringUtil::replace(filename, ".h", "_generated.h");
 	std::filesystem::path outSourceFilename = path / StringUtil::replace(filename, ".h", "_generated.cpp");
 
@@ -41,12 +59,11 @@ bool Encoder::encode(TypeCollection& collection, const std::filesystem::path& pa
 	source_buffer.push_line("");
 
 	// enums
-	for (const auto& entity : collection.m_entities)
+	for (Type* const entity : collection.m_entities)
 	{
-		Type* const e = entity.get();
-		if (TypeEnum* const eEnum = dynamic_cast<TypeEnum*>(e))
+		if (TypeEnum* const eEnum = dynamic_cast<TypeEnum*>(entity))
 		{
-			if (!encode(header_buffer, source_buffer, *eEnum))
+			if (!encode(header_buffer, source_buffer, symbolTable, *eEnum))
 			{
 				return false;
 			}
@@ -54,52 +71,49 @@ bool Encoder::encode(TypeCollection& collection, const std::filesystem::path& pa
 	}
 
 	// classes
-	for (const auto& entity : collection.m_entities)
+	for (Type* const entity : collection.m_entities)
 	{
-		Type* const e = entity.get();
-		if (TypeClass* const eClass = dynamic_cast<TypeClass*>(e))
+		if (TypeClass* const eClass = dynamic_cast<TypeClass*>(entity))
 		{
-			if (!encode(header_buffer, source_buffer, *eClass))
+			if (!encode(header_buffer, source_buffer, symbolTable, *eClass))
 			{
 				return false;
 			}
 		}
 	}
 
-	// generate the header file
+	static const auto& generate = [](const EncodeBuffer& buffer, const std::string& filename) -> bool
 	{
-		std::ofstream fstream(outHeaderFilename);
-		if (!fstream.is_open())
+		std::string previousContent;
+		std::string content = buffer.string();
+
+		if (std::filesystem::exists(filename))
 		{
-			return false;
+			previousContent = read(filename);
 		}
 
-		for (const std::string& line : header_buffer.m_lines)
+		if (previousContent != content)
 		{
-			fstream << line << "\n";
+			std::ofstream fstream(filename);
+			if (!fstream.is_open())
+			{
+				return false;
+			}
+			fstream << content;
+			fstream.close();
 		}
-		fstream.close();
-	}
+		return true;
+	};
 
-	// generate the imp file
-	{
-		std::ofstream fstream(outSourceFilename);
-		if (!fstream.is_open())
-		{
-			return false;
-		}
-
-		for (const std::string& line : source_buffer.m_lines)
-		{
-			fstream << line << "\n";
-		}
-		fstream.close();
-	}
+	// generate the header file only if it is changed or if it doesn't exist
+	if (!generate(header_buffer, outHeaderFilename.string())) return false;
+	// generate the source file only if it is changed or if it doesn't exist
+	if (!generate(source_buffer, outSourceFilename.string())) return false;
 
 	return true;
 }
 
-bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, TypeClass& type)
+bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, const SymbolTable& symbolTable, TypeClass& type)
 {
 	// header
 	headerBuffer.push_line("struct ", type.name, "Type : RegisteredInTypeFactory<", type.name, "Type>");
@@ -127,15 +141,9 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, Typ
 	{
 		sourceBuffer.push_line("    properties_t properties;");
 	}
-	for (const Property& prop : type.properties)
+	for (const Property& property : type.properties)
 	{
-		sourceBuffer.push_line("    properties.insert(std::make_pair<std::string, Property>(\"", prop.name, "\", Property(\"", prop.name, "\", ", encodeToTypeEnum(prop),
-			", \"", prop.type, "\", ", encodeIsNormalType(prop.type), ", sizeof(", prop.type, "), origin + offsetof(", type.name, ", ", prop.name, "), {");
-		for (const auto& [key, value] : prop.meta)
-		{
-			sourceBuffer.push_line("        std::make_pair(\"", key, "\", \"", value, "\"),");
-		}
-		sourceBuffer.push_line("    })));");
+		sourceBuffer.push_line(encode(symbolTable, type.name, "    ", property));
 	}
 	sourceBuffer.push_line("    return properties;");
 	sourceBuffer.push_line("}");
@@ -155,7 +163,7 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, Typ
 	return true;
 }
 
-bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, TypeEnum& type)
+bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, const SymbolTable& symbolTable, TypeEnum& type)
 {
 	// header
 	headerBuffer.push_line("template <>");
@@ -183,9 +191,33 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, Typ
 	return true;
 }
 
-std::string Encoder::encodeToTypeEnum(const Property& prop)
+std::string Encoder::encode(const SymbolTable& symbolTable, const std::string& name, const std::string& offset, const Property& property)
 {
-	std::string type = prop.type;
+	std::string content = (offset + "properties.insert(std::make_pair<std::string, Property>(\"" + property.name + "\", Property(\"" + property.name + "\", " +
+		encode(symbolTable, property.type) +
+		", sizeof(" + property.type + "), origin + offsetof(" + name + ", " + property.name + "), {\n");
+	for (const auto& [key, value] : property.meta)
+	{
+		content += (offset + "    std::make_pair(\"" + key + "\", \"" + value + "\"),\n");
+	}
+	content += (offset + "})));");
+	return content;
+}
+
+std::string Encoder::encode(const SymbolTable& symbolTable, const std::string& type)
+{
+	const std::vector<std::string> typenames = extractTypenames(type);
+	std::string children;
+	for (const std::string& tname : typenames)
+	{
+		children += (children.empty() ? "" : ", ") + encode(symbolTable, tname);
+	}
+	return ("Property::TypeDescriptor(\"" + type + "\", " + encodeToTypeEnum(symbolTable, type) + ", " + encodeToDecoratorTypeEnum(symbolTable, type) + ", {" + children + "})");
+}
+
+std::string Encoder::encodeToTypeEnum(const SymbolTable& symbolTable, const std::string& t)
+{
+	std::string type = t;
 	if (type.empty()) return "PropertyType::T_unknown";
 
 	while (!type.empty() && (type[type.length() - 1] == '*' || type[type.length() - 1] == '&' || type[type.length() - 1] == ' '))
@@ -193,28 +225,57 @@ std::string Encoder::encodeToTypeEnum(const Property& prop)
 		type.pop_back();
 	}
 
-	if (prop.type == "bool") return "PropertyType::T_bool";
-	if (prop.type == "char") return "PropertyType::T_char";
-	if (prop.type == "double") return "PropertyType::T_double";
-	if (prop.type == "float") return "PropertyType::T_float";
-	if (prop.type == "int") return "PropertyType::T_int";
-	if (prop.type == "void") return "PropertyType::T_void";
-	if (prop.type == "std::array" || prop.type == "array") return "PropertyType::T_container_array";
-	if (prop.type == "std::list" || prop.type == "list") return "PropertyType::T_container_list";
-	if (prop.type == "std::map" || prop.type == "map") return "PropertyType::T_container_map";
-	if (prop.type == "std::queue" || prop.type == "queue") return "PropertyType::T_container_queue";
-	if (prop.type == "std::set" || prop.type == "set") return "PropertyType::NT_container_set";
-	if (prop.type == "std::stack" || prop.type == "stack") return "PropertyType::T_container_stack";
-	if (prop.type == "std::string" || prop.type == "string") return "PropertyType::T_container_string";
-	if (prop.type == "std::vector" || prop.type == "vector") return "PropertyType::T_container_vector";
-	if (prop.type == "std::unordered_map" || prop.type == "unordered_map") return "PropertyType::T_container_unordered_map";
-	if (prop.meta.find("IsEnum") != prop.meta.end()) return "PropertyType::T_custom_enum";
-	if (prop.meta.find("IsType") != prop.meta.end()) return "PropertyType::T_custom_type";
-	return "PropertyType::T_unknown";
+	if (type == "bool") return "Property::Type::T_bool";
+	if (type == "char") return "Property::Type::T_char";
+	if (type == "double") return "Property::Type::T_double";
+	if (type == "float") return "Property::Type::T_float";
+	if (type == "int") return "Property::Type::T_int";
+	if (type == "void") return "Property::Type::T_void";
+	if (type == "std::string" || type == "string") return "Property::Type::T_container_string";
+	if (StringUtil::startsWith(type, "std::array") || StringUtil::startsWith(type, "array")) return "Property::Type::T_container_array";
+	if (StringUtil::startsWith(type, "std::list") || StringUtil::startsWith(type, "list")) return "Property::Type::T_container_list";
+	if (StringUtil::startsWith(type, "std::map") || StringUtil::startsWith(type, "map")) return "Property::Type::T_container_map";
+	if (StringUtil::startsWith(type, "std::queue") || StringUtil::startsWith(type, "queue")) return "Property::Type::T_container_queue";
+	if (StringUtil::startsWith(type, "std::set") || StringUtil::startsWith(type, "set")) return "Property::Type::NT_container_set";
+	if (StringUtil::startsWith(type, "std::stack") || StringUtil::startsWith(type, "stack")) return "Property::Type::T_container_stack";
+	if (StringUtil::startsWith(type, "std::vector") || StringUtil::startsWith(type, "vector")) return "Property::Type::T_container_vector";
+	if (StringUtil::startsWith(type, "std::unordered_map") || StringUtil::startsWith(type, "unordered_map")) return "Property::Type::T_container_unordered_map";
+
+	const auto& it = symbolTable.find(type);
+	if (it != symbolTable.end())
+	{
+		switch (it->second)
+		{
+		case SymbolType::S_class: return "Property::Type::T_custom_type";
+		case SymbolType::S_enum: return "Property::Type::T_custom_enum";
+		default: "Property::Type::T_unknown";
+		}
+	}
+
+	return "Property::Type::T_unknown";
 }
 
-std::string Encoder::encodeIsNormalType(const std::string& type)
+std::string Encoder::encodeToDecoratorTypeEnum(const SymbolTable& symbolTable, const std::string& type)
 {
-	if (StringUtil::contains(type, "*") || StringUtil::contains(type, "&")) return "false";
-	return "true";
+	if (StringUtil::contains(type, "*")) return "Property::DecoratorType::D_pointer";
+	if (StringUtil::contains(type, "&")) return "Property::DecoratorType::D_reference";
+	return "Property::DecoratorType::D_normalized";
+}
+
+std::vector<std::string> Encoder::extractTypenames(const std::string& token)
+{
+	std::vector<std::string> typenames;
+	const size_t startIndex = token.find('<');
+	if (startIndex == std::string::npos) return typenames;
+
+	if (token.back() != '>') return typenames;
+
+	std::string content = token.substr(startIndex + 1, token.length());
+	content.pop_back();
+
+	for (std::string t : StringUtil::split(content, ','))
+	{
+		typenames.push_back(StringUtil::trim(t));
+	}
+	return typenames;
 }

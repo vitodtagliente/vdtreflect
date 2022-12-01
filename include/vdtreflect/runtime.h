@@ -4,8 +4,8 @@
 #include <cstring>
 #include <functional>
 #include <map>
-#include <memory>
 #include <string>
+#include <vector>
 
 template <typename T>
 struct EnumType
@@ -57,42 +57,64 @@ bool stringToEnum(const std::string& name, T& t)
 	return false;
 }
 
-typedef unsigned long long member_address_t;
-
-enum class PropertyType
-{
-	T_unknown,
-
-	T_bool,
-	T_char,
-	T_double,
-	T_float,
-	T_int,
-	T_void,
-
-	T_container_array,
-	T_container_list,
-	T_container_map,
-	T_container_queue,
-	T_container_set,
-	T_container_stack,
-	T_container_string,
-	T_container_vector,
-	T_container_unordered_map,
-
-	T_custom_enum,
-	T_custom_type
-};
-
 typedef std::map<std::string, std::string> meta_t;
+typedef unsigned long long member_address_t;
 
 struct Property
 {
-	Property(const std::string& name, const PropertyType type, const std::string& typeStr, const bool isNormal, const std::size_t size, const member_address_t address, const meta_t& meta)
+	enum class Type
+	{
+		T_unknown,
+
+		T_bool,
+		T_char,
+		T_double,
+		T_float,
+		T_int,
+		T_void,
+
+		T_container_array,
+		T_container_list,
+		T_container_map,
+		T_container_queue,
+		T_container_set,
+		T_container_stack,
+		T_container_string,
+		T_container_vector,
+		T_container_unordered_map,
+
+		T_custom_enum,
+		T_custom_type
+	};
+
+	enum class DecoratorType
+	{
+		D_normalized,
+		D_pointer,
+		D_reference,
+		D_unknown
+	};
+
+	struct TypeDescriptor
+	{
+		TypeDescriptor(const std::string& name, const Property::Type type, const Property::DecoratorType decorator, const std::vector<TypeDescriptor>& children)
+			: name(name)
+			, type(type)
+			, decoratorType(decoratorType)
+			, children(children)
+		{
+
+		}
+
+		std::string name;
+		Property::Type type;
+		Property::DecoratorType decoratorType;
+		std::vector<TypeDescriptor> children;
+	};
+
+	Property(const std::string& name, const TypeDescriptor& descriptor, const std::size_t size, const member_address_t address, const meta_t& meta)
 		: name(name)
-		, type(type)
-		, typeStr(typeStr)
-		, isNormal(isNormal)
+		, descriptor(descriptor)
 		, size(size)
 		, address(address)
 		, meta(meta)
@@ -101,11 +123,9 @@ struct Property
 	}
 
 	const std::string name;
-	const PropertyType type{ PropertyType::T_unknown };
-	const std::string typeStr;
-	const bool isNormal;
-	const std::size_t size;
+	TypeDescriptor descriptor;
 	const member_address_t address{ 0 };
+	const std::size_t size;
 	const meta_t meta;
 
 	template<typename T>

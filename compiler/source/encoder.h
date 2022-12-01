@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "symbol_table.h"
 #include "type.h"
 
 struct EncodeBuffer
@@ -32,6 +33,8 @@ public:
 		push_line(str);
 	}
 
+	std::string string() const;
+
 private:
 
 	template<typename... Ts>
@@ -48,13 +51,14 @@ private:
 class Encoder
 {
 public:
-	Encoder() = default;
-
-	bool encode(TypeCollection& collection, const std::filesystem::path& path, const std::string& filename);
+	static bool encode(const TypeCollection& collection, const SymbolTable& symbolTable, const std::filesystem::path& path, const std::string& filename);
 
 private:
-	bool encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, TypeClass& type);
-	bool encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, TypeEnum& type);
-	static std::string encodeToTypeEnum(const Property& prop);
-	static std::string encodeIsNormalType(const std::string& type);
+	static bool encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, const SymbolTable& symbolTable, TypeClass& type);
+	static bool encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, const SymbolTable& symbolTable, TypeEnum& type);
+	static std::string encode(const SymbolTable& symbolTable, const std::string& name, const std::string& offset, const Property& property);
+	static std::string encode(const SymbolTable& symbolTable, const std::string& type);
+	static std::string encodeToTypeEnum(const SymbolTable& symbolTable, const std::string& type);
+	static std::string encodeToDecoratorTypeEnum(const SymbolTable& symbolTable, const std::string& type);
+	static std::vector<std::string> extractTypenames(const std::string& token);
 };

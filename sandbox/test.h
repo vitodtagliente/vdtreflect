@@ -1,6 +1,10 @@
 // Copyright (c) Vito Domenico Tagliente
 #pragma once
 
+#include <map>
+#include <string>
+#include <vector>
+
 #include "test_generated.h"
 
 ENUM(Category = MyEnums)
@@ -47,9 +51,11 @@ public:
 	PROPERTY() double borntime;
 	PROPERTY() char sex;
 	PROPERTY() bool active;
-	PROPERTY(IsEnum) UserRole role;
-	PROPERTY(IsType) Foo foo;
-	PROPERTY(IsType) Foo* foo_ptr;
+	PROPERTY() UserRole role;
+	PROPERTY() Foo foo;
+	PROPERTY() Foo* foo_ptr;
+	PROPERTY() std::vector<int> v;
+	PROPERTY() std::map<std::string, int> m;
 
 	GENERATED_BODY()
 };

@@ -38,10 +38,10 @@ const std::string& Foo::getTypeName() const { return FooType::type().name; }
 const properties_t Foo::getTypeProperties() const {
     member_address_t origin = reinterpret_cast<member_address_t>(this);
     properties_t properties;
-    properties.insert(std::make_pair<std::string, Property>("a", Property("a", PropertyType::T_int, "int", true, sizeof(int), origin + offsetof(Foo, a), {
+    properties.insert(std::make_pair<std::string, Property>("a", Property("a", Property::TypeDescriptor("int", Property::Type::T_int, Property::DecoratorType::D_normalized, {}), sizeof(int), origin + offsetof(Foo, a), {
         std::make_pair("JsonExport", "true"),
     })));
-    properties.insert(std::make_pair<std::string, Property>("b", Property("b", PropertyType::T_int, "int", true, sizeof(int), origin + offsetof(Foo, b), {
+    properties.insert(std::make_pair<std::string, Property>("b", Property("b", Property::TypeDescriptor("int", Property::Type::T_int, Property::DecoratorType::D_normalized, {}), sizeof(int), origin + offsetof(Foo, b), {
     })));
     return properties;
 }
@@ -60,7 +60,7 @@ const std::string& Poo::getTypeName() const { return PooType::type().name; }
 const properties_t Poo::getTypeProperties() const {
     member_address_t origin = reinterpret_cast<member_address_t>(this);
     properties_t properties = Foo::getTypeProperties();
-    properties.insert(std::make_pair<std::string, Property>("c", Property("c", PropertyType::T_int, "int", true, sizeof(int), origin + offsetof(Poo, c), {
+    properties.insert(std::make_pair<std::string, Property>("c", Property("c", Property::TypeDescriptor("int", Property::Type::T_int, Property::DecoratorType::D_normalized, {}), sizeof(int), origin + offsetof(Poo, c), {
     })));
     return properties;
 }
@@ -77,28 +77,29 @@ const std::string& User::getTypeName() const { return UserType::type().name; }
 const properties_t User::getTypeProperties() const {
     member_address_t origin = reinterpret_cast<member_address_t>(this);
     properties_t properties;
-    properties.insert(std::make_pair<std::string, Property>("name", Property("name", PropertyType::T_container_string, "std::string", true, sizeof(std::string), origin + offsetof(User, name), {
+    properties.insert(std::make_pair<std::string, Property>("name", Property("name", Property::TypeDescriptor("std::string", Property::Type::T_container_string, Property::DecoratorType::D_normalized, {}), sizeof(std::string), origin + offsetof(User, name), {
     })));
-    properties.insert(std::make_pair<std::string, Property>("surname", Property("surname", PropertyType::T_container_string, "std::string", true, sizeof(std::string), origin + offsetof(User, surname), {
+    properties.insert(std::make_pair<std::string, Property>("surname", Property("surname", Property::TypeDescriptor("std::string", Property::Type::T_container_string, Property::DecoratorType::D_normalized, {}), sizeof(std::string), origin + offsetof(User, surname), {
     })));
-    properties.insert(std::make_pair<std::string, Property>("age", Property("age", PropertyType::T_int, "int", true, sizeof(int), origin + offsetof(User, age), {
+    properties.insert(std::make_pair<std::string, Property>("age", Property("age", Property::TypeDescriptor("int", Property::Type::T_int, Property::DecoratorType::D_normalized, {}), sizeof(int), origin + offsetof(User, age), {
     })));
-    properties.insert(std::make_pair<std::string, Property>("height", Property("height", PropertyType::T_float, "float", true, sizeof(float), origin + offsetof(User, height), {
+    properties.insert(std::make_pair<std::string, Property>("height", Property("height", Property::TypeDescriptor("float", Property::Type::T_float, Property::DecoratorType::D_normalized, {}), sizeof(float), origin + offsetof(User, height), {
     })));
-    properties.insert(std::make_pair<std::string, Property>("borntime", Property("borntime", PropertyType::T_double, "double", true, sizeof(double), origin + offsetof(User, borntime), {
+    properties.insert(std::make_pair<std::string, Property>("borntime", Property("borntime", Property::TypeDescriptor("double", Property::Type::T_double, Property::DecoratorType::D_normalized, {}), sizeof(double), origin + offsetof(User, borntime), {
     })));
-    properties.insert(std::make_pair<std::string, Property>("sex", Property("sex", PropertyType::T_char, "char", true, sizeof(char), origin + offsetof(User, sex), {
+    properties.insert(std::make_pair<std::string, Property>("sex", Property("sex", Property::TypeDescriptor("char", Property::Type::T_char, Property::DecoratorType::D_normalized, {}), sizeof(char), origin + offsetof(User, sex), {
     })));
-    properties.insert(std::make_pair<std::string, Property>("active", Property("active", PropertyType::T_bool, "bool", true, sizeof(bool), origin + offsetof(User, active), {
+    properties.insert(std::make_pair<std::string, Property>("active", Property("active", Property::TypeDescriptor("bool", Property::Type::T_bool, Property::DecoratorType::D_normalized, {}), sizeof(bool), origin + offsetof(User, active), {
     })));
-    properties.insert(std::make_pair<std::string, Property>("role", Property("role", PropertyType::T_custom_enum, "UserRole", true, sizeof(UserRole), origin + offsetof(User, role), {
-        std::make_pair("IsEnum", ""),
+    properties.insert(std::make_pair<std::string, Property>("role", Property("role", Property::TypeDescriptor("UserRole", Property::Type::T_custom_enum, Property::DecoratorType::D_normalized, {}), sizeof(UserRole), origin + offsetof(User, role), {
     })));
-    properties.insert(std::make_pair<std::string, Property>("foo", Property("foo", PropertyType::T_custom_type, "Foo", true, sizeof(Foo), origin + offsetof(User, foo), {
-        std::make_pair("IsType", ""),
+    properties.insert(std::make_pair<std::string, Property>("foo", Property("foo", Property::TypeDescriptor("Foo", Property::Type::T_custom_type, Property::DecoratorType::D_normalized, {}), sizeof(Foo), origin + offsetof(User, foo), {
     })));
-    properties.insert(std::make_pair<std::string, Property>("foo_ptr", Property("foo_ptr", PropertyType::T_custom_type, "Foo*", false, sizeof(Foo*), origin + offsetof(User, foo_ptr), {
-        std::make_pair("IsType", ""),
+    properties.insert(std::make_pair<std::string, Property>("foo_ptr", Property("foo_ptr", Property::TypeDescriptor("Foo*", Property::Type::T_custom_type, Property::DecoratorType::D_pointer, {}), sizeof(Foo*), origin + offsetof(User, foo_ptr), {
+    })));
+    properties.insert(std::make_pair<std::string, Property>("v", Property("v", Property::TypeDescriptor("std::vector<int>", Property::Type::T_container_vector, Property::DecoratorType::D_normalized, {Property::TypeDescriptor("int", Property::Type::T_int, Property::DecoratorType::D_normalized, {})}), sizeof(std::vector<int>), origin + offsetof(User, v), {
+    })));
+    properties.insert(std::make_pair<std::string, Property>("m", Property("m", Property::TypeDescriptor("std::map<std::string, int>", Property::Type::T_container_map, Property::DecoratorType::D_normalized, {Property::TypeDescriptor("std::string", Property::Type::T_container_string, Property::DecoratorType::D_normalized, {}), Property::TypeDescriptor("int", Property::Type::T_int, Property::DecoratorType::D_normalized, {})}), sizeof(std::map<std::string, int>), origin + offsetof(User, m), {
     })));
     return properties;
 }

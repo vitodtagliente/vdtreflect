@@ -9,7 +9,7 @@
 
 #include "string_util.h"
 
-bool Parser::parse(TypeCollection& collection, const std::filesystem::path& file)
+bool Parser::parse(TypeCollection& collection, SymbolTable& symbolTable, const std::filesystem::path& file)
 {
 	static const auto read = [](const std::filesystem::path& filename) -> std::string
 	{
@@ -71,14 +71,14 @@ bool Parser::parse(TypeCollection& collection, const std::filesystem::path& file
 		const std::string& keyword = tokens[index];
 		if (keyword == "ENUM")
 		{
-			if (!parseEnum(collection, tokens, index))
+			if (!parseEnum(collection, symbolTable, tokens, index))
 			{
 				return false;
 			}
 		}
 		else if (keyword == "CLASS")
 		{
-			if (!parseClass(collection, tokens, index))
+			if (!parseClass(collection, symbolTable, tokens, index))
 			{
 				return false;
 			}
@@ -89,13 +89,13 @@ bool Parser::parse(TypeCollection& collection, const std::filesystem::path& file
 	return true;
 }
 
-bool Parser::parseClass(TypeCollection& collection, const std::vector<std::string>& tokens, size_t& index)
+bool Parser::parseClass(TypeCollection& collection, SymbolTable& symbolTable, const std::vector<std::string>& tokens, size_t& index)
 {
 	const size_t startingIndex = index;
 	TypeClass* element = nullptr;
 	while (index + 1 < tokens.size())
 	{
-		if (tokens[index] == "class")
+		if (tokens[index] == "class" || tokens[index] == "struct")
 		{
 			element = collection.addClass(tokens[(++index)++]);
 			break;
@@ -104,21 +104,24 @@ bool Parser::parseClass(TypeCollection& collection, const std::vector<std::strin
 	}
 
 	if (element == nullptr) return false;
+	symbolTable.insert(std::make_pair(element->name, SymbolType::S_class));
 
-	bool foundClassOpening = false;
+	bool foundParent = false;
 	while (index < tokens.size())
 	{
 		const std::string& token = tokens[index++];
 		if (token == "{")
 		{
-			foundClassOpening = true;
 			break;
 		}
+
+		if (foundParent) continue;
 
 		if (token == ":"
 			|| token == "public"
 			|| token == "private"
 			|| token == "protected"
+			|| token == ","
 			) continue;
 
 		if (element->parent != "IType")
@@ -126,8 +129,6 @@ bool Parser::parseClass(TypeCollection& collection, const std::vector<std::strin
 			element->parent = token;
 		}
 	}
-
-	if (!foundClassOpening) return false;
 
 	int openGraphs = 0;
 	while (index < tokens.size())
@@ -157,7 +158,19 @@ bool Parser::parseClass(TypeCollection& collection, const std::vector<std::strin
 
 			if (index + 2 >= tokens.size()) return false;
 
-			const std::string propertyType = tokens[++index];
+			std::string propertyType = tokens[++index];
+			if (propertyType.find('<') != std::string::npos)
+			{
+				while(propertyType.find('>') == std::string::npos && index + 1 < tokens.size())
+				{
+					propertyType += tokens[++index];
+					if (propertyType.back() == ',')
+					{
+						propertyType += " ";
+					}
+				}
+				if (propertyType.find('>') == std::string::npos) return false;
+			}
 			std::string propertyName = tokens[++index];
 			meta_t propertyMeta;
 			parseMeta(tokens, startingPropertyIndex, propertyMeta);
@@ -168,7 +181,7 @@ bool Parser::parseClass(TypeCollection& collection, const std::vector<std::strin
 	return false;
 }
 
-bool Parser::parseEnum(TypeCollection& collection, const std::vector<std::string>& tokens, size_t& index)
+bool Parser::parseEnum(TypeCollection& collection, SymbolTable& symbolTable, const std::vector<std::string>& tokens, size_t& index)
 {
 	const size_t startingIndex = index;
 	TypeEnum* element = nullptr;
@@ -183,6 +196,7 @@ bool Parser::parseEnum(TypeCollection& collection, const std::vector<std::string
 	}
 
 	if (element == nullptr) return false;
+	symbolTable.insert(std::make_pair(element->name, SymbolType::S_enum));
 
 	while (index + 1 < tokens.size())
 	{
