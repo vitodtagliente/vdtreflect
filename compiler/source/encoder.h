@@ -61,4 +61,5 @@ private:
 	static std::string encodeToTypeEnum(const SymbolTable& symbolTable, const std::string& type);
 	static std::string encodeToDecoratorTypeEnum(const SymbolTable& symbolTable, const std::string& type);
 	static std::vector<std::string> extractTypenames(const std::string& token);
+	static std::string sanitizeTemplate(const std::string& token);
 };

@@ -120,7 +120,7 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	headerBuffer.push_line("{");
 	headerBuffer.push_line("    ", type.name, "Type() = delete;");
 	headerBuffer.push_line("");
-	headerBuffer.push_line("    static const Type& type();");
+	headerBuffer.push_line("    static const TypeDefinition& type();");
 	headerBuffer.push_line("    static bool registered() { return value; };");
 	headerBuffer.push_line("};");
 	headerBuffer.push_line("");
@@ -149,15 +149,15 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	sourceBuffer.push_line("}");
 	sourceBuffer.push_line("std::size_t ", type.name, "::getTypeSize() const { return ", type.name, "Type::type().size; }");
 	sourceBuffer.push_line("");
-	sourceBuffer.push_line("const Type& ", type.name, "Type::type()");
+	sourceBuffer.push_line("const TypeDefinition& ", type.name, "Type::type()");
 	sourceBuffer.push_line("{");
-	sourceBuffer.push_line("    static const Type s_type([]() -> IType* { return new ", type.name, "(); }, \"", type.name, "\", {");
+	sourceBuffer.push_line("    static const TypeDefinition s_typeDefinition([]() -> IType* { return new ", type.name, "(); }, \"", type.name, "\", {");
 	for (const auto& [key, value] : type.meta)
 	{
 		sourceBuffer.push_line("        std::make_pair(\"", key, "\", \"", value, "\"),");
 	}
 	sourceBuffer.push_line("    }, sizeof(", type.name, "));");
-	sourceBuffer.push_line("    return s_type;");
+	sourceBuffer.push_line("    return s_typeDefinition;");
 	sourceBuffer.push_line("}");
 
 	return true;
@@ -204,20 +204,34 @@ std::string Encoder::encode(const SymbolTable& symbolTable, const std::string& n
 	return content;
 }
 
-std::string Encoder::encode(const SymbolTable& symbolTable, const std::string& type)
+std::string Encoder::encode(const SymbolTable& symbolTable, const std::string& token)
 {
-	const std::vector<std::string> typenames = extractTypenames(type);
+	std::string type = token;
+	const std::string decoratorType = encodeToDecoratorTypeEnum(symbolTable, type);
+	std::vector<std::string> typenames; 
 	std::string children;
-	for (const std::string& tname : typenames)
+
+	if (decoratorType == "Property::DecoratorType::D_shared_ptr"
+		|| decoratorType == "Property::DecoratorType::D_unique_ptr"
+		|| decoratorType == "Property::DecoratorType::D_weak_ptr")
 	{
-		children += (children.empty() ? "" : ", ") + encode(symbolTable, tname);
+		type = sanitizeTemplate(type);
 	}
-	return ("Property::TypeDescriptor(\"" + type + "\", " + encodeToTypeEnum(symbolTable, type) + ", " + encodeToDecoratorTypeEnum(symbolTable, type) + ", {" + children + "})");
+	else
+	{
+		typenames = extractTypenames(type);
+		for (const std::string& tname : typenames)
+		{
+			children += (children.empty() ? "" : ", ") + encode(symbolTable, tname);
+		}
+	}
+	
+	return ("Property::TypeDescriptor(\"" + type + "\", " + encodeToTypeEnum(symbolTable, type) + ", " + decoratorType + ", {" + children + "})");
 }
 
 std::string Encoder::encodeToTypeEnum(const SymbolTable& symbolTable, const std::string& t)
 {
-	std::string type = t;
+	std::string type = StringUtil::replace(t, "std::", "");
 	if (type.empty()) return "PropertyType::T_unknown";
 
 	while (!type.empty() && (type[type.length() - 1] == '*' || type[type.length() - 1] == '&' || type[type.length() - 1] == ' '))
@@ -231,15 +245,9 @@ std::string Encoder::encodeToTypeEnum(const SymbolTable& symbolTable, const std:
 	if (type == "float") return "Property::Type::T_float";
 	if (type == "int") return "Property::Type::T_int";
 	if (type == "void") return "Property::Type::T_void";
-	if (type == "std::string" || type == "string") return "Property::Type::T_container_string";
-	if (StringUtil::startsWith(type, "std::array") || StringUtil::startsWith(type, "array")) return "Property::Type::T_container_array";
-	if (StringUtil::startsWith(type, "std::list") || StringUtil::startsWith(type, "list")) return "Property::Type::T_container_list";
-	if (StringUtil::startsWith(type, "std::map") || StringUtil::startsWith(type, "map")) return "Property::Type::T_container_map";
-	if (StringUtil::startsWith(type, "std::queue") || StringUtil::startsWith(type, "queue")) return "Property::Type::T_container_queue";
-	if (StringUtil::startsWith(type, "std::set") || StringUtil::startsWith(type, "set")) return "Property::Type::NT_container_set";
-	if (StringUtil::startsWith(type, "std::stack") || StringUtil::startsWith(type, "stack")) return "Property::Type::T_container_stack";
-	if (StringUtil::startsWith(type, "std::vector") || StringUtil::startsWith(type, "vector")) return "Property::Type::T_container_vector";
-	if (StringUtil::startsWith(type, "std::unordered_map") || StringUtil::startsWith(type, "unordered_map")) return "Property::Type::T_container_unordered_map";
+	if (type == "string") return "Property::Type::T_container_string";
+	if (StringUtil::startsWith(type, "map<")) return "Property::Type::T_container_map";
+	if (StringUtil::startsWith(type, "vector<")) return "Property::Type::T_container_vector";
 
 	const auto& it = symbolTable.find(type);
 	if (it != symbolTable.end())
@@ -248,17 +256,22 @@ std::string Encoder::encodeToTypeEnum(const SymbolTable& symbolTable, const std:
 		{
 		case SymbolType::S_class: return "Property::Type::T_custom_type";
 		case SymbolType::S_enum: return "Property::Type::T_custom_enum";
-		default: "Property::Type::T_unknown";
+		default: return "Property::Type::T_unknown";
 		}
 	}
 
 	return "Property::Type::T_unknown";
 }
 
-std::string Encoder::encodeToDecoratorTypeEnum(const SymbolTable& symbolTable, const std::string& type)
+std::string Encoder::encodeToDecoratorTypeEnum(const SymbolTable& symbolTable, const std::string& t)
 {
-	if (StringUtil::contains(type, "*")) return "Property::DecoratorType::D_pointer";
-	if (StringUtil::contains(type, "&")) return "Property::DecoratorType::D_reference";
+	std::string type = StringUtil::replace(t, "std::", "");
+
+	if (StringUtil::endsWith(type, "*")) return "Property::DecoratorType::D_pointer";
+	if (StringUtil::endsWith(type, "&")) return "Property::DecoratorType::D_reference";
+	if (StringUtil::startsWith(type, "shared_ptr")) return "Property::DecoratorType::D_shared_ptr";
+	if (StringUtil::startsWith(type, "unique_ptr")) return "Property::DecoratorType::D_unique_ptr";
+	if (StringUtil::startsWith(type, "weak_ptr")) return "Property::DecoratorType::D_weak_ptr";
 	return "Property::DecoratorType::D_normalized";
 }
 
@@ -278,4 +291,17 @@ std::vector<std::string> Encoder::extractTypenames(const std::string& token)
 		typenames.push_back(StringUtil::trim(t));
 	}
 	return typenames;
+}
+
+std::string Encoder::sanitizeTemplate(const std::string& token)
+{
+	const size_t startIndex = token.find('<');
+	if (startIndex == std::string::npos) return token;
+
+	if (token.back() != '>') return token;
+
+	std::string content = token.substr(startIndex + 1, token.length());
+	content.pop_back();
+
+	return content;
 }

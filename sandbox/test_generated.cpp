@@ -47,13 +47,13 @@ const properties_t Foo::getTypeProperties() const {
 }
 std::size_t Foo::getTypeSize() const { return FooType::type().size; }
 
-const Type& FooType::type()
+const TypeDefinition& FooType::type()
 {
-    static const Type s_type([]() -> IType* { return new Foo(); }, "Foo", {
+    static const TypeDefinition s_typeDefinition([]() -> IType* { return new Foo(); }, "Foo", {
         std::make_pair("Category", "MyClass"),
         std::make_pair("Serializable", "true"),
     }, sizeof(Foo));
-    return s_type;
+    return s_typeDefinition;
 }
 const meta_t& Poo::getTypeMeta() const { return PooType::type().meta; }
 const std::string& Poo::getTypeName() const { return PooType::type().name; }
@@ -66,11 +66,11 @@ const properties_t Poo::getTypeProperties() const {
 }
 std::size_t Poo::getTypeSize() const { return PooType::type().size; }
 
-const Type& PooType::type()
+const TypeDefinition& PooType::type()
 {
-    static const Type s_type([]() -> IType* { return new Poo(); }, "Poo", {
+    static const TypeDefinition s_typeDefinition([]() -> IType* { return new Poo(); }, "Poo", {
     }, sizeof(Poo));
-    return s_type;
+    return s_typeDefinition;
 }
 const meta_t& User::getTypeMeta() const { return UserType::type().meta; }
 const std::string& User::getTypeName() const { return UserType::type().name; }
@@ -95,19 +95,25 @@ const properties_t User::getTypeProperties() const {
     })));
     properties.insert(std::make_pair<std::string, Property>("foo", Property("foo", Property::TypeDescriptor("Foo", Property::Type::T_custom_type, Property::DecoratorType::D_normalized, {}), sizeof(Foo), origin + offsetof(User, foo), {
     })));
-    properties.insert(std::make_pair<std::string, Property>("foo_ptr", Property("foo_ptr", Property::TypeDescriptor("Foo*", Property::Type::T_custom_type, Property::DecoratorType::D_pointer, {}), sizeof(Foo*), origin + offsetof(User, foo_ptr), {
+    properties.insert(std::make_pair<std::string, Property>("foo_ptr", Property("foo_ptr", Property::TypeDescriptor("Foo*", Property::Type::T_custom_type, Property::DecoratorType::D_normalized, {}), sizeof(Foo*), origin + offsetof(User, foo_ptr), {
     })));
     properties.insert(std::make_pair<std::string, Property>("v", Property("v", Property::TypeDescriptor("std::vector<int>", Property::Type::T_container_vector, Property::DecoratorType::D_normalized, {Property::TypeDescriptor("int", Property::Type::T_int, Property::DecoratorType::D_normalized, {})}), sizeof(std::vector<int>), origin + offsetof(User, v), {
     })));
-    properties.insert(std::make_pair<std::string, Property>("m", Property("m", Property::TypeDescriptor("std::map<std::string, int>", Property::Type::T_container_map, Property::DecoratorType::D_normalized, {Property::TypeDescriptor("std::string", Property::Type::T_container_string, Property::DecoratorType::D_normalized, {}), Property::TypeDescriptor("int", Property::Type::T_int, Property::DecoratorType::D_normalized, {})}), sizeof(std::map<std::string, int>), origin + offsetof(User, m), {
+    properties.insert(std::make_pair<std::string, Property>("m", Property("m", Property::TypeDescriptor("std::map<std::string, Foo>", Property::Type::T_container_map, Property::DecoratorType::D_normalized, {Property::TypeDescriptor("std::string", Property::Type::T_container_string, Property::DecoratorType::D_normalized, {}), Property::TypeDescriptor("Foo", Property::Type::T_custom_type, Property::DecoratorType::D_normalized, {})}), sizeof(std::map<std::string, Foo>), origin + offsetof(User, m), {
+    })));
+    properties.insert(std::make_pair<std::string, Property>("cm", Property("cm", Property::TypeDescriptor("std::map<std::string, std::unique_ptr<Foo>>", Property::Type::T_container_map, Property::DecoratorType::D_normalized, {Property::TypeDescriptor("std::string", Property::Type::T_container_string, Property::DecoratorType::D_normalized, {}), Property::TypeDescriptor("Foo", Property::Type::T_custom_type, Property::DecoratorType::D_unique_ptr, {})}), sizeof(std::map<std::string, std::unique_ptr<Foo>>), origin + offsetof(User, cm), {
+    })));
+    properties.insert(std::make_pair<std::string, Property>("foos", Property("foos", Property::TypeDescriptor("std::vector<Foo>", Property::Type::T_container_vector, Property::DecoratorType::D_normalized, {Property::TypeDescriptor("Foo", Property::Type::T_custom_type, Property::DecoratorType::D_normalized, {})}), sizeof(std::vector<Foo>), origin + offsetof(User, foos), {
+    })));
+    properties.insert(std::make_pair<std::string, Property>("cfoos", Property("cfoos", Property::TypeDescriptor("std::vector<std::unique_ptr<Foo>>", Property::Type::T_container_vector, Property::DecoratorType::D_normalized, {Property::TypeDescriptor("Foo", Property::Type::T_custom_type, Property::DecoratorType::D_unique_ptr, {})}), sizeof(std::vector<std::unique_ptr<Foo>>), origin + offsetof(User, cfoos), {
     })));
     return properties;
 }
 std::size_t User::getTypeSize() const { return UserType::type().size; }
 
-const Type& UserType::type()
+const TypeDefinition& UserType::type()
 {
-    static const Type s_type([]() -> IType* { return new User(); }, "User", {
+    static const TypeDefinition s_typeDefinition([]() -> IType* { return new User(); }, "User", {
     }, sizeof(User));
-    return s_type;
+    return s_typeDefinition;
 }

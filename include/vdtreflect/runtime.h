@@ -4,6 +4,7 @@
 #include <cstring>
 #include <functional>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -73,15 +74,9 @@ struct Property
 		T_int,
 		T_void,
 
-		T_container_array,
-		T_container_list,
 		T_container_map,
-		T_container_queue,
-		T_container_set,
-		T_container_stack,
 		T_container_string,
 		T_container_vector,
-		T_container_unordered_map,
 
 		T_custom_enum,
 		T_custom_type
@@ -92,6 +87,9 @@ struct Property
 		D_normalized,
 		D_pointer,
 		D_reference,
+		D_shared_ptr,
+		D_unique_ptr,
+		D_weak_ptr,
 		D_unknown
 	};
 
@@ -150,9 +148,9 @@ typedef std::function<IType* ()> factory_constructor_t;
 typedef std::function<IType* ()> type_constructor_t;
 typedef std::function<const meta_t& ()> factory_meta_t;
 
-struct Type
+struct TypeDefinition
 {
-	Type(const type_constructor_t& constructor, const std::string& name, const meta_t& meta, const std::size_t size)
+	TypeDefinition(const type_constructor_t& constructor, const std::string& name, const meta_t& meta, const std::size_t size)
 		: constructor(constructor)
 		, name(name)
 		, meta(meta)
@@ -221,16 +219,16 @@ public:
 		return result;
 	}
 
-	static bool registerType(const Type& type)
+	static bool registerType(const TypeDefinition& type)
 	{
 		collection().insert(std::make_pair(type.name, type));
 		return true;
 	}
 
 private:
-	static std::map<std::string, Type>& collection()
+	static std::map<std::string, TypeDefinition>& collection()
 	{
-		static std::map<std::string, Type> s_types;
+		static std::map<std::string, TypeDefinition> s_types;
 		return s_types;
 	}
 };

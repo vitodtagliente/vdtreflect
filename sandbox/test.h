@@ -55,7 +55,10 @@ public:
 	PROPERTY() Foo foo;
 	PROPERTY() Foo* foo_ptr;
 	PROPERTY() std::vector<int> v;
-	PROPERTY() std::map<std::string, int> m;
+	PROPERTY() std::map<std::string, Foo> m;
+	PROPERTY() std::map<std::string, std::unique_ptr<Foo>> cm;
+	PROPERTY() std::vector<Foo> foos;
+	PROPERTY() std::vector<std::unique_ptr<Foo>> cfoos;
 
 	GENERATED_BODY()
 };

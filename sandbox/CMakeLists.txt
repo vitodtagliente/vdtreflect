@@ -7,21 +7,23 @@ set(CMAKE_CXX_STANDARD 17)
 
 include_directories(.)
 
-set(REFTECT_COMPILER_EXE "vdtreflect-compiler.exe")
+set(GENERATOR_EXECUTABLE "${CMAKE_CURRENT_SOURCE_DIR}/../tools/vdtreflect-compiler.exe")
 
-function(generate_file SRC_FILE)
-	get_filename_component(_file_path "${SRC_FILE}" PATH)
-	message(STATUS "`${SRC_FILE}`: add generation of C++ code in ${_file_path}")
+function(generate_reflection EXECUTABLE SRC_DIR)
 	execute_process(
-		COMMAND ${REFTECT_COMPILER_EXE} ${SRC_FILE}
+		COMMAND ${EXECUTABLE} ${SRC_DIR}
 		RESULT_VARIABLE CMD_ERROR
 		OUTPUT_FILE CMD_OUTPUT
 	)
-	message(STATUS "vdtreflect_compiler_error:" ${CMD_ERROR})
-	message(STATUS "vdtreflect_compiler_output:" ${CMD_OUTPUT})
+	if(${CMD_ERROR} EQUAL 0)
+		message(STATUS "Generated C++ code for ${SRC_DIR}")
+	else()
+		message(STATUS "`${SRC_DIR}` failed to generate C++ code with error: ${CMD_ERROR}")
+	endif()
 endfunction()
 
-generate_file("test.h")
+# generate reflection data
+generate_reflection(${GENERATOR_EXECUTABLE} ${PROJECT_SOURCE_DIR})
 
 file(GLOB PROJECT_HEADERS "*.h") 
 file(GLOB PROJECT_SOURCES "*.cpp")

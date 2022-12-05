@@ -29,7 +29,7 @@ struct FooType : RegisteredInTypeFactory<FooType>
 {
     FooType() = delete;
 
-    static const Type& type();
+    static const TypeDefinition& type();
     static bool registered() { return value; };
 };
 
@@ -37,7 +37,7 @@ struct PooType : RegisteredInTypeFactory<PooType>
 {
     PooType() = delete;
 
-    static const Type& type();
+    static const TypeDefinition& type();
     static bool registered() { return value; };
 };
 
@@ -45,7 +45,7 @@ struct UserType : RegisteredInTypeFactory<UserType>
 {
     UserType() = delete;
 
-    static const Type& type();
+    static const TypeDefinition& type();
     static bool registered() { return value; };
 };
 
