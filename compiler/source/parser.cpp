@@ -124,7 +124,7 @@ bool Parser::parseClass(TypeCollection& collection, SymbolTable& symbolTable, co
 			|| token == ","
 			) continue;
 
-		if (element->parent != "IType")
+		if (element->parent != "Type")
 		{
 			element->parent = token;
 		}
