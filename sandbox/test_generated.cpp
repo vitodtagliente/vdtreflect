@@ -49,7 +49,7 @@ std::size_t Foo::getTypeSize() const { return FooType::type().size; }
 
 const TypeDefinition& FooType::type()
 {
-    static const TypeDefinition s_typeDefinition([]() -> IType* { return new Foo(); }, "Foo", {
+    static const TypeDefinition s_typeDefinition([]() -> Type* { return new Foo(); }, "Foo", {
         std::make_pair("Category", "MyClass"),
         std::make_pair("Serializable", "true"),
     }, sizeof(Foo));
@@ -68,7 +68,7 @@ std::size_t Poo::getTypeSize() const { return PooType::type().size; }
 
 const TypeDefinition& PooType::type()
 {
-    static const TypeDefinition s_typeDefinition([]() -> IType* { return new Poo(); }, "Poo", {
+    static const TypeDefinition s_typeDefinition([]() -> Type* { return new Poo(); }, "Poo", {
     }, sizeof(Poo));
     return s_typeDefinition;
 }
@@ -113,7 +113,7 @@ std::size_t User::getTypeSize() const { return UserType::type().size; }
 
 const TypeDefinition& UserType::type()
 {
-    static const TypeDefinition s_typeDefinition([]() -> IType* { return new User(); }, "User", {
+    static const TypeDefinition s_typeDefinition([]() -> Type* { return new User(); }, "User", {
     }, sizeof(User));
     return s_typeDefinition;
 }

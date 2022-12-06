@@ -134,18 +134,35 @@ struct Property
 };
 typedef std::map<std::string, Property> properties_t;
 
-struct IType
+struct Type
 {
-	IType() = default;
-	virtual ~IType() = default;
+	Type() = default;
+	virtual ~Type() = default;
 
-	virtual const std::string& getTypeName() const = 0;
-	virtual const meta_t& getTypeMeta() const = 0;
-	virtual const properties_t getTypeProperties() const = 0;
-	virtual std::size_t getTypeSize() const = 0;
+	virtual const std::string& getTypeName() const
+	{
+		static std::string s_name("Type");
+		return s_name;
+	}
+
+	virtual const meta_t& getTypeMeta() const
+	{
+		static meta_t s_meta;
+		return s_meta;
+	}
+
+	virtual const properties_t getTypeProperties() const 
+	{
+		return {};
+	}
+
+	virtual std::size_t getTypeSize() const
+	{
+		return sizeof(Type);
+	}
 };
-typedef std::function<IType* ()> factory_constructor_t;
-typedef std::function<IType* ()> type_constructor_t;
+typedef std::function<Type* ()> factory_constructor_t;
+typedef std::function<Type* ()> type_constructor_t;
 typedef std::function<const meta_t& ()> factory_meta_t;
 
 struct TypeDefinition
@@ -168,7 +185,7 @@ class TypeFactory final
 public:
 	TypeFactory() = delete;
 
-	static IType* instantiate(const std::string& name)
+	static Type* instantiate(const std::string& name)
 	{
 		const auto& it = collection().find(name);
 		if (it != collection().end())

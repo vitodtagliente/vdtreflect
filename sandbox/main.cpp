@@ -5,7 +5,7 @@
 
 using namespace std;
 
-void test(const IType* type)
+void test(const Type* type)
 {
 	cout << type->getTypeName() << endl;
 	for (const auto& [name, field] : type->getTypeProperties())
@@ -43,7 +43,7 @@ int main()
 			Foo& foo = property.value<Foo>();
 			foo.b = 6;
 
-			IType* _foo = &property.value<IType>();
+			Type* _foo = &property.value<Type>();
 			test(_foo);
 		}
 	}
@@ -59,7 +59,7 @@ int main()
 			foo->b = 56;
 			foos.push_back(std::unique_ptr<Foo>(foo));
 
-			auto& v = property.value<std::vector<unique_ptr<IType>>>();
+			auto& v = property.value<std::vector<unique_ptr<Type>>>();
 			for (auto& element : v)
 			{
 				test(element.get());
@@ -81,7 +81,7 @@ int main()
 
 			for (auto& [name, element] : property.value<std::map<std::string, size_t>>())
 			{
-				IType* t = reinterpret_cast<IType*>(&element);
+				Type* t = reinterpret_cast<Type*>(&element);
 				test(t);
 			}
 		}

@@ -133,7 +133,7 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	{
 		sourceBuffer.push_line("    member_address_t origin = reinterpret_cast<member_address_t>(this);");
 	}
-	if (type.parent != "IType")
+	if (type.parent != "Type")
 	{
 		sourceBuffer.push_line("    properties_t properties = ", type.parent, "::getTypeProperties();");
 	}
@@ -151,7 +151,7 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	sourceBuffer.push_line("");
 	sourceBuffer.push_line("const TypeDefinition& ", type.name, "Type::type()");
 	sourceBuffer.push_line("{");
-	sourceBuffer.push_line("    static const TypeDefinition s_typeDefinition([]() -> IType* { return new ", type.name, "(); }, \"", type.name, "\", {");
+	sourceBuffer.push_line("    static const TypeDefinition s_typeDefinition([]() -> Type* { return new ", type.name, "(); }, \"", type.name, "\", {");
 	for (const auto& [key, value] : type.meta)
 	{
 		sourceBuffer.push_line("        std::make_pair(\"", key, "\", \"", value, "\"),");

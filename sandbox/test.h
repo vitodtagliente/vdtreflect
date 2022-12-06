@@ -15,7 +15,7 @@ enum class TestEnum
 };
 
 CLASS(Category = MyClass, Serializable = true)
-class Foo : public IType
+class Foo : public Type
 {
 public:
 	PROPERTY(JsonExport = true) int a{ 4 };
@@ -41,7 +41,7 @@ enum class UserRole : int
 };
 
 CLASS()
-class User : public IType
+class User : public Type
 {
 public:
 	PROPERTY() std::string name;
