@@ -26,6 +26,8 @@ int main()
 
 		cout << enumToString(TestEnum::A) << endl;
 		cout << EnumFactory::enumToString("UserRole", static_cast<int>(UserRole::Guest)) << endl;
+		cout << EnumFactory::enumToString("ApplicationMode", static_cast<int>(ApplicationMode::Server)) << endl;
+		cout << EnumFactory::enumToString("ApplicationMode", static_cast<int>(ApplicationMode::Standalone)) << endl;
 
 		const Foo* const f = TypeFactory::instantiate<Foo>("Foo");
 

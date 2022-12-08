@@ -9,7 +9,6 @@
 #include <vector>
 
 typedef std::map<std::string, int> enum_values_t;
-typedef std::function<const enum_values_t& ()> enum_values_getter_t;
 
 template <typename T>
 struct EnumType
@@ -33,7 +32,7 @@ public:
 		const auto& it = collection().find(name);
 		if (it != collection().end())
 		{
-			return it->second();
+			return it->second;
 		}
 		return s_empty_definition;
 	}
@@ -61,15 +60,15 @@ public:
 		return false;
 	}
 
-	static bool registerEnum(const std::string& name, const enum_values_getter_t& getter)
+	static bool registerEnum(const std::string& name, const enum_values_t& values)
 	{
-		return collection().insert(std::make_pair(name, getter)), true;
+		return collection().insert(std::make_pair(name, values)), true;
 	}
 
 private:
-	static std::map<std::string, enum_values_getter_t>& collection()
+	static std::map<std::string, enum_values_t>& collection()
 	{
-		static std::map<std::string, enum_values_getter_t> s_getters;
+		static std::map<std::string, enum_values_t> s_getters;
 		return s_getters;
 	}
 };
@@ -81,7 +80,7 @@ struct RegisteredInEnumFactory
 };
 
 template <typename T>
-bool RegisteredInEnumFactory<T>::value{ EnumFactory::registerEnum(EnumType<T>::name(), []() -> const enum_values_t& { return EnumType<T>::values(); }) };
+bool RegisteredInEnumFactory<T>::value{ EnumFactory::registerEnum(EnumType<T>::name(), EnumType<T>::values()) };
 
 template <class T>
 std::string enumToString(const T t)
