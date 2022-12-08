@@ -25,6 +25,7 @@ int main()
 		test(&poo);
 
 		cout << enumToString(TestEnum::A) << endl;
+		cout << EnumFactory::enumToString("UserRole", static_cast<int>(UserRole::Guest)) << endl;
 
 		const Foo* const f = TypeFactory::instantiate<Foo>("Foo");
 

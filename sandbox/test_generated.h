@@ -8,21 +8,36 @@ template <>
 struct EnumType<enum class TestEnum>
 {
     static const char* name();
-    static const std::map<const char*, int> values();
+    static const  enum_values_t& values();
+};
+
+struct TestEnumEnum : RegisteredInEnumFactory<enum class TestEnum>
+{
+    static bool registered() { return value; };
 };
 
 template <>
 struct EnumType<enum class UserRole>
 {
     static const char* name();
-    static const std::map<const char*, int> values();
+    static const  enum_values_t& values();
+};
+
+struct UserRoleEnum : RegisteredInEnumFactory<enum class UserRole>
+{
+    static bool registered() { return value; };
 };
 
 template <>
 struct EnumType<enum class ApplicationMode>
 {
     static const char* name();
-    static const std::map<const char*, int> values();
+    static const  enum_values_t& values();
+};
+
+struct ApplicationModeEnum : RegisteredInEnumFactory<enum class ApplicationMode>
+{
+    static bool registered() { return value; };
 };
 
 struct FooType : RegisteredInTypeFactory<FooType>

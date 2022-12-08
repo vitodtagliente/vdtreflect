@@ -3,9 +3,9 @@
 #include "test.h"
 
 const char* EnumType<TestEnum>::name() { return "TestEnum"; }
-const std::map<const char*, int>  EnumType<TestEnum>::values()
+const enum_values_t& EnumType<TestEnum>::values()
 {
-    static std::map<const char*, int> s_values{
+    static enum_values_t s_values{
         { "A", static_cast<int>(TestEnum::A) }, 
         { "B", static_cast<int>(TestEnum::B) }, 
     };
@@ -13,9 +13,9 @@ const std::map<const char*, int>  EnumType<TestEnum>::values()
 }
 
 const char* EnumType<UserRole>::name() { return "UserRole"; }
-const std::map<const char*, int>  EnumType<UserRole>::values()
+const enum_values_t& EnumType<UserRole>::values()
 {
-    static std::map<const char*, int> s_values{
+    static enum_values_t s_values{
         { "Guest", static_cast<int>(UserRole::Guest) }, 
         { "Admin", static_cast<int>(UserRole::Admin) }, 
     };
@@ -23,9 +23,9 @@ const std::map<const char*, int>  EnumType<UserRole>::values()
 }
 
 const char* EnumType<ApplicationMode>::name() { return "ApplicationMode"; }
-const std::map<const char*, int>  EnumType<ApplicationMode>::values()
+const enum_values_t& EnumType<ApplicationMode>::values()
 {
-    static std::map<const char*, int> s_values{
+    static enum_values_t s_values{
         { "Editor", static_cast<int>(ApplicationMode::Editor) }, 
         { "Server", static_cast<int>(ApplicationMode::Server) }, 
         { "Standalone", static_cast<int>(ApplicationMode::Standalone) }, 

@@ -8,15 +8,80 @@
 #include <string>
 #include <vector>
 
+typedef std::map<std::string, int> enum_values_t;
+typedef std::function<const enum_values_t& ()> enum_values_getter_t;
+
 template <typename T>
 struct EnumType
 {
 	static const char* name() { return ""; }
-	static const std::map<const char*, int> values() {
-		static std::map<const char*, int> s_values;
+	static const enum_values_t& values() {
+		static enum_values_t s_values;
 		return s_values;
 	}
 };
+
+class EnumFactory final
+{
+public:
+	EnumFactory() = delete;
+
+	static const enum_values_t& definition(const std::string& name)
+	{
+		static enum_values_t s_empty_definition;
+
+		const auto& it = collection().find(name);
+		if (it != collection().end())
+		{
+			return it->second();
+		}
+		return s_empty_definition;
+	}
+
+	static std::string enumToString(const std::string& type, const int value)
+	{
+		for (const auto& pair : definition(type))
+		{
+			if (pair.second == value)
+			{
+				return pair.first;
+			}
+		}
+		return "";
+	}
+
+	static bool stringToEnum(const std::string& type, const std::string& name, int& value)
+	{
+		const enum_values_t& def = definition(type);
+		const auto& it = def.find(name);
+		if (it != def.end())
+		{
+			return value = it->second, true;
+		}
+		return false;
+	}
+
+	static bool registerEnum(const std::string& name, const enum_values_getter_t& getter)
+	{
+		return collection().insert(std::make_pair(name, getter)), true;
+	}
+
+private:
+	static std::map<std::string, enum_values_getter_t>& collection()
+	{
+		static std::map<std::string, enum_values_getter_t> s_getters;
+		return s_getters;
+	}
+};
+
+template <typename T>
+struct RegisteredInEnumFactory
+{
+	static bool value;
+};
+
+template <typename T>
+bool RegisteredInEnumFactory<T>::value{ EnumFactory::registerEnum(EnumType<T>::name(), []() -> const enum_values_t& { return EnumType<T>::values(); }) };
 
 template <class T>
 std::string enumToString(const T t)
@@ -33,27 +98,13 @@ std::string enumToString(const T t)
 }
 
 template <class T>
-bool stringToEnum(const char* name, T& t)
-{
-	for (const auto& pair : EnumType<T>::values())
-	{
-		if (std::strcmp(pair.first, name) == 0)
-		{
-			return t = static_cast<T>(pair.second), true;
-		}
-	}
-	return false;
-}
-
-template <class T>
 bool stringToEnum(const std::string& name, T& t)
 {
-	for (const auto& pair : EnumType<T>::values())
+	const enum_values_t& definition = EnumType<T>::values();
+	const auto& it = definition.find(name);
+	if (it != definition.end())
 	{
-		if (name == pair.first)
-		{
-			return t = static_cast<T>(pair.second), true;
-		}
+		return t = static_cast<T>(it->second), true;
 	}
 	return false;
 }
@@ -151,7 +202,7 @@ struct Type
 		return s_meta;
 	}
 
-	virtual const properties_t getTypeProperties() const 
+	virtual const properties_t getTypeProperties() const
 	{
 		return {};
 	}
@@ -238,8 +289,7 @@ public:
 
 	static bool registerType(const TypeDefinition& type)
 	{
-		collection().insert(std::make_pair(type.name, type));
-		return true;
+		return collection().insert(std::make_pair(type.name, type)), true;
 	}
 
 private:

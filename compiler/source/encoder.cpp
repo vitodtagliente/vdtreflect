@@ -170,15 +170,20 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	headerBuffer.push_line("struct EnumType<enum class ", type.name, ">");
 	headerBuffer.push_line("{");
 	headerBuffer.push_line("    static const char* name();");
-	headerBuffer.push_line("    static const std::map<const char*, int> values();");
+	headerBuffer.push_line("    static const  enum_values_t& values();");
+	headerBuffer.push_line("};");
+	headerBuffer.push_line("");
+	headerBuffer.push_line("struct ", type.name, "Enum : RegisteredInEnumFactory<enum class ", type.name, ">");
+	headerBuffer.push_line("{");
+	headerBuffer.push_line("    static bool registered() { return value; };");
 	headerBuffer.push_line("};");
 	headerBuffer.push_line("");
 
 	// source
 	sourceBuffer.push_line("const char* EnumType<", type.name, ">::name() { return \"", type.name, "\"; }");
-	sourceBuffer.push_line("const std::map<const char*, int>  EnumType<", type.name, ">::values()");
+	sourceBuffer.push_line("const enum_values_t& EnumType<", type.name, ">::values()");
 	sourceBuffer.push_line("{");
-	sourceBuffer.push_line("    static std::map<const char*, int> s_values{");
+	sourceBuffer.push_line("    static enum_values_t s_values{");
 	for (const std::string& option : type.options)
 	{
 		sourceBuffer.push_line("        { \"", option, "\", static_cast<int>(", type.name, "::", option, ") }, ");
