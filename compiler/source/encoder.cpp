@@ -116,9 +116,9 @@ bool Encoder::encode(const TypeCollection& collection, const SymbolTable& symbol
 bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, const SymbolTable& symbolTable, TypeClass& type)
 {
 	// header
-	headerBuffer.push_line("struct ", type.name, "Type : RegisteredInTypeFactory<", type.name, "Type>");
+	headerBuffer.push_line("struct __", type.name, "Type : RegisteredInTypeFactory<__", type.name, "Type>");
 	headerBuffer.push_line("{");
-	headerBuffer.push_line("    ", type.name, "Type() = delete;");
+	headerBuffer.push_line("    __", type.name, "Type() = delete;");
 	headerBuffer.push_line("");
 	headerBuffer.push_line("    static const TypeDefinition& type();");
 	headerBuffer.push_line("    static bool registered() { return value; };");
@@ -126,8 +126,8 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	headerBuffer.push_line("");
 
 	// source
-	sourceBuffer.push_line("const meta_t& ", type.name, "::getTypeMeta() const { return ", type.name, "Type::type().meta; }");
-	sourceBuffer.push_line("const std::string& ", type.name, "::getTypeName() const { return ", type.name, "Type::type().name; }");
+	sourceBuffer.push_line("const meta_t& ", type.name, "::getTypeMeta() const { return __", type.name, "Type::type().meta; }");
+	sourceBuffer.push_line("const std::string& ", type.name, "::getTypeName() const { return __", type.name, "Type::type().name; }");
 	sourceBuffer.push_line("const properties_t ", type.name, "::getTypeProperties() const {");
 	if (!type.properties.empty())
 	{
@@ -147,9 +147,9 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	}
 	sourceBuffer.push_line("    return properties;");
 	sourceBuffer.push_line("}");
-	sourceBuffer.push_line("std::size_t ", type.name, "::getTypeSize() const { return ", type.name, "Type::type().size; }");
+	sourceBuffer.push_line("std::size_t ", type.name, "::getTypeSize() const { return __", type.name, "Type::type().size; }");
 	sourceBuffer.push_line("");
-	sourceBuffer.push_line("const TypeDefinition& ", type.name, "Type::type()");
+	sourceBuffer.push_line("const TypeDefinition& __", type.name, "Type::type()");
 	sourceBuffer.push_line("{");
 	sourceBuffer.push_line("    static const TypeDefinition s_typeDefinition([]() -> Type* { return new ", type.name, "(); }, \"", type.name, "\", {");
 	for (const auto& [key, value] : type.meta)
@@ -173,7 +173,7 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	headerBuffer.push_line("    static const  enum_values_t& values();");
 	headerBuffer.push_line("};");
 	headerBuffer.push_line("");
-	headerBuffer.push_line("struct ", type.name, "Enum : RegisteredInEnumFactory<enum class ", type.name, ">");
+	headerBuffer.push_line("struct __", type.name, "Enum : RegisteredInEnumFactory<enum class ", type.name, ">");
 	headerBuffer.push_line("{");
 	headerBuffer.push_line("    static bool registered() { return value; };");
 	headerBuffer.push_line("};");

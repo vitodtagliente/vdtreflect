@@ -11,7 +11,7 @@ struct EnumType<enum class TestEnum>
     static const  enum_values_t& values();
 };
 
-struct TestEnumEnum : RegisteredInEnumFactory<enum class TestEnum>
+struct __TestEnumEnum : RegisteredInEnumFactory<enum class TestEnum>
 {
     static bool registered() { return value; };
 };
@@ -23,7 +23,7 @@ struct EnumType<enum class UserRole>
     static const  enum_values_t& values();
 };
 
-struct UserRoleEnum : RegisteredInEnumFactory<enum class UserRole>
+struct __UserRoleEnum : RegisteredInEnumFactory<enum class UserRole>
 {
     static bool registered() { return value; };
 };
@@ -35,30 +35,30 @@ struct EnumType<enum class ApplicationMode>
     static const  enum_values_t& values();
 };
 
-struct ApplicationModeEnum : RegisteredInEnumFactory<enum class ApplicationMode>
+struct __ApplicationModeEnum : RegisteredInEnumFactory<enum class ApplicationMode>
 {
     static bool registered() { return value; };
 };
 
-struct FooType : RegisteredInTypeFactory<FooType>
+struct __FooType : RegisteredInTypeFactory<__FooType>
 {
-    FooType() = delete;
+    __FooType() = delete;
 
     static const TypeDefinition& type();
     static bool registered() { return value; };
 };
 
-struct PooType : RegisteredInTypeFactory<PooType>
+struct __PooType : RegisteredInTypeFactory<__PooType>
 {
-    PooType() = delete;
+    __PooType() = delete;
 
     static const TypeDefinition& type();
     static bool registered() { return value; };
 };
 
-struct UserType : RegisteredInTypeFactory<UserType>
+struct __UserType : RegisteredInTypeFactory<__UserType>
 {
-    UserType() = delete;
+    __UserType() = delete;
 
     static const TypeDefinition& type();
     static bool registered() { return value; };

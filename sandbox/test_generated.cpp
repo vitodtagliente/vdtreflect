@@ -33,8 +33,8 @@ const enum_values_t& EnumType<ApplicationMode>::values()
     return s_values;
 }
 
-const meta_t& Foo::getTypeMeta() const { return FooType::type().meta; }
-const std::string& Foo::getTypeName() const { return FooType::type().name; }
+const meta_t& Foo::getTypeMeta() const { return __FooType::type().meta; }
+const std::string& Foo::getTypeName() const { return __FooType::type().name; }
 const properties_t Foo::getTypeProperties() const {
     member_address_t origin = reinterpret_cast<member_address_t>(this);
     properties_t properties;
@@ -45,9 +45,9 @@ const properties_t Foo::getTypeProperties() const {
     })));
     return properties;
 }
-std::size_t Foo::getTypeSize() const { return FooType::type().size; }
+std::size_t Foo::getTypeSize() const { return __FooType::type().size; }
 
-const TypeDefinition& FooType::type()
+const TypeDefinition& __FooType::type()
 {
     static const TypeDefinition s_typeDefinition([]() -> Type* { return new Foo(); }, "Foo", {
         std::make_pair("Category", "MyClass"),
@@ -55,8 +55,8 @@ const TypeDefinition& FooType::type()
     }, sizeof(Foo));
     return s_typeDefinition;
 }
-const meta_t& Poo::getTypeMeta() const { return PooType::type().meta; }
-const std::string& Poo::getTypeName() const { return PooType::type().name; }
+const meta_t& Poo::getTypeMeta() const { return __PooType::type().meta; }
+const std::string& Poo::getTypeName() const { return __PooType::type().name; }
 const properties_t Poo::getTypeProperties() const {
     member_address_t origin = reinterpret_cast<member_address_t>(this);
     properties_t properties = Foo::getTypeProperties();
@@ -64,16 +64,16 @@ const properties_t Poo::getTypeProperties() const {
     })));
     return properties;
 }
-std::size_t Poo::getTypeSize() const { return PooType::type().size; }
+std::size_t Poo::getTypeSize() const { return __PooType::type().size; }
 
-const TypeDefinition& PooType::type()
+const TypeDefinition& __PooType::type()
 {
     static const TypeDefinition s_typeDefinition([]() -> Type* { return new Poo(); }, "Poo", {
     }, sizeof(Poo));
     return s_typeDefinition;
 }
-const meta_t& User::getTypeMeta() const { return UserType::type().meta; }
-const std::string& User::getTypeName() const { return UserType::type().name; }
+const meta_t& User::getTypeMeta() const { return __UserType::type().meta; }
+const std::string& User::getTypeName() const { return __UserType::type().name; }
 const properties_t User::getTypeProperties() const {
     member_address_t origin = reinterpret_cast<member_address_t>(this);
     properties_t properties;
@@ -109,9 +109,9 @@ const properties_t User::getTypeProperties() const {
     })));
     return properties;
 }
-std::size_t User::getTypeSize() const { return UserType::type().size; }
+std::size_t User::getTypeSize() const { return __UserType::type().size; }
 
-const TypeDefinition& UserType::type()
+const TypeDefinition& __UserType::type()
 {
     static const TypeDefinition s_typeDefinition([]() -> Type* { return new User(); }, "User", {
     }, sizeof(User));
