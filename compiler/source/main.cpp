@@ -52,7 +52,7 @@ int main(int argc, char** argv)
 			TypeCollection collection;
 			if (!Parser::parse(collection, symbolTable, file))
 			{
-				std::cout << "Failed to parse the input file" << std::endl;
+				std::cout << "Failed to parse the input file " << file << std::endl;
 				return COMPILER_ERROR;
 			}
 			if (collection.empty()) continue;
