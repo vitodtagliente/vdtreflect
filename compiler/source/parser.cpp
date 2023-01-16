@@ -121,6 +121,7 @@ bool Parser::parseClass(TypeCollection& collection, SymbolTable& symbolTable, co
 			|| token == "public"
 			|| token == "private"
 			|| token == "protected"
+			|| token == "final"
 			|| token == ","
 			) continue;
 

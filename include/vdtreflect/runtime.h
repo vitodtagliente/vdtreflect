@@ -314,7 +314,9 @@ bool RegisteredInTypeFactory<T>::value{ TypeFactory::registerType(T::type()) };
 #define FUNCTION(...)
 
 #define GENERATED_BODY() \
-	virtual const std::string& getTypeName() const; \
 	virtual const meta_t& getTypeMeta() const ; \
+	virtual const std::string& getTypeName() const; \
 	virtual const properties_t getTypeProperties() const; \
-	virtual std::size_t getTypeSize() const;
+	virtual std::size_t getTypeSize() const; \
+	static const meta_t& staticTypeMeta() ; \
+	static const std::string& staticTypeName();

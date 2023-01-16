@@ -148,6 +148,8 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	sourceBuffer.push_line("    return properties;");
 	sourceBuffer.push_line("}");
 	sourceBuffer.push_line("std::size_t ", type.name, "::getTypeSize() const { return __", type.name, "Type::type().size; }");
+	sourceBuffer.push_line("const meta_t& ", type.name, "::staticTypeMeta() { return __", type.name, "Type::type().meta; }");
+	sourceBuffer.push_line("const std::string& ", type.name, "::staticTypeName() { return __", type.name, "Type::type().name; }");
 	sourceBuffer.push_line("");
 	sourceBuffer.push_line("const TypeDefinition& __", type.name, "Type::type()");
 	sourceBuffer.push_line("{");

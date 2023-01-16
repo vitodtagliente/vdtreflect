@@ -46,6 +46,8 @@ const properties_t Foo::getTypeProperties() const {
     return properties;
 }
 std::size_t Foo::getTypeSize() const { return __FooType::type().size; }
+const meta_t& Foo::staticTypeMeta() { return __FooType::type().meta; }
+const std::string& Foo::staticTypeName() { return __FooType::type().name; }
 
 const TypeDefinition& __FooType::type()
 {
@@ -65,6 +67,8 @@ const properties_t Poo::getTypeProperties() const {
     return properties;
 }
 std::size_t Poo::getTypeSize() const { return __PooType::type().size; }
+const meta_t& Poo::staticTypeMeta() { return __PooType::type().meta; }
+const std::string& Poo::staticTypeName() { return __PooType::type().name; }
 
 const TypeDefinition& __PooType::type()
 {
@@ -110,6 +114,8 @@ const properties_t User::getTypeProperties() const {
     return properties;
 }
 std::size_t User::getTypeSize() const { return __UserType::type().size; }
+const meta_t& User::staticTypeMeta() { return __UserType::type().meta; }
+const std::string& User::staticTypeName() { return __UserType::type().name; }
 
 const TypeDefinition& __UserType::type()
 {
