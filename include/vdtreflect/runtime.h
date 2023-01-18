@@ -257,30 +257,36 @@ public:
 		return reinterpret_cast<T*>(instantiate(name));
 	}
 
-	static std::vector<std::string> list()
+	template <typename T>
+	static T* instantiate(const TypeDefinition& type)
 	{
-		std::vector<std::string> result;
+		return reinterpret_cast<T*>(instantiate(type.name));
+	}
+
+	static std::vector<TypeDefinition> list()
+	{
+		std::vector<TypeDefinition> result;
 		for (const auto& [typeName, type] : collection())
 		{
-			result.push_back(typeName);
+			result.push_back(type);
 		}
 		return result;
 	}
 
-	static std::vector<std::string> list(const std::string& metaOption)
+	static std::vector<TypeDefinition> list(const std::string& metaOption)
 	{
 		return TypeFactory::list(metaOption, "");
 	}
 
-	static std::vector<std::string> list(const std::string& metaOption, const std::string& metaValue)
+	static std::vector<TypeDefinition> list(const std::string& metaOption, const std::string& metaValue)
 	{
-		std::vector<std::string> result;
+		std::vector<TypeDefinition> result;
 		for (const auto& [typeName, type] : collection())
 		{
 			const auto& it = type.meta.find(metaOption);
 			if (it != type.meta.end() && (metaValue.empty() || it->second == metaValue))
 			{
-				result.push_back(typeName);
+				result.push_back(type);
 			}
 		}
 		return result;
