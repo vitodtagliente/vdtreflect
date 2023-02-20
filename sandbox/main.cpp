@@ -31,9 +31,9 @@ int main()
 
 		const Foo* const f = TypeFactory::instantiate<Foo>("Foo");
 
-		for (const std::string& typeName : TypeFactory::list())
+		for (const auto& type : TypeFactory::list())
 		{
-			cout << typeName << endl;
+			cout << type.name << endl;
 		}
 	}
 

@@ -11,7 +11,7 @@
 typedef std::map<std::string, int> enum_values_t;
 
 template <typename T>
-struct EnumType
+struct Enum
 {
 	static const char* name() { return ""; }
 	static const enum_values_t& values() {
@@ -25,17 +25,8 @@ class EnumFactory final
 public:
 	EnumFactory() = delete;
 
-	static const enum_values_t& definition(const std::string& name)
-	{
-		static enum_values_t s_empty_definition;
-
-		const auto& it = collection().find(name);
-		if (it != collection().end())
-		{
-			return it->second;
-		}
-		return s_empty_definition;
-	}
+	template <typename T>
+	friend struct RegisteredInEnumFactory;
 
 	static std::string enumToString(const std::string& type, const int value)
 	{
@@ -60,16 +51,28 @@ public:
 		return false;
 	}
 
-	static bool registerEnum(const std::string& name, const enum_values_t& values)
-	{
-		return collection().insert(std::make_pair(name, values)), true;
-	}
-
 private:
 	static std::map<std::string, enum_values_t>& collection()
 	{
 		static std::map<std::string, enum_values_t> s_getters;
 		return s_getters;
+	}
+
+	static const enum_values_t& definition(const std::string& name)
+	{
+		static enum_values_t s_empty_definition;
+
+		const auto& it = collection().find(name);
+		if (it != collection().end())
+		{
+			return it->second;
+		}
+		return s_empty_definition;
+	}
+
+	static bool registerEnum(const std::string& name, const enum_values_t& values)
+	{
+		return collection().insert(std::make_pair(name, values)), true;
 	}
 };
 
@@ -80,13 +83,13 @@ struct RegisteredInEnumFactory
 };
 
 template <typename T>
-bool RegisteredInEnumFactory<T>::value{ EnumFactory::registerEnum(EnumType<T>::name(), EnumType<T>::values()) };
+bool RegisteredInEnumFactory<T>::value{ EnumFactory::registerEnum(Enum<T>::name(), Enum<T>::values()) };
 
 template <class T>
 std::string enumToString(const T t)
 {
 	const int value = static_cast<int>(t);
-	for (const auto& pair : EnumType<T>::values())
+	for (const auto& pair : Enum<T>::values())
 	{
 		if (pair.second == value)
 		{
@@ -99,7 +102,7 @@ std::string enumToString(const T t)
 template <class T>
 bool stringToEnum(const std::string& name, T& t)
 {
-	const enum_values_t& definition = EnumType<T>::values();
+	const enum_values_t& definition = Enum<T>::values();
 	const auto& it = definition.find(name);
 	if (it != definition.end())
 	{

@@ -5,38 +5,29 @@
 #include <vdtreflect/runtime.h>
 
 template <>
-struct EnumType<enum class TestEnum>
+struct Enum<enum class TestEnum> : RegisteredInEnumFactory<enum class TestEnum>
 {
-    static const char* name();
-    static const  enum_values_t& values();
-};
-
-struct __TestEnumEnum : RegisteredInEnumFactory<enum class TestEnum>
-{
+    static const char* const name();
+    static const enum_values_t& values();
+    
     static bool registered() { return value; };
 };
 
 template <>
-struct EnumType<enum class UserRole>
+struct Enum<enum class UserRole> : RegisteredInEnumFactory<enum class UserRole>
 {
-    static const char* name();
-    static const  enum_values_t& values();
-};
-
-struct __UserRoleEnum : RegisteredInEnumFactory<enum class UserRole>
-{
+    static const char* const name();
+    static const enum_values_t& values();
+    
     static bool registered() { return value; };
 };
 
 template <>
-struct EnumType<enum class ApplicationMode>
+struct Enum<enum class ApplicationMode> : RegisteredInEnumFactory<enum class ApplicationMode>
 {
-    static const char* name();
-    static const  enum_values_t& values();
-};
-
-struct __ApplicationModeEnum : RegisteredInEnumFactory<enum class ApplicationMode>
-{
+    static const char* const name();
+    static const enum_values_t& values();
+    
     static bool registered() { return value; };
 };
 
