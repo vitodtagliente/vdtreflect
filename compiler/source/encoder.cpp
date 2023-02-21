@@ -58,27 +58,37 @@ bool Encoder::encode(const TypeCollection& collection, const SymbolTable& symbol
 	source_buffer.push_line("#include \"", filename, "\"");
 	source_buffer.push_line("");
 
+	std::vector<TypeEnum*> enums;
+	std::vector<TypeClass*> classes;
+
 	// enums
 	for (Type* const entity : collection.m_entities)
 	{
 		if (TypeEnum* const eEnum = dynamic_cast<TypeEnum*>(entity))
 		{
-			if (!encode(header_buffer, source_buffer, symbolTable, *eEnum))
-			{
-				return false;
-			}
+			enums.push_back(eEnum);
+		}
+		else if (TypeClass* const eClass = dynamic_cast<TypeClass*>(entity))
+		{
+			classes.push_back(eClass);
+		}
+	}
+
+	// enums
+	for (TypeEnum* const eEnum : enums)
+	{
+		if (!encode(header_buffer, source_buffer, symbolTable, *eEnum))
+		{
+			return false;
 		}
 	}
 
 	// classes
-	for (Type* const entity : collection.m_entities)
+	for (TypeClass* const eClass : classes)
 	{
-		if (TypeClass* const eClass = dynamic_cast<TypeClass*>(entity))
+		if (!encode(header_buffer, source_buffer, symbolTable, classes, *eClass))
 		{
-			if (!encode(header_buffer, source_buffer, symbolTable, *eClass))
-			{
-				return false;
-			}
+			return false;
 		}
 	}
 
@@ -113,54 +123,78 @@ bool Encoder::encode(const TypeCollection& collection, const SymbolTable& symbol
 	return true;
 }
 
-bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, const SymbolTable& symbolTable, TypeClass& type)
+bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, const SymbolTable& symbolTable, std::vector<TypeClass*>& classes, TypeClass& type)
 {
 	// header
-	headerBuffer.push_line("struct __", type.name, "Type : RegisteredInTypeFactory<__", type.name, "Type>");
+	const std::string forward_keyword = type.isStruct ? "struct" : "class";
+	headerBuffer.push_line("template <>");
+	headerBuffer.push_line("struct Type<", forward_keyword, " ", type.name, "> : RegisteredInTypeFactory<", forward_keyword, " ", type.name, ">");
 	headerBuffer.push_line("{");
-	headerBuffer.push_line("    __", type.name, "Type() = delete;");
+	headerBuffer.push_line("    static const type_meta_t& meta();");
+	headerBuffer.push_line("    static const char* const name();");
+	headerBuffer.push_line("    static const type_properties_t& properties();");
 	headerBuffer.push_line("");
-	headerBuffer.push_line("    static const TypeDefinition& type();");
 	headerBuffer.push_line("    static bool registered() { return value; };");
 	headerBuffer.push_line("};");
 	headerBuffer.push_line("");
 
 	// source
-	sourceBuffer.push_line("const meta_t& ", type.name, "::getTypeMeta() const { return __", type.name, "Type::type().meta; }");
-	sourceBuffer.push_line("const std::string& ", type.name, "::getTypeName() const { return __", type.name, "Type::type().name; }");
-	sourceBuffer.push_line("const properties_t ", type.name, "::getTypeProperties() const {");
-	if (!type.properties.empty())
+	sourceBuffer.push_line("const type_meta_t& Type<", type.name, ">::meta()");
+	sourceBuffer.push_line("{");
+	sourceBuffer.push_line("    static type_meta_t s_meta {");
+	for (const auto& [key, value] : type.meta)
 	{
-		sourceBuffer.push_line("    member_address_t origin = reinterpret_cast<member_address_t>(this);");
+		sourceBuffer.push_line("        { \"", key, "\", \"", value, "\" },");
 	}
-	if (type.parent != "Type")
+	sourceBuffer.push_line("    };");
+	sourceBuffer.push_line("    return s_meta;");
+	sourceBuffer.push_line("}");
+	sourceBuffer.push_line("const char* const Type<", type.name, ">::name() { return \"", type.name, "\"; }");
+	sourceBuffer.push_line("");
+	sourceBuffer.push_line("const type_properties_t& Type<", type.name, ">::properties()");
+	sourceBuffer.push_line("{");
+	sourceBuffer.push_line("    static type_properties_t s_properties {");
+	// look for parent classes
+	bool has_parent = false;
+	std::string parent_name = type.parent;
+	while (parent_name != "IType")
 	{
-		sourceBuffer.push_line("    properties_t properties = ", type.parent, "::getTypeProperties();");
+		has_parent = true;
+		const auto& it = std::find_if(
+			classes.begin(), classes.end(),
+			[&parent_name](TypeClass* const eClass) -> bool
+			{
+				return eClass->name == parent_name;
+			}
+		);
+		if (it == classes.end()) return false;
+
+		TypeClass* const parentClass = *it;
+
+		sourceBuffer.push_line("        // Parent class ", parent_name, " properties");
+		for (const Property& property : parentClass->properties)
+		{
+			sourceBuffer.push_line(encode(symbolTable, type.name, "        ", property) + ",");
+		}
+
+		parent_name = parentClass->parent;
 	}
-	else
+	if (has_parent)
 	{
-		sourceBuffer.push_line("    properties_t properties;");
+		sourceBuffer.push_line("        // Properties");
 	}
 	for (const Property& property : type.properties)
 	{
-		sourceBuffer.push_line(encode(symbolTable, type.name, "    ", property));
+		sourceBuffer.push_line(encode(symbolTable, type.name, "        ", property) + ",");
 	}
-	sourceBuffer.push_line("    return properties;");
+	sourceBuffer.push_line("    };");
+	sourceBuffer.push_line("    return s_properties;");
 	sourceBuffer.push_line("}");
-	sourceBuffer.push_line("std::size_t ", type.name, "::getTypeSize() const { return __", type.name, "Type::type().size; }");
-	sourceBuffer.push_line("const meta_t& ", type.name, "::staticTypeMeta() { return __", type.name, "Type::type().meta; }");
-	sourceBuffer.push_line("const std::string& ", type.name, "::staticTypeName() { return __", type.name, "Type::type().name; }");
 	sourceBuffer.push_line("");
-	sourceBuffer.push_line("const TypeDefinition& __", type.name, "Type::type()");
-	sourceBuffer.push_line("{");
-	sourceBuffer.push_line("    static const TypeDefinition s_typeDefinition([]() -> Type* { return new ", type.name, "(); }, \"", type.name, "\", {");
-	for (const auto& [key, value] : type.meta)
-	{
-		sourceBuffer.push_line("        std::make_pair(\"", key, "\", \"", value, "\"),");
-	}
-	sourceBuffer.push_line("    }, sizeof(", type.name, "));");
-	sourceBuffer.push_line("    return s_typeDefinition;");
-	sourceBuffer.push_line("}");
+	sourceBuffer.push_line("const type_meta_t& ", type.name, "::type_meta() const { return Type<", type.name, ">::meta(); }");
+	sourceBuffer.push_line("const char* const ", type.name, "::type_name() const { return Type<", type.name, ">::name(); }");
+	sourceBuffer.push_line("const type_properties_t& ", type.name, "::type_properties() const { return Type<", type.name, ">::properties(); }");
+	sourceBuffer.push_line("");
 
 	return true;
 }
@@ -197,86 +231,78 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 
 std::string Encoder::encode(const SymbolTable& symbolTable, const std::string& name, const std::string& offset, const Property& property)
 {
-	std::string content = (offset + "properties.insert(std::make_pair<std::string, Property>(\"" + property.name + "\", Property(\"" + property.name + "\", " +
-		encode(symbolTable, property.type) +
-		", sizeof(" + property.type + "), origin + offsetof(" + name + ", " + property.name + "), {\n");
+	std::string content = (offset + "{ \"" + property.name + "\", Property{ offsetof(" + name + ", " + property.name + "), type_meta_t {");
+	bool first = true;
 	for (const auto& [key, value] : property.meta)
 	{
-		content += (offset + "    std::make_pair(\"" + key + "\", \"" + value + "\"),\n");
+		content += (std::string(first ? "" : ", ") + ("{\"" + key + "\", \"" + value + "\"}"));
+		first = false;
 	}
-	content += (offset + "})));");
+	content += (" }, \"" + property.name + "\", " + encode(symbolTable, property.type, offset) + " } }");
 	return content;
 }
 
-std::string Encoder::encode(const SymbolTable& symbolTable, const std::string& token)
+std::string Encoder::encode(const SymbolTable& symbolTable, const std::string& token, const std::string& offset)
 {
-	std::string type = token;
-	const std::string decoratorType = encodeToDecoratorTypeEnum(symbolTable, type);
+	const std::string type = token;
+	const std::string decoratorEnum = encodeToDecoratorTypeEnum(symbolTable, type);
+	const std::string typeEnum = encodeToTypeEnum(symbolTable, type);
 	std::vector<std::string> typenames; 
-	std::string children;
+	std::string children = " ";
 
-	if (decoratorType == "Property::DecoratorType::D_shared_ptr"
-		|| decoratorType == "Property::DecoratorType::D_unique_ptr"
-		|| decoratorType == "Property::DecoratorType::D_weak_ptr")
+	std::string off = offset + "    ";
+	if (typeEnum == "NativeType::Type::T_template")
 	{
-		type = sanitizeTemplate(type);
-	}
-	else
-	{
+		children = "";
 		typenames = extractTypenames(type);
 		for (const std::string& tname : typenames)
 		{
-			children += (children.empty() ? "" : ", ") + encode(symbolTable, tname);
+			children += ("\n" + off + encode(symbolTable, tname, offset + "    ") + ",");
 		}
+		children += ("\n" + offset);
 	}
 	
-	return ("Property::TypeDescriptor(\"" + type + "\", " + encodeToTypeEnum(symbolTable, type) + ", " + decoratorType + ", {" + children + "})");
+	return ("NativeType{ \"" + type + "\", { " + children + "}, " + decoratorEnum + ", sizeof(" + type + "), " + typeEnum + " }");
 }
 
 std::string Encoder::encodeToTypeEnum(const SymbolTable& symbolTable, const std::string& t)
 {
 	std::string type = StringUtil::replace(t, "std::", "");
-	if (type.empty()) return "PropertyType::T_unknown";
+	if (type.empty()) return "NativeType::Type::T_unknown";
 
 	while (!type.empty() && (type[type.length() - 1] == '*' || type[type.length() - 1] == '&' || type[type.length() - 1] == ' '))
 	{
 		type.pop_back();
 	}
 
-	if (type == "bool") return "Property::Type::T_bool";
-	if (type == "char") return "Property::Type::T_char";
-	if (type == "double") return "Property::Type::T_double";
-	if (type == "float") return "Property::Type::T_float";
-	if (type == "int") return "Property::Type::T_int";
-	if (type == "void") return "Property::Type::T_void";
-	if (type == "string") return "Property::Type::T_container_string";
-	if (StringUtil::startsWith(type, "map<")) return "Property::Type::T_container_map";
-	if (StringUtil::startsWith(type, "vector<")) return "Property::Type::T_container_vector";
+	if (type == "bool") return "NativeType::Type::T_bool";
+	if (type == "char") return "NativeType::Type::T_char";
+	if (type == "double") return "NativeType::Type::T_double";
+	if (type == "float") return "NativeType::Type::T_float";
+	if (type == "int") return "NativeType::Type::T_int";
+	if (type == "void") return "NativeType::Type::T_void";
+	if (type == "string") return "NativeType::Type::T_string";
+	if (type.find("<") != std::string::npos) return "NativeType::Type::T_template";
 
 	const auto& it = symbolTable.find(type);
 	if (it != symbolTable.end())
 	{
 		switch (it->second)
 		{
-		case SymbolType::S_class: return "Property::Type::T_custom_type";
-		case SymbolType::S_enum: return "Property::Type::T_custom_enum";
+		case SymbolType::S_class: return "NativeType::Type::T_type";
+		case SymbolType::S_enum: return "NativeType::Type::T_enum";
 		default: return "Property::Type::T_unknown";
 		}
 	}
 
-	return "Property::Type::T_unknown";
+	return "NativeType::Type::T_unknown";
 }
 
 std::string Encoder::encodeToDecoratorTypeEnum(const SymbolTable& symbolTable, const std::string& t)
 {
-	std::string type = StringUtil::replace(t, "std::", "");
-
-	if (StringUtil::endsWith(type, "*")) return "Property::DecoratorType::D_pointer";
-	if (StringUtil::endsWith(type, "&")) return "Property::DecoratorType::D_reference";
-	if (StringUtil::startsWith(type, "shared_ptr")) return "Property::DecoratorType::D_shared_ptr";
-	if (StringUtil::startsWith(type, "unique_ptr")) return "Property::DecoratorType::D_unique_ptr";
-	if (StringUtil::startsWith(type, "weak_ptr")) return "Property::DecoratorType::D_weak_ptr";
-	return "Property::DecoratorType::D_normalized";
+	if (StringUtil::endsWith(t, "*")) return "NativeType::DecoratorType::D_pointer";
+	if (StringUtil::endsWith(t, "&")) return "NativeType::DecoratorType::D_reference";
+	return "NativeType::DecoratorType::D_raw";
 }
 
 std::vector<std::string> Encoder::extractTypenames(const std::string& token)

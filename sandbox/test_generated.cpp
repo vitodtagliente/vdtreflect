@@ -12,16 +12,6 @@ const enum_values_t& Enum<TestEnum>::values()
     return s_values;
 }
 
-const char* const Enum<UserRole>::name() { return "UserRole"; }
-const enum_values_t& Enum<UserRole>::values()
-{
-    static enum_values_t s_values{
-        { "Guest", static_cast<int>(UserRole::Guest) }, 
-        { "Admin", static_cast<int>(UserRole::Admin) }, 
-    };
-    return s_values;
-}
-
 const char* const Enum<ApplicationMode>::name() { return "ApplicationMode"; }
 const enum_values_t& Enum<ApplicationMode>::values()
 {
@@ -33,93 +23,95 @@ const enum_values_t& Enum<ApplicationMode>::values()
     return s_values;
 }
 
-const meta_t& Foo::getTypeMeta() const { return __FooType::type().meta; }
-const std::string& Foo::getTypeName() const { return __FooType::type().name; }
-const properties_t Foo::getTypeProperties() const {
-    member_address_t origin = reinterpret_cast<member_address_t>(this);
-    properties_t properties;
-    properties.insert(std::make_pair<std::string, Property>("a", Property("a", Property::TypeDescriptor("int", Property::Type::T_int, Property::DecoratorType::D_normalized, {}), sizeof(int), origin + offsetof(Foo, a), {
-        std::make_pair("JsonExport", "true"),
-    })));
-    properties.insert(std::make_pair<std::string, Property>("b", Property("b", Property::TypeDescriptor("int", Property::Type::T_int, Property::DecoratorType::D_normalized, {}), sizeof(int), origin + offsetof(Foo, b), {
-    })));
-    return properties;
-}
-std::size_t Foo::getTypeSize() const { return __FooType::type().size; }
-const meta_t& Foo::staticTypeMeta() { return __FooType::type().meta; }
-const std::string& Foo::staticTypeName() { return __FooType::type().name; }
-
-const TypeDefinition& __FooType::type()
+const type_meta_t& Type<Foo>::meta()
 {
-    static const TypeDefinition s_typeDefinition([]() -> Type* { return new Foo(); }, "Foo", {
-        std::make_pair("Category", "MyClass"),
-        std::make_pair("Serializable", "true"),
-    }, sizeof(Foo));
-    return s_typeDefinition;
+    static type_meta_t s_meta {
+        { "Category", "MyClass" },
+        { "Serializable", "true" },
+    };
+    return s_meta;
 }
-const meta_t& Poo::getTypeMeta() const { return __PooType::type().meta; }
-const std::string& Poo::getTypeName() const { return __PooType::type().name; }
-const properties_t Poo::getTypeProperties() const {
-    member_address_t origin = reinterpret_cast<member_address_t>(this);
-    properties_t properties = Foo::getTypeProperties();
-    properties.insert(std::make_pair<std::string, Property>("c", Property("c", Property::TypeDescriptor("int", Property::Type::T_int, Property::DecoratorType::D_normalized, {}), sizeof(int), origin + offsetof(Poo, c), {
-    })));
-    return properties;
-}
-std::size_t Poo::getTypeSize() const { return __PooType::type().size; }
-const meta_t& Poo::staticTypeMeta() { return __PooType::type().meta; }
-const std::string& Poo::staticTypeName() { return __PooType::type().name; }
+const char* const Type<Foo>::name() { return "Foo"; }
 
-const TypeDefinition& __PooType::type()
+const type_properties_t& Type<Foo>::properties()
 {
-    static const TypeDefinition s_typeDefinition([]() -> Type* { return new Poo(); }, "Poo", {
-    }, sizeof(Poo));
-    return s_typeDefinition;
+    static type_properties_t s_properties {
+        { "a", Property{ offsetof(Foo, a), type_meta_t {{"JsonExport", "true"} }, "a", NativeType{ "int", {  }, NativeType::DecoratorType::D_raw, sizeof(int), NativeType::Type::T_int } } },
+        { "b", Property{ offsetof(Foo, b), type_meta_t { }, "b", NativeType{ "int", {  }, NativeType::DecoratorType::D_raw, sizeof(int), NativeType::Type::T_int } } },
+    };
+    return s_properties;
 }
-const meta_t& User::getTypeMeta() const { return __UserType::type().meta; }
-const std::string& User::getTypeName() const { return __UserType::type().name; }
-const properties_t User::getTypeProperties() const {
-    member_address_t origin = reinterpret_cast<member_address_t>(this);
-    properties_t properties;
-    properties.insert(std::make_pair<std::string, Property>("name", Property("name", Property::TypeDescriptor("std::string", Property::Type::T_container_string, Property::DecoratorType::D_normalized, {}), sizeof(std::string), origin + offsetof(User, name), {
-    })));
-    properties.insert(std::make_pair<std::string, Property>("surname", Property("surname", Property::TypeDescriptor("std::string", Property::Type::T_container_string, Property::DecoratorType::D_normalized, {}), sizeof(std::string), origin + offsetof(User, surname), {
-    })));
-    properties.insert(std::make_pair<std::string, Property>("age", Property("age", Property::TypeDescriptor("int", Property::Type::T_int, Property::DecoratorType::D_normalized, {}), sizeof(int), origin + offsetof(User, age), {
-    })));
-    properties.insert(std::make_pair<std::string, Property>("height", Property("height", Property::TypeDescriptor("float", Property::Type::T_float, Property::DecoratorType::D_normalized, {}), sizeof(float), origin + offsetof(User, height), {
-    })));
-    properties.insert(std::make_pair<std::string, Property>("borntime", Property("borntime", Property::TypeDescriptor("double", Property::Type::T_double, Property::DecoratorType::D_normalized, {}), sizeof(double), origin + offsetof(User, borntime), {
-    })));
-    properties.insert(std::make_pair<std::string, Property>("sex", Property("sex", Property::TypeDescriptor("char", Property::Type::T_char, Property::DecoratorType::D_normalized, {}), sizeof(char), origin + offsetof(User, sex), {
-    })));
-    properties.insert(std::make_pair<std::string, Property>("active", Property("active", Property::TypeDescriptor("bool", Property::Type::T_bool, Property::DecoratorType::D_normalized, {}), sizeof(bool), origin + offsetof(User, active), {
-    })));
-    properties.insert(std::make_pair<std::string, Property>("role", Property("role", Property::TypeDescriptor("UserRole", Property::Type::T_custom_enum, Property::DecoratorType::D_normalized, {}), sizeof(UserRole), origin + offsetof(User, role), {
-    })));
-    properties.insert(std::make_pair<std::string, Property>("foo", Property("foo", Property::TypeDescriptor("Foo", Property::Type::T_custom_type, Property::DecoratorType::D_normalized, {}), sizeof(Foo), origin + offsetof(User, foo), {
-    })));
-    properties.insert(std::make_pair<std::string, Property>("foo_ptr", Property("foo_ptr", Property::TypeDescriptor("Foo*", Property::Type::T_custom_type, Property::DecoratorType::D_normalized, {}), sizeof(Foo*), origin + offsetof(User, foo_ptr), {
-    })));
-    properties.insert(std::make_pair<std::string, Property>("v", Property("v", Property::TypeDescriptor("std::vector<int>", Property::Type::T_container_vector, Property::DecoratorType::D_normalized, {Property::TypeDescriptor("int", Property::Type::T_int, Property::DecoratorType::D_normalized, {})}), sizeof(std::vector<int>), origin + offsetof(User, v), {
-    })));
-    properties.insert(std::make_pair<std::string, Property>("m", Property("m", Property::TypeDescriptor("std::map<std::string, Foo>", Property::Type::T_container_map, Property::DecoratorType::D_normalized, {Property::TypeDescriptor("std::string", Property::Type::T_container_string, Property::DecoratorType::D_normalized, {}), Property::TypeDescriptor("Foo", Property::Type::T_custom_type, Property::DecoratorType::D_normalized, {})}), sizeof(std::map<std::string, Foo>), origin + offsetof(User, m), {
-    })));
-    properties.insert(std::make_pair<std::string, Property>("cm", Property("cm", Property::TypeDescriptor("std::map<std::string, std::unique_ptr<Foo>>", Property::Type::T_container_map, Property::DecoratorType::D_normalized, {Property::TypeDescriptor("std::string", Property::Type::T_container_string, Property::DecoratorType::D_normalized, {}), Property::TypeDescriptor("Foo", Property::Type::T_custom_type, Property::DecoratorType::D_unique_ptr, {})}), sizeof(std::map<std::string, std::unique_ptr<Foo>>), origin + offsetof(User, cm), {
-    })));
-    properties.insert(std::make_pair<std::string, Property>("foos", Property("foos", Property::TypeDescriptor("std::vector<Foo>", Property::Type::T_container_vector, Property::DecoratorType::D_normalized, {Property::TypeDescriptor("Foo", Property::Type::T_custom_type, Property::DecoratorType::D_normalized, {})}), sizeof(std::vector<Foo>), origin + offsetof(User, foos), {
-    })));
-    properties.insert(std::make_pair<std::string, Property>("cfoos", Property("cfoos", Property::TypeDescriptor("std::vector<std::unique_ptr<Foo>>", Property::Type::T_container_vector, Property::DecoratorType::D_normalized, {Property::TypeDescriptor("Foo", Property::Type::T_custom_type, Property::DecoratorType::D_unique_ptr, {})}), sizeof(std::vector<std::unique_ptr<Foo>>), origin + offsetof(User, cfoos), {
-    })));
-    return properties;
-}
-std::size_t User::getTypeSize() const { return __UserType::type().size; }
-const meta_t& User::staticTypeMeta() { return __UserType::type().meta; }
-const std::string& User::staticTypeName() { return __UserType::type().name; }
 
-const TypeDefinition& __UserType::type()
+const type_meta_t& Foo::type_meta() const { return Type<Foo>::meta(); }
+const char* const Foo::type_name() const { return Type<Foo>::name(); }
+const type_properties_t& Foo::type_properties() const { return Type<Foo>::properties(); }
+
+const type_meta_t& Type<Poo>::meta()
 {
-    static const TypeDefinition s_typeDefinition([]() -> Type* { return new User(); }, "User", {
-    }, sizeof(User));
-    return s_typeDefinition;
+    static type_meta_t s_meta {
+    };
+    return s_meta;
 }
+const char* const Type<Poo>::name() { return "Poo"; }
+
+const type_properties_t& Type<Poo>::properties()
+{
+    static type_properties_t s_properties {
+        // Parent class Foo properties
+        { "a", Property{ offsetof(Poo, a), type_meta_t {{"JsonExport", "true"} }, "a", NativeType{ "int", {  }, NativeType::DecoratorType::D_raw, sizeof(int), NativeType::Type::T_int } } },
+        { "b", Property{ offsetof(Poo, b), type_meta_t { }, "b", NativeType{ "int", {  }, NativeType::DecoratorType::D_raw, sizeof(int), NativeType::Type::T_int } } },
+        // Properties
+        { "c", Property{ offsetof(Poo, c), type_meta_t { }, "c", NativeType{ "int", {  }, NativeType::DecoratorType::D_raw, sizeof(int), NativeType::Type::T_int } } },
+        { "numbers", Property{ offsetof(Poo, numbers), type_meta_t { }, "numbers", NativeType{ "std::vector<int>", { 
+            NativeType{ "int", {  }, NativeType::DecoratorType::D_raw, sizeof(int), NativeType::Type::T_int },
+        }, NativeType::DecoratorType::D_raw, sizeof(std::vector<int>), NativeType::Type::T_template } } },
+        { "dictionary", Property{ offsetof(Poo, dictionary), type_meta_t { }, "dictionary", NativeType{ "std::map<std::string, int>", { 
+            NativeType{ "std::string", {  }, NativeType::DecoratorType::D_raw, sizeof(std::string), NativeType::Type::T_string },
+            NativeType{ "int", {  }, NativeType::DecoratorType::D_raw, sizeof(int), NativeType::Type::T_int },
+        }, NativeType::DecoratorType::D_raw, sizeof(std::map<std::string, int>), NativeType::Type::T_template } } },
+        { "tuple", Property{ offsetof(Poo, tuple), type_meta_t { }, "tuple", NativeType{ "std::tuple<int, float, bool, double>", { 
+            NativeType{ "int", {  }, NativeType::DecoratorType::D_raw, sizeof(int), NativeType::Type::T_int },
+            NativeType{ "float", {  }, NativeType::DecoratorType::D_raw, sizeof(float), NativeType::Type::T_float },
+            NativeType{ "bool", {  }, NativeType::DecoratorType::D_raw, sizeof(bool), NativeType::Type::T_bool },
+            NativeType{ "double", {  }, NativeType::DecoratorType::D_raw, sizeof(double), NativeType::Type::T_double },
+        }, NativeType::DecoratorType::D_raw, sizeof(std::tuple<int, float, bool, double>), NativeType::Type::T_template } } },
+        { "power_dictionary", Property{ offsetof(Poo, power_dictionary), type_meta_t { }, "power_dictionary", NativeType{ "std::map<std::string, std::vector<int>>", { 
+            NativeType{ "std::string", {  }, NativeType::DecoratorType::D_raw, sizeof(std::string), NativeType::Type::T_string },
+            NativeType{ "std::vector<int>", { 
+                NativeType{ "int", {  }, NativeType::DecoratorType::D_raw, sizeof(int), NativeType::Type::T_int },
+            }, NativeType::DecoratorType::D_raw, sizeof(std::vector<int>), NativeType::Type::T_template },
+        }, NativeType::DecoratorType::D_raw, sizeof(std::map<std::string, std::vector<int>>), NativeType::Type::T_template } } },
+        { "e", Property{ offsetof(Poo, e), type_meta_t { }, "e", NativeType{ "TestEnum", {  }, NativeType::DecoratorType::D_raw, sizeof(TestEnum), NativeType::Type::T_enum } } },
+        { "type", Property{ offsetof(Poo, type), type_meta_t { }, "type", NativeType{ "Foo", {  }, NativeType::DecoratorType::D_raw, sizeof(Foo), NativeType::Type::T_type } } },
+    };
+    return s_properties;
+}
+
+const type_meta_t& Poo::type_meta() const { return Type<Poo>::meta(); }
+const char* const Poo::type_name() const { return Type<Poo>::name(); }
+const type_properties_t& Poo::type_properties() const { return Type<Poo>::properties(); }
+
+const type_meta_t& Type<Too>::meta()
+{
+    static type_meta_t s_meta {
+    };
+    return s_meta;
+}
+const char* const Type<Too>::name() { return "Too"; }
+
+const type_properties_t& Type<Too>::properties()
+{
+    static type_properties_t s_properties {
+        // Parent class Foo properties
+        { "a", Property{ offsetof(Too, a), type_meta_t {{"JsonExport", "true"} }, "a", NativeType{ "int", {  }, NativeType::DecoratorType::D_raw, sizeof(int), NativeType::Type::T_int } } },
+        { "b", Property{ offsetof(Too, b), type_meta_t { }, "b", NativeType{ "int", {  }, NativeType::DecoratorType::D_raw, sizeof(int), NativeType::Type::T_int } } },
+        // Properties
+        { "c", Property{ offsetof(Too, c), type_meta_t { }, "c", NativeType{ "int", {  }, NativeType::DecoratorType::D_raw, sizeof(int), NativeType::Type::T_int } } },
+    };
+    return s_properties;
+}
+
+const type_meta_t& Too::type_meta() const { return Type<Too>::meta(); }
+const char* const Too::type_name() const { return Type<Too>::name(); }
+const type_properties_t& Too::type_properties() const { return Type<Too>::properties(); }
+

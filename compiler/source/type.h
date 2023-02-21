@@ -31,6 +31,7 @@ public:
 	std::string parent;
 	std::vector<Property> properties;
 	meta_t meta;
+	bool isStruct{ false };
 
 	TypeClass* const addProperty(const std::string& memberName, const std::string& type, const meta_t& meta);
 };

@@ -91,13 +91,17 @@ bool Parser::parse(TypeCollection& collection, SymbolTable& symbolTable, const s
 
 bool Parser::parseClass(TypeCollection& collection, SymbolTable& symbolTable, const std::vector<std::string>& tokens, size_t& index)
 {
+	bool isStruct = false;
+
 	const size_t startingIndex = index;
 	TypeClass* element = nullptr;
 	while (index + 1 < tokens.size())
 	{
 		if (tokens[index] == "class" || tokens[index] == "struct")
 		{
+			isStruct = tokens[index] == "struct";
 			element = collection.addClass(tokens[(++index)++]);
+			element->isStruct = isStruct;
 			break;
 		}
 		++index;
@@ -125,7 +129,7 @@ bool Parser::parseClass(TypeCollection& collection, SymbolTable& symbolTable, co
 			|| token == ","
 			) continue;
 
-		if (element->parent != "Type")
+		if (element->parent != "IType")
 		{
 			element->parent = token;
 		}

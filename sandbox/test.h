@@ -15,7 +15,7 @@ enum class TestEnum
 };
 
 CLASS(Category = MyClass, Serializable = true)
-class Foo : public Type
+class Foo : public IType
 {
 public:
 	PROPERTY(JsonExport = true) int a{ 4 };
@@ -28,37 +28,22 @@ CLASS()
 class Poo : public Foo
 {
 public:
-	PROPERTY() int c{ 14 };
+	PROPERTY() int c = 15;
+	PROPERTY() std::vector<int> numbers;
+	PROPERTY() std::map<std::string, int> dictionary;
+	PROPERTY() std::tuple<int, float, bool, double> tuple;
+	PROPERTY() std::map<std::string, std::vector<int>> power_dictionary;
+	PROPERTY() TestEnum e;
+	PROPERTY() Foo type;
 
 	GENERATED_BODY()
 };
 
-ENUM()
-enum class UserRole : int
-{
-	Guest,
-	Admin
-};
-
 CLASS()
-class User : public Type
+struct Too : public Foo
 {
 public:
-	PROPERTY() std::string name;
-	PROPERTY() std::string surname;
-	PROPERTY() int age;
-	PROPERTY() float height;
-	PROPERTY() double borntime;
-	PROPERTY() char sex;
-	PROPERTY() bool active;
-	PROPERTY() UserRole role;
-	PROPERTY() Foo foo;
-	PROPERTY() Foo* foo_ptr;
-	PROPERTY() std::vector<int> v;
-	PROPERTY() std::map<std::string, Foo> m;
-	PROPERTY() std::map<std::string, std::unique_ptr<Foo>> cm;
-	PROPERTY() std::vector<Foo> foos;
-	PROPERTY() std::vector<std::unique_ptr<Foo>> cfoos;
+	PROPERTY() int c = 14;
 
 	GENERATED_BODY()
 };

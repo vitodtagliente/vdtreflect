@@ -14,15 +14,6 @@ struct Enum<enum class TestEnum> : RegisteredInEnumFactory<enum class TestEnum>
 };
 
 template <>
-struct Enum<enum class UserRole> : RegisteredInEnumFactory<enum class UserRole>
-{
-    static const char* const name();
-    static const enum_values_t& values();
-    
-    static bool registered() { return value; };
-};
-
-template <>
 struct Enum<enum class ApplicationMode> : RegisteredInEnumFactory<enum class ApplicationMode>
 {
     static const char* const name();
@@ -31,27 +22,33 @@ struct Enum<enum class ApplicationMode> : RegisteredInEnumFactory<enum class App
     static bool registered() { return value; };
 };
 
-struct __FooType : RegisteredInTypeFactory<__FooType>
+template <>
+struct Type<class Foo> : RegisteredInTypeFactory<class Foo>
 {
-    __FooType() = delete;
+    static const type_meta_t& meta();
+    static const char* const name();
+    static const type_properties_t& properties();
 
-    static const TypeDefinition& type();
     static bool registered() { return value; };
 };
 
-struct __PooType : RegisteredInTypeFactory<__PooType>
+template <>
+struct Type<class Poo> : RegisteredInTypeFactory<class Poo>
 {
-    __PooType() = delete;
+    static const type_meta_t& meta();
+    static const char* const name();
+    static const type_properties_t& properties();
 
-    static const TypeDefinition& type();
     static bool registered() { return value; };
 };
 
-struct __UserType : RegisteredInTypeFactory<__UserType>
+template <>
+struct Type<struct Too> : RegisteredInTypeFactory<struct Too>
 {
-    __UserType() = delete;
+    static const type_meta_t& meta();
+    static const char* const name();
+    static const type_properties_t& properties();
 
-    static const TypeDefinition& type();
     static bool registered() { return value; };
 };
 

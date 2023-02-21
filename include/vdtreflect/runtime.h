@@ -70,7 +70,7 @@ private:
 		return s_empty_definition;
 	}
 
-	static bool registerEnum(const std::string& name, const enum_values_t& values)
+	static bool insert(const std::string& name, const enum_values_t& values)
 	{
 		return collection().insert(std::make_pair(name, values)), true;
 	}
@@ -83,7 +83,7 @@ struct RegisteredInEnumFactory
 };
 
 template <typename T>
-bool RegisteredInEnumFactory<T>::value{ EnumFactory::registerEnum(Enum<T>::name(), Enum<T>::values()) };
+bool RegisteredInEnumFactory<T>::value{ EnumFactory::insert(Enum<T>::name(), Enum<T>::values()) };
 
 template <class T>
 std::string enumToString(const T t)
@@ -111,10 +111,10 @@ bool stringToEnum(const std::string& name, T& t)
 	return false;
 }
 
-typedef std::map<std::string, std::string> meta_t;
-typedef unsigned long long member_address_t;
+typedef std::map<std::string, std::string> type_meta_t;
+typedef unsigned long long type_member_address_t;
 
-struct Property
+struct NativeType
 {
 	enum class Type
 	{
@@ -123,188 +123,145 @@ struct Property
 		T_bool,
 		T_char,
 		T_double,
+		T_enum,
 		T_float,
 		T_int,
-		T_void,
-
-		T_container_map,
-		T_container_string,
-		T_container_vector,
-
-		T_custom_enum,
-		T_custom_type
+		T_string,
+		T_template,
+		T_type,
+		T_void
 	};
 
 	enum class DecoratorType
 	{
-		D_normalized,
+		D_raw,
 		D_pointer,
-		D_reference,
-		D_shared_ptr,
-		D_unique_ptr,
-		D_weak_ptr,
-		D_unknown
+		D_reference
 	};
 
-	struct TypeDescriptor
-	{
-		TypeDescriptor(const std::string& name, const Property::Type type, const Property::DecoratorType decoratorType, const std::vector<TypeDescriptor>& children)
-			: name(name)
-			, type(type)
-			, decoratorType(decoratorType)
-			, children(children)
-		{
+	std::string name;
+	std::vector<NativeType> children;
+	DecoratorType decorator;
+	std::size_t size;
+	Type type;
+};
 
-		}
-
-		std::string name;
-		Property::Type type;
-		Property::DecoratorType decoratorType;
-		std::vector<TypeDescriptor> children;
-	};
-
-	Property(const std::string& name, const TypeDescriptor& descriptor, const std::size_t size, const member_address_t address, const meta_t& meta)
-		: name(name)
-		, descriptor(descriptor)
-		, size(size)
-		, address(address)
-		, meta(meta)
-	{
-
-	}
-
+struct Property
+{
+	std::size_t offset;
+	const type_meta_t meta;
 	const std::string name;
-	TypeDescriptor descriptor;
-	const member_address_t address{ 0 };
-	const std::size_t size;
-	const meta_t meta;
+	const NativeType type;
 
-	template<typename T>
-	T& value() const
+	template<typename T, typename O>
+	T& value(O* const object) const
 	{
-		return *reinterpret_cast<T*>(address);
+		return *reinterpret_cast<T*>(reinterpret_cast<type_member_address_t>(object) + offset);
 	}
 };
-typedef std::map<std::string, Property> properties_t;
+typedef std::map<std::string, Property> type_properties_t;
 
+struct IType
+{
+	virtual const char* const type_name() const = 0;
+	virtual const type_meta_t& type_meta() const = 0;
+	virtual const type_properties_t& type_properties() const = 0;
+};
+
+template <typename T>
 struct Type
 {
-	Type() = default;
-	virtual ~Type() = default;
+	Type() = delete;
 
-	virtual const std::string& getTypeName() const
-	{
-		static std::string s_name("Type");
-		return s_name;
-	}
-
-	virtual const meta_t& getTypeMeta() const
-	{
-		static meta_t s_meta;
+	static const type_meta_t& meta() {
+		static type_meta_t s_meta;
 		return s_meta;
 	}
-
-	virtual const properties_t getTypeProperties() const
-	{
-		return {};
-	}
-
-	virtual std::size_t getTypeSize() const
-	{
-		return sizeof(Type);
-	}
+	static const char* const name() { return ""; }
+	static std::size_t size() { return sizeof(T); }
 };
-typedef std::function<Type* ()> factory_constructor_t;
-typedef std::function<Type* ()> type_constructor_t;
-typedef std::function<const meta_t& ()> factory_meta_t;
-
-struct TypeDefinition
-{
-	TypeDefinition(const type_constructor_t& constructor, const std::string& name, const meta_t& meta, const std::size_t size)
-		: constructor(constructor)
-		, name(name)
-		, meta(meta)
-		, size(size)
-	{}
-
-	type_constructor_t constructor;
-	std::string name;
-	meta_t meta;
-	std::size_t size;
-};
+typedef std::function<IType* ()> type_constructor_t;
 
 class TypeFactory final
 {
 public:
 	TypeFactory() = delete;
 
-	static Type* instantiate(const std::string& name)
+	template <typename T>
+	friend struct RegisteredInTypeFactory;
+
+	static IType* const instantiate(const std::string& name)
 	{
-		const auto& it = collection().find(name);
-		if (it != collection().end())
+		const auto& dictionary = collection();
+		const auto& it = dictionary.find(name);
+		if (it != dictionary.end())
 		{
-			return it->second.constructor();
+			const type_constructor_t& constructor = std::get<1>(it->second);
+			IType* const type = constructor();
+			return type;
 		}
 		return nullptr;
 	}
 
-	template <typename T>
-	static T* instantiate()
+	template <typename T = IType>
+	static T* const instantiate()
 	{
 		return reinterpret_cast<T*>(instantiate(Type<T>::name()));
 	}
-
-	template <typename T>
-	static T* instantiate(const std::string& name)
+	
+	template <typename T = IType>
+	static T* const instantiate(const std::string& name)
 	{
 		return reinterpret_cast<T*>(instantiate(name));
 	}
 
-	template <typename T>
-	static T* instantiate(const TypeDefinition& type)
+	static const std::map<std::string, std::tuple<type_meta_t, type_constructor_t>>& list()
 	{
-		return reinterpret_cast<T*>(instantiate(type.name));
+		return collection();
 	}
 
-	static std::vector<TypeDefinition> list()
+	static std::map<std::string, std::tuple<type_meta_t, type_constructor_t>> list(const std::string& metaOption)
 	{
-		std::vector<TypeDefinition> result;
-		for (const auto& [typeName, type] : collection())
+		return list(metaOption, "");
+	}
+
+	static std::map<std::string, std::tuple<type_meta_t, type_constructor_t>> list(const std::string& metaOption, const std::string& metaValue)
+	{
+		std::map<std::string, std::tuple<type_meta_t, type_constructor_t>> result;
+		for (const auto& [name, tuple] : collection())
 		{
-			result.push_back(type);
-		}
-		return result;
-	}
-
-	static std::vector<TypeDefinition> list(const std::string& metaOption)
-	{
-		return TypeFactory::list(metaOption, "");
-	}
-
-	static std::vector<TypeDefinition> list(const std::string& metaOption, const std::string& metaValue)
-	{
-		std::vector<TypeDefinition> result;
-		for (const auto& [typeName, type] : collection())
-		{
-			const auto& it = type.meta.find(metaOption);
-			if (it != type.meta.end() && (metaValue.empty() || it->second == metaValue))
+			const type_meta_t& meta = std::get<0>(tuple);
+			const auto& it = meta.find(metaOption);
+			if (it != meta.end() && (metaValue.empty() || it->second == metaValue))
 			{
-				result.push_back(type);
+				result.insert(std::make_pair(name, tuple));
 			}
 		}
 		return result;
 	}
 
-	static bool registerType(const TypeDefinition& type)
+private:
+	static std::map<std::string, std::tuple<type_meta_t, type_constructor_t>>& collection()
 	{
-		return collection().insert(std::make_pair(type.name, type)), true;
+		static std::map<std::string, std::tuple<type_meta_t, type_constructor_t>> s_getters;
+		return s_getters;
 	}
 
-private:
-	static std::map<std::string, TypeDefinition>& collection()
+	static const std::tuple<type_meta_t, type_constructor_t>& definition(const std::string& name)
 	{
-		static std::map<std::string, TypeDefinition> s_types;
-		return s_types;
+		static std::tuple<type_meta_t, type_constructor_t> s_empty_definition;
+
+		const auto& it = collection().find(name);
+		if (it != collection().end())
+		{
+			return it->second;
+		}
+		return s_empty_definition;
+	}
+
+	static bool insert(const std::string& name, const type_meta_t& meta, const type_constructor_t& constructor)
+	{
+		return collection().insert(std::make_pair(name, std::make_tuple(meta, constructor))), true;
 	}
 };
 
@@ -315,17 +272,13 @@ struct RegisteredInTypeFactory
 };
 
 template <typename T>
-bool RegisteredInTypeFactory<T>::value{ TypeFactory::registerType(T::type()) };
+bool RegisteredInTypeFactory<T>::value{ TypeFactory::insert(Type<T>::name(), Type<T>::meta(), []() -> IType* { return new T(); }) };
 
 #define ENUM(...)
 #define CLASS(...)
 #define PROPERTY(...)
 #define FUNCTION(...)
-
 #define GENERATED_BODY() \
-	virtual const meta_t& getTypeMeta() const ; \
-	virtual const std::string& getTypeName() const; \
-	virtual const properties_t getTypeProperties() const; \
-	virtual std::size_t getTypeSize() const; \
-	static const meta_t& staticTypeMeta() ; \
-	static const std::string& staticTypeName();
+	virtual const type_meta_t& type_meta() const override; \
+	virtual const char* const type_name() const override; \
+	virtual const type_properties_t& type_properties() const override;

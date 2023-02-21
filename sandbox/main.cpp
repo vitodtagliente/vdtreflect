@@ -5,118 +5,47 @@
 
 using namespace std;
 
-void test(const Type* type)
-{
-	cout << type->getTypeName() << endl;
-	for (const auto& [name, field] : type->getTypeProperties())
-	{
-		cout << name << " = " << field.value<int>() << endl;
-	}
-
-}
-
 int main()
 {
+	cout << "Testing Foo's properties: " << endl;
 	{
 		Foo foo;
-		test(&foo);
+		for (const auto& [name, prop] : foo.type_properties())
+		{
+			cout << name << " " << prop.value<int>(&foo) << endl;
+		}
+	}
 
-		Poo poo;
-		test(&poo);
+	cout << "Registered types: " << endl;
+	{
+		for (const auto& [name, def] : TypeFactory::list())
+		{
+			cout << name << ": ";
+			IType* const type = std::get<1>(def)();
+			cout << (type != nullptr ? "can instantiate" : "cannot instantiate") << endl;
+		}
+	}
 
+	cout << "Testing enums: " << endl;
+	{
 		cout << enumToString(TestEnum::A) << endl;
-		cout << EnumFactory::enumToString("UserRole", static_cast<int>(UserRole::Guest)) << endl;
-		cout << EnumFactory::enumToString("ApplicationMode", static_cast<int>(ApplicationMode::Server)) << endl;
-		cout << EnumFactory::enumToString("ApplicationMode", static_cast<int>(ApplicationMode::Standalone)) << endl;
+	}
 
-		const Foo* const f = TypeFactory::instantiate<Foo>("Foo");
-
-		for (const auto& type : TypeFactory::list())
+	cout << "Instantiating a Foo type" << endl;
+	{
+		Foo* foo = TypeFactory::instantiate<Foo>("Foo");
+		for (const auto& [name, prop] : foo->type_properties())
 		{
-			cout << type.name << endl;
+			cout << "property: " << name << ", value: " << prop.value<int>(foo) << endl;
 		}
 	}
 
-	User user;
-	// access IType properties
-	for (const auto& [name, property] : user.getTypeProperties())
+	cout << "Instantiating a Poo type" << endl;
 	{
-		if (name == "foo")
+		Poo* poo = TypeFactory::instantiate<Poo>("Poo");
+		for (const auto& [name, prop] : poo->type_properties())
 		{
-			Foo& foo = property.value<Foo>();
-			foo.b = 6;
-
-			Type* _foo = &property.value<Type>();
-			test(_foo);
+			cout << "property: " << name << endl;
 		}
-	}
-
-	// access IType vectors
-	for (const auto& [name, property] : user.getTypeProperties())
-	{
-		if (name == "cfoos")
-		{
-			std::vector<unique_ptr<Foo>>& foos = property.value<std::vector<unique_ptr<Foo>>>();
-			Foo* foo = new Foo();
-			foo->a = 13;
-			foo->b = 56;
-			foos.push_back(std::unique_ptr<Foo>(foo));
-
-			auto& v = property.value<std::vector<unique_ptr<Type>>>();
-			for (auto& element : v)
-			{
-				test(element.get());
-			}
-		}
-	}
-
-	// access IType maps
-	for (const auto& [name, property] : user.getTypeProperties())
-	{
-		break;
-		if (name == "m")
-		{
-			std::map<std::string, Foo>& m = property.value<std::map<std::string, Foo>>();
-			Foo foo;
-			foo.a = 13;
-			foo.b = 56;
-			m.insert(std::make_pair("foo", foo));
-
-			for (auto& [name, element] : property.value<std::map<std::string, size_t>>())
-			{
-				Type* t = reinterpret_cast<Type*>(&element);
-				test(t);
-			}
-		}
-	}
-
-	std::vector<Foo> foos;
-	{
-		Foo foo;
-		foo.a = 13;
-		foo.b = 56;
-		foos.push_back(foo);
-	}
-	{
-		Foo foo;
-		foo.a = 24;
-		foo.b = 12;
-		foos.push_back(foo);
-	}
-	size_t begin = reinterpret_cast<size_t>(&foos[0]);
-	size_t end = reinterpret_cast<size_t>(&foos[foos.size() - 1]);
-
-	size_t elemSize = TypeFactory::instantiate("Foo")->getTypeSize();
-	size_t diff = (end - begin);
-	size_t count = diff / elemSize;
-
-	Foo* foo1 = reinterpret_cast<Foo*>(begin);
-	Foo* foo2 = reinterpret_cast<Foo*>(begin + elemSize);
-
-	
-
-	if (true)
-	{
-
 	}
 }
