@@ -279,6 +279,8 @@ bool RegisteredInTypeFactory<T>::value{ TypeFactory::insert(Type<T>::name(), Typ
 #define PROPERTY(...)
 #define FUNCTION(...)
 #define GENERATED_BODY() \
+	template <typename T> \
+	friend struct Type; \
 	virtual const type_meta_t& type_meta() const override; \
 	virtual const char* const type_name() const override; \
 	virtual const type_properties_t& type_properties() const override;
