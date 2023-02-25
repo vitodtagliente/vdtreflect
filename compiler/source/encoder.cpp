@@ -1,6 +1,7 @@
 #include "encoder.h"
 
 #include <fstream>
+#include <iostream>
 
 #include "string_util.h"
 
@@ -31,7 +32,7 @@ std::string EncodeBuffer::string() const
 	return content;
 }
 
-bool Encoder::encode(const TypeCollection& collection, const SymbolTable& symbolTable, const std::filesystem::path& path, const std::string& filename)
+bool Encoder::encode(const SymbolList& symbolList, const TypeCollection& collection, const SymbolTable& symbolTable, const std::filesystem::path& path, const std::string& filename)
 {
 	static const auto read = [](const std::filesystem::path& filename) -> std::string
 	{
@@ -61,16 +62,35 @@ bool Encoder::encode(const TypeCollection& collection, const SymbolTable& symbol
 	std::vector<TypeEnum*> enums;
 	std::vector<TypeClass*> classes;
 
-	// enums
-	for (Type* const entity : collection.m_entities)
+	for (const std::string& name : symbolList)
 	{
-		if (TypeEnum* const eEnum = dynamic_cast<TypeEnum*>(entity))
+		const auto& it = symbolTable.find(name);
+		if (it == symbolTable.end())
 		{
-			enums.push_back(eEnum);
+			std::cout << "Failed to find the symbol " << name << std::endl;
+			return false;
 		}
-		else if (TypeClass* const eClass = dynamic_cast<TypeClass*>(entity))
+
+		SymbolType type = it->second;
+		if (type == SymbolType::S_class)
 		{
+			TypeClass* const eClass = collection.findClass(name);
+			if (eClass == nullptr)
+			{
+				std::cout << "Failed to find the class " << name << std::endl;
+				return false;
+			}
 			classes.push_back(eClass);
+		}
+		else
+		{
+			TypeEnum* const eEnum = collection.findEnum(name);
+			if (eEnum == nullptr)
+			{
+				std::cout << "Failed to find the enum " << name << std::endl;
+				return false;
+			}
+			enums.push_back(eEnum);
 		}
 	}
 
@@ -79,6 +99,7 @@ bool Encoder::encode(const TypeCollection& collection, const SymbolTable& symbol
 	{
 		if (!encode(header_buffer, source_buffer, symbolTable, *eEnum))
 		{
+			std::cout << "Failed to encode the enum " << eEnum->name << std::endl;
 			return false;
 		}
 	}
@@ -86,8 +107,9 @@ bool Encoder::encode(const TypeCollection& collection, const SymbolTable& symbol
 	// classes
 	for (TypeClass* const eClass : classes)
 	{
-		if (!encode(header_buffer, source_buffer, symbolTable, classes, *eClass))
+		if (!encode(header_buffer, source_buffer, symbolTable, collection, *eClass))
 		{
+			std::cout << "Failed to encode the class " << eClass->name << std::endl;
 			return false;
 		}
 	}
@@ -107,10 +129,13 @@ bool Encoder::encode(const TypeCollection& collection, const SymbolTable& symbol
 			std::ofstream fstream(filename);
 			if (!fstream.is_open())
 			{
+				std::cout << "Failed to open the stream " << filename << std::endl;
 				return false;
 			}
 			fstream << content;
 			fstream.close();
+
+			std::cout << filename << " generated" << std::endl;
 		}
 		return true;
 	};
@@ -123,7 +148,7 @@ bool Encoder::encode(const TypeCollection& collection, const SymbolTable& symbol
 	return true;
 }
 
-bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, const SymbolTable& symbolTable, std::vector<TypeClass*>& classes, TypeClass& type)
+bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, const SymbolTable& symbolTable, const TypeCollection& collection, TypeClass& type)
 {
 	// header
 	const std::string forward_keyword = type.isStruct ? "struct" : "class";
@@ -160,16 +185,12 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	while (parent_name != "IType")
 	{
 		has_parent = true;
-		const auto& it = std::find_if(
-			classes.begin(), classes.end(),
-			[&parent_name](TypeClass* const eClass) -> bool
-			{
-				return eClass->name == parent_name;
-			}
-		);
-		if (it == classes.end()) return false;
-
-		TypeClass* const parentClass = *it;
+		TypeClass* const parentClass = collection.findClass(parent_name);
+		if (parentClass == nullptr)
+		{
+			std::cout << "Cannot find the parent class " << parent_name << std::endl;
+			return false;
+		}
 
 		sourceBuffer.push_line("        // Parent class ", parent_name, " properties");
 		for (const Property& property : parentClass->properties)

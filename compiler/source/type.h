@@ -13,6 +13,8 @@ class Type
 public:
 	Type() = default;
 	virtual ~Type() = default;
+
+	std::string name;
 };
 
 struct Property
@@ -27,7 +29,6 @@ class TypeClass : public Type
 public:
 	TypeClass() = default;
 
-	std::string name;
 	std::string parent;
 	std::vector<Property> properties;
 	meta_t meta;
@@ -41,7 +42,6 @@ class TypeEnum : public Type
 public:
 	TypeEnum() = default;
 
-	std::string name;
 	std::vector<std::string> options;
 	meta_t meta;
 
@@ -57,7 +57,9 @@ public:
 	~TypeCollection();
 
 	TypeClass* const addClass(const std::string& name);
+	TypeClass* const findClass(const std::string& name) const;
 	TypeEnum* const addEnum(const std::string& name);
+	TypeEnum* const findEnum(const std::string& name) const;
 
 	bool empty() const;
 

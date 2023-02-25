@@ -3,8 +3,8 @@
 
 #include "directory.h"
 #include "encoder.h"
+#include "file_collection.h"
 #include "parser.h"
-#include "symbol_table.h"
 #include "string_util.h"
 
 #define COMPILER_SUCCESS 0;
@@ -43,59 +43,63 @@ int main(int argc, char** argv)
 		return COMPILER_ERROR;
 	}
 
-	SymbolTable symbolTable;
 	if (std::filesystem::is_directory(in))
 	{
-		std::map<std::filesystem::path, TypeCollection> collections;
+		FileCollection fileCollection;
+		TypeCollection typeCollection;
+		SymbolTable symbolTable;
 		for (const std::filesystem::path& file : Directory::scan(in, { ".h" }, recursive))
 		{
-			TypeCollection collection;
-			if (!Parser::parse(collection, symbolTable, file))
+			SymbolList symbolList;
+			if (!Parser::parse(typeCollection, symbolTable, symbolList, file))
 			{
 				std::cout << "Failed to parse the input file " << file << std::endl;
 				return COMPILER_ERROR;
 			}
-			if (collection.empty()) continue;
+			if (symbolList.empty()) continue;
 
-			collections.insert(std::make_pair(file, collection));
+			fileCollection.insert(std::make_pair(file, symbolList));
 		}
 
-		if (collections.empty())
+		if (fileCollection.empty())
 		{
 			// Nothing to generate
 			return COMPILER_SUCCESS;
 		}
 
-		for (auto& [file, collection] : collections)
+		for (auto& [file, symbols] : fileCollection)
 		{
-			if (!Encoder::encode(collection, symbolTable, file.parent_path(), file.filename().string()))
+			if (!Encoder::encode(symbols, typeCollection, symbolTable, file.parent_path(), file.filename().string()))
 			{
-				std::cout << "Failed to encode the generated code for the file " << in.filename().string() << std::endl;
+				std::cout << "Failed to encode the generated code for the file " << file.filename().string() << std::endl;
 				return COMPILER_ERROR;
 			}
 		}
 	}
 	else
 	{
-		TypeCollection collection;
-		if (!Parser::parse(collection, symbolTable, in))
+		TypeCollection typeCollection;
+		SymbolTable symbolTable;
+		SymbolList symbolList;
+		if (!Parser::parse(typeCollection, symbolTable, symbolList, in))
 		{
 			std::cout << "Failed to parse the input file" << std::endl;
 			return COMPILER_ERROR;
 		}
 
-		if (collection.empty())
+		if (symbolList.empty())
 		{
 			// Nothing to generate
 			return COMPILER_SUCCESS;
 		}
 
-		if (!Encoder::encode(collection, symbolTable, in.parent_path(), in.filename().string()))
+		if (!Encoder::encode(symbolList, typeCollection, symbolTable, in.parent_path(), in.filename().string()))
 		{
 			std::cout << "Failed to encode the generated code for the file " << in.filename().string() << std::endl;
 			return COMPILER_ERROR;
 		}
 	}
 
+	std::cout << "Compilation succeeded" << std::endl;
 	return COMPILER_SUCCESS;
 }

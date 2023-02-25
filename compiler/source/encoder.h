@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "symbol_table.h"
+#include "file_collection.h"
 #include "type.h"
 
 struct EncodeBuffer
@@ -51,10 +51,10 @@ private:
 class Encoder
 {
 public:
-	static bool encode(const TypeCollection& collection, const SymbolTable& symbolTable, const std::filesystem::path& path, const std::string& filename);
+	static bool encode(const SymbolList& symbolList, const TypeCollection& collection, const SymbolTable& symbolTable, const std::filesystem::path& path, const std::string& filename);
 
 private:
-	static bool encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, const SymbolTable& symbolTable, std::vector<TypeClass*>& classes, TypeClass& type);
+	static bool encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, const SymbolTable& symbolTable, const TypeCollection& collection, TypeClass& type);
 	static bool encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, const SymbolTable& symbolTable, TypeEnum& type);
 	static std::string encode(const SymbolTable& symbolTable, const std::string& name, const std::string& offset, const Property& property);
 	static std::string encode(const SymbolTable& symbolTable, const std::string& type, const std::string& offset);

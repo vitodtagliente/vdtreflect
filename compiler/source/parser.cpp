@@ -9,7 +9,7 @@
 
 #include "string_util.h"
 
-bool Parser::parse(TypeCollection& collection, SymbolTable& symbolTable, const std::filesystem::path& file)
+bool Parser::parse(TypeCollection& collection, SymbolTable& symbolTable, SymbolList& symbolList, const std::filesystem::path& file)
 {
 	static const auto read = [](const std::filesystem::path& filename) -> std::string
 	{
@@ -71,14 +71,14 @@ bool Parser::parse(TypeCollection& collection, SymbolTable& symbolTable, const s
 		const std::string& keyword = tokens[index];
 		if (keyword == "ENUM")
 		{
-			if (!parseEnum(collection, symbolTable, tokens, index))
+			if (!parseEnum(collection, symbolTable, symbolList, tokens, index))
 			{
 				return false;
 			}
 		}
 		else if (keyword == "CLASS")
 		{
-			if (!parseClass(collection, symbolTable, tokens, index))
+			if (!parseClass(collection, symbolTable, symbolList, tokens, index))
 			{
 				return false;
 			}
@@ -89,7 +89,7 @@ bool Parser::parse(TypeCollection& collection, SymbolTable& symbolTable, const s
 	return true;
 }
 
-bool Parser::parseClass(TypeCollection& collection, SymbolTable& symbolTable, const std::vector<std::string>& tokens, size_t& index)
+bool Parser::parseClass(TypeCollection& collection, SymbolTable& symbolTable, SymbolList& symbolList, const std::vector<std::string>& tokens, size_t& index)
 {
 	bool isStruct = false;
 
@@ -109,6 +109,7 @@ bool Parser::parseClass(TypeCollection& collection, SymbolTable& symbolTable, co
 
 	if (element == nullptr) return false;
 	symbolTable.insert(std::make_pair(element->name, SymbolType::S_class));
+	symbolList.push_back(element->name);
 
 	bool foundParent = false;
 	while (index < tokens.size())
@@ -186,7 +187,7 @@ bool Parser::parseClass(TypeCollection& collection, SymbolTable& symbolTable, co
 	return false;
 }
 
-bool Parser::parseEnum(TypeCollection& collection, SymbolTable& symbolTable, const std::vector<std::string>& tokens, size_t& index)
+bool Parser::parseEnum(TypeCollection& collection, SymbolTable& symbolTable, SymbolList& symbolList, const std::vector<std::string>& tokens, size_t& index)
 {
 	const size_t startingIndex = index;
 	TypeEnum* element = nullptr;
@@ -202,6 +203,7 @@ bool Parser::parseEnum(TypeCollection& collection, SymbolTable& symbolTable, con
 
 	if (element == nullptr) return false;
 	symbolTable.insert(std::make_pair(element->name, SymbolType::S_enum));
+	symbolList.push_back(element->name);
 
 	while (index + 1 < tokens.size())
 	{
