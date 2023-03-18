@@ -7,6 +7,8 @@
 
 #include "test_generated.h"
 
+using namespace reflect;
+
 ENUM(Category = MyEnums)
 enum class TestEnum
 {

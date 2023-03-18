@@ -153,20 +153,20 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	// header
 	const std::string forward_keyword = type.isStruct ? "struct" : "class";
 	headerBuffer.push_line("template <>");
-	headerBuffer.push_line("struct Type<", forward_keyword, " ", type.name, "> : RegisteredInTypeFactory<", forward_keyword, " ", type.name, ">");
+	headerBuffer.push_line("struct reflect::Type<", forward_keyword, " ", type.name, "> : reflect::RegisteredInTypeFactory<", forward_keyword, " ", type.name, ">");
 	headerBuffer.push_line("{");
-	headerBuffer.push_line("    static const type_meta_t& meta();");
+	headerBuffer.push_line("    static const reflect::meta_t& meta();");
 	headerBuffer.push_line("    static const char* const name();");
-	headerBuffer.push_line("    static const type_properties_t& properties();");
+	headerBuffer.push_line("    static const reflect::properties_t& properties();");
 	headerBuffer.push_line("");
 	headerBuffer.push_line("    static bool registered() { return value; };");
 	headerBuffer.push_line("};");
 	headerBuffer.push_line("");
 
 	// source
-	sourceBuffer.push_line("const type_meta_t& Type<", type.name, ">::meta()");
+	sourceBuffer.push_line("const reflect::meta_t& reflect::Type<", type.name, ">::meta()");
 	sourceBuffer.push_line("{");
-	sourceBuffer.push_line("    static type_meta_t s_meta {");
+	sourceBuffer.push_line("    static reflect::meta_t s_meta {");
 	for (const auto& [key, value] : type.meta)
 	{
 		sourceBuffer.push_line("        { \"", key, "\", \"", value, "\" },");
@@ -174,11 +174,11 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	sourceBuffer.push_line("    };");
 	sourceBuffer.push_line("    return s_meta;");
 	sourceBuffer.push_line("}");
-	sourceBuffer.push_line("const char* const Type<", type.name, ">::name() { return \"", type.name, "\"; }");
+	sourceBuffer.push_line("const char* const reflect::Type<", type.name, ">::name() { return \"", type.name, "\"; }");
 	sourceBuffer.push_line("");
-	sourceBuffer.push_line("const type_properties_t& Type<", type.name, ">::properties()");
+	sourceBuffer.push_line("const reflect::properties_t& Type<", type.name, ">::properties()");
 	sourceBuffer.push_line("{");
-	sourceBuffer.push_line("    static type_properties_t s_properties {");
+	sourceBuffer.push_line("    static reflect::properties_t s_properties {");
 	// look for parent classes
 	bool has_parent = false;
 	std::string parent_name = type.parent;
@@ -212,9 +212,9 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	sourceBuffer.push_line("    return s_properties;");
 	sourceBuffer.push_line("}");
 	sourceBuffer.push_line("");
-	sourceBuffer.push_line("const type_meta_t& ", type.name, "::type_meta() const { return Type<", type.name, ">::meta(); }");
-	sourceBuffer.push_line("const char* const ", type.name, "::type_name() const { return Type<", type.name, ">::name(); }");
-	sourceBuffer.push_line("const type_properties_t& ", type.name, "::type_properties() const { return Type<", type.name, ">::properties(); }");
+	sourceBuffer.push_line("const reflect::meta_t& ", type.name, "::type_meta() const { return reflect::Type<", type.name, ">::meta(); }");
+	sourceBuffer.push_line("const char* const ", type.name, "::type_name() const { return reflect::Type<", type.name, ">::name(); }");
+	sourceBuffer.push_line("const reflect::properties_t& ", type.name, "::type_properties() const { return reflect::Type<", type.name, ">::properties(); }");
 	sourceBuffer.push_line("");
 
 	return true;
@@ -224,20 +224,20 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 {
 	// header
 	headerBuffer.push_line("template <>");
-	headerBuffer.push_line("struct Enum<enum class ", type.name, "> : RegisteredInEnumFactory<enum class ", type.name, ">");
+	headerBuffer.push_line("struct reflect::Enum<enum class ", type.name, "> : reflect::RegisteredInEnumFactory<enum class ", type.name, ">");
 	headerBuffer.push_line("{");
 	headerBuffer.push_line("    static const char* const name();");
-	headerBuffer.push_line("    static const enum_values_t& values();");
+	headerBuffer.push_line("    static const reflect::enum_values_t& values();");
 	headerBuffer.push_line("    ");
 	headerBuffer.push_line("    static bool registered() { return value; };");
 	headerBuffer.push_line("};");
 	headerBuffer.push_line("");
 
 	// source
-	sourceBuffer.push_line("const char* const Enum<", type.name, ">::name() { return \"", type.name, "\"; }");
-	sourceBuffer.push_line("const enum_values_t& Enum<", type.name, ">::values()");
+	sourceBuffer.push_line("const char* const reflect::Enum<", type.name, ">::name() { return \"", type.name, "\"; }");
+	sourceBuffer.push_line("const reflect::enum_values_t& reflect::Enum<", type.name, ">::values()");
 	sourceBuffer.push_line("{");
-	sourceBuffer.push_line("    static enum_values_t s_values{");
+	sourceBuffer.push_line("    static reflect::enum_values_t s_values{");
 	for (const std::string& option : type.options)
 	{
 		sourceBuffer.push_line("        { \"", option, "\", static_cast<int>(", type.name, "::", option, ") }, ");
@@ -252,7 +252,7 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 
 std::string Encoder::encode(const SymbolTable& symbolTable, const std::string& name, const std::string& offset, const Property& property)
 {
-	std::string content = (offset + "{ \"" + property.name + "\", Property{ offsetof(" + name + ", " + property.name + "), type_meta_t {");
+	std::string content = (offset + "{ \"" + property.name + "\", reflect::Property{ offsetof(" + name + ", " + property.name + "), reflect::meta_t {");
 	bool first = true;
 	for (const auto& [key, value] : property.meta)
 	{
@@ -272,7 +272,7 @@ std::string Encoder::encode(const SymbolTable& symbolTable, const std::string& t
 	std::string children = " ";
 
 	std::string off = offset + "    ";
-	if (typeEnum == "NativeType::Type::T_template")
+	if (typeEnum == "reflect::NativeType::Type::T_template")
 	{
 		children = "";
 		typenames = extractTypenames(type);
@@ -289,41 +289,41 @@ std::string Encoder::encode(const SymbolTable& symbolTable, const std::string& t
 std::string Encoder::encodeToTypeEnum(const SymbolTable& symbolTable, const std::string& t)
 {
 	std::string type = StringUtil::replace(t, "std::", "");
-	if (type.empty()) return "NativeType::Type::T_unknown";
+	if (type.empty()) return "reflect::NativeType::Type::T_unknown";
 
 	while (!type.empty() && (type[type.length() - 1] == '*' || type[type.length() - 1] == '&' || type[type.length() - 1] == ' '))
 	{
 		type.pop_back();
 	}
 
-	if (type == "bool") return "NativeType::Type::T_bool";
-	if (type == "char") return "NativeType::Type::T_char";
-	if (type == "double") return "NativeType::Type::T_double";
-	if (type == "float") return "NativeType::Type::T_float";
-	if (type == "int") return "NativeType::Type::T_int";
-	if (type == "void") return "NativeType::Type::T_void";
-	if (type == "string") return "NativeType::Type::T_string";
-	if (type.find("<") != std::string::npos) return "NativeType::Type::T_template";
+	if (type == "bool") return "reflect::NativeType::Type::T_bool";
+	if (type == "char") return "reflect::NativeType::Type::T_char";
+	if (type == "double") return "reflect::NativeType::Type::T_double";
+	if (type == "float") return "reflect::NativeType::Type::T_float";
+	if (type == "int") return "reflect::NativeType::Type::T_int";
+	if (type == "void") return "reflect::NativeType::Type::T_void";
+	if (type == "string") return "reflect::NativeType::Type::T_string";
+	if (type.find("<") != std::string::npos) return "reflect::NativeType::Type::T_template";
 
 	const auto& it = symbolTable.find(type);
 	if (it != symbolTable.end())
 	{
 		switch (it->second)
 		{
-		case SymbolType::S_class: return "NativeType::Type::T_type";
-		case SymbolType::S_enum: return "NativeType::Type::T_enum";
-		default: return "Property::Type::T_unknown";
+		case SymbolType::S_class: return "reflect::NativeType::Type::T_type";
+		case SymbolType::S_enum: return "reflect::NativeType::Type::T_enum";
+		default: return "reflect::Property::Type::T_unknown";
 		}
 	}
 
-	return "NativeType::Type::T_unknown";
+	return "reflect::NativeType::Type::T_unknown";
 }
 
 std::string Encoder::encodeToDecoratorTypeEnum(const SymbolTable& symbolTable, const std::string& t)
 {
-	if (StringUtil::endsWith(t, "*")) return "NativeType::DecoratorType::D_pointer";
-	if (StringUtil::endsWith(t, "&")) return "NativeType::DecoratorType::D_reference";
-	return "NativeType::DecoratorType::D_raw";
+	if (StringUtil::endsWith(t, "*")) return "reflect::NativeType::DecoratorType::D_pointer";
+	if (StringUtil::endsWith(t, "&")) return "reflect::NativeType::DecoratorType::D_reference";
+	return "reflect::NativeType::DecoratorType::D_raw";
 }
 
 std::vector<std::string> Encoder::extractTypenames(const std::string& token)

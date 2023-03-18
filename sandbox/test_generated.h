@@ -5,49 +5,49 @@
 #include <vdtreflect/runtime.h>
 
 template <>
-struct Enum<enum class TestEnum> : RegisteredInEnumFactory<enum class TestEnum>
+struct reflect::Enum<enum class TestEnum> : reflect::RegisteredInEnumFactory<enum class TestEnum>
 {
     static const char* const name();
-    static const enum_values_t& values();
+    static const reflect::enum_values_t& values();
     
     static bool registered() { return value; };
 };
 
 template <>
-struct Enum<enum class ApplicationMode> : RegisteredInEnumFactory<enum class ApplicationMode>
+struct reflect::Enum<enum class ApplicationMode> : reflect::RegisteredInEnumFactory<enum class ApplicationMode>
 {
     static const char* const name();
-    static const enum_values_t& values();
+    static const reflect::enum_values_t& values();
     
     static bool registered() { return value; };
 };
 
 template <>
-struct Type<class Foo> : RegisteredInTypeFactory<class Foo>
+struct reflect::Type<class Foo> : reflect::RegisteredInTypeFactory<class Foo>
 {
-    static const type_meta_t& meta();
+    static const reflect::meta_t& meta();
     static const char* const name();
-    static const type_properties_t& properties();
+    static const reflect::properties_t& properties();
 
     static bool registered() { return value; };
 };
 
 template <>
-struct Type<class Poo> : RegisteredInTypeFactory<class Poo>
+struct reflect::Type<class Poo> : reflect::RegisteredInTypeFactory<class Poo>
 {
-    static const type_meta_t& meta();
+    static const reflect::meta_t& meta();
     static const char* const name();
-    static const type_properties_t& properties();
+    static const reflect::properties_t& properties();
 
     static bool registered() { return value; };
 };
 
 template <>
-struct Type<struct Too> : RegisteredInTypeFactory<struct Too>
+struct reflect::Type<struct Too> : reflect::RegisteredInTypeFactory<struct Too>
 {
-    static const type_meta_t& meta();
+    static const reflect::meta_t& meta();
     static const char* const name();
-    static const type_properties_t& properties();
+    static const reflect::properties_t& properties();
 
     static bool registered() { return value; };
 };

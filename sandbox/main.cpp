@@ -48,4 +48,25 @@ int main()
 			cout << "property: " << name << endl;
 		}
 	}
+
+	{
+		Foo foo;
+		foo.a = 17;
+		foo.b = 12;
+		reflect::encoding::ByteBuffer buffer;
+		reflect::encoding::OutputByteStream out(buffer);
+		out << foo.a;
+		out << foo.b;
+		out << std::string("mondo");
+		reflect::encoding::ByteBufferFile::save(buffer, "test.txt");
+
+		Foo foo1;
+		std::string str;
+		reflect::encoding::ByteBufferFile::load(buffer, "test.txt");
+		reflect::encoding::InputByteStream in(buffer);
+		in >> foo.a;
+		in >> foo.b;
+		in >> str;
+	}
+
 }
