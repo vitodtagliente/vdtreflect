@@ -8,7 +8,6 @@
 #include <iterator>
 #include <map>
 #include <memory>
-#include <sstream>
 #include <string>
 #include <variant>
 #include <vector>
@@ -445,49 +444,6 @@ namespace reflect
 		private:
 			// reading byte index
 			std::size_t m_index;
-		};
-
-		class StringBuffer
-		{
-		public:
-			void push(const std::string& token);
-			template<typename... Ts>
-			void push(Ts const&... ts)
-			{
-				const std::string str = string_format(ts...);
-				push(str);
-			}
-
-			void push_line(const std::string& line){ m_lines.push_back(line); }
-			template<typename... Ts>
-			void push_line(Ts const&... ts)
-			{
-				const std::string str = string_format(ts...);
-				push_line(str);
-			}
-
-			std::string string() const
-			{
-				std::string content;
-				for (const std::string& line : m_lines)
-				{
-					if (!content.empty())
-						content += "\n";
-					content += line;
-				}
-				return content;
-			}
-
-		private:
-			template<typename... Ts>
-			std::string string_format(Ts const&... ts) {
-				std::stringstream s;
-				int dummy[] = { 0, ((s << ts), 0)... };
-				static_cast<void>(dummy); // Avoid warning for unused variable
-				return s.str();
-			}
-
-			std::vector<std::string> m_lines;
 		};
 	}
 

@@ -326,8 +326,6 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	sourceBuffer.push_line("");
 	sourceBuffer.push_line("std::string ", type.name, "::to_json() const");
 	sourceBuffer.push_line("{");
-	sourceBuffer.push_line("    reflect::encoding::StringBuffer buffer;");
-	sourceBuffer.push_line("    buffer.push_line(\"{\");");
 	// look for parent classes
 	has_parent = false;
 	parent_name = type.parent;
@@ -347,7 +345,7 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 			const bool serialize = true;
 			std::string temp = encodePropertySerializationToJson("    ", symbolTable, serialize, property);
 			if (!temp.empty())
-				sourceBuffer.push_line("    buffer.push_line(\"", temp, "\");");
+				sourceBuffer.push_line(temp);
 		}
 
 		parent_name = parentClass->parent;
@@ -361,10 +359,9 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 		const bool serialize = true;
 		std::string temp = encodePropertySerializationToJson("    ", symbolTable, serialize, property);
 		if (!temp.empty())
-			sourceBuffer.push_line("    buffer.push_line(\"", temp, "\");");
+			sourceBuffer.push_line(temp);
 	}
-	sourceBuffer.push_line("    buffer.push_line(\"}\");");
-	sourceBuffer.push_line("    return buffer.string();");
+	sourceBuffer.push_line("    return \"\";");
 	sourceBuffer.push_line("}");
 	sourceBuffer.push_line("");
 
@@ -587,90 +584,7 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 
 std::string Encoder::encodePropertySerializationToJson(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const Property& property)
 {
-	const std::string temp = encodePropertySerializationToJson("", symbolTable, serialize, property.name, property.type);
-	if (!temp.empty())
-	{
-		return (offset + "\\\"" + property.name + "\\\": \", " + temp + ", \",");
-	}
 	return "";
-}
-
-std::string Encoder::encodePropertySerializationToJson(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const std::string& name, const std::string& type)
-{
-	const DecoratorType decoratorType = parseDecoratorType(symbolTable, type);
-	const NativeType nativeType = parseNativeType(symbolTable, type);
-	EncodeBuffer buffer;
-
-	if (decoratorType != DecoratorType::D_raw) return "";
-
-	switch (nativeType)
-	{
-	case NativeType::T_double:
-	case NativeType::T_float:
-	case NativeType::T_int:
-	{
-		if (serialize)
-		{
-			buffer.push(offset, name);
-		}
-		else
-		{
-
-		}
-		break;
-	}
-	case NativeType::T_char:
-	case NativeType::T_string:
-	{
-		if (serialize)
-		{
-			buffer.push(offset, "\\\"", name, "\\\"");
-		}
-		else
-		{
-
-		}
-		break;
-	}
-	case NativeType::T_bool:
-	{
-		if (serialize)
-		{
-			buffer.push(offset, name, " ? \"true\" : \"false\"");
-		}
-		else
-		{
-
-		}
-		break;
-	}
-	case NativeType::T_enum:
-	{
-		if (serialize)
-		{
-			buffer.push(offset, "\"\\\"\", enumToString(", name, "), \"\\\"\"");
-		}
-		else
-		{
-
-		}
-		break;
-	}
-	case NativeType::T_template:
-	{
-		break;
-	}
-	case NativeType::T_type:
-	{
-		break;
-	}
-	default:
-	case NativeType::T_void:
-	case NativeType::T_unknown:
-		break;
-	}
-
-	return buffer.string(false);
 }
 
 NativeType Encoder::parseNativeType(const SymbolTable& symbolTable, const std::string& t)

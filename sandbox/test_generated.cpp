@@ -89,13 +89,7 @@ void Foo::from_json(const std::string& json)
 
 std::string Foo::to_json() const
 {
-    reflect::encoding::StringBuffer buffer;
-    buffer.push_line("{");
-    buffer.push_line("    \"a\": ", a, ",");
-    buffer.push_line("    \"b\": ", b, ",");
-    buffer.push_line("    \"enabled\": ", enabled ? "true" : "false", ",");
-    buffer.push_line("}");
-    return buffer.string();
+    return "";
 }
 
 const reflect::meta_t& reflect::Type<Poo>::meta()
@@ -263,17 +257,9 @@ void Poo::from_json(const std::string& json)
 
 std::string Poo::to_json() const
 {
-    reflect::encoding::StringBuffer buffer;
-    buffer.push_line("{");
     // Parent class Foo properties
-    buffer.push_line("    \"a\": ", a, ",");
-    buffer.push_line("    \"b\": ", b, ",");
-    buffer.push_line("    \"enabled\": ", enabled ? "true" : "false", ",");
     // Properties
-    buffer.push_line("    \"c\": ", c, ",");
-    buffer.push_line("    \"e\": ", "\"", enumToString(e), "\"", ",");
-    buffer.push_line("}");
-    return buffer.string();
+    return "";
 }
 
 const reflect::meta_t& reflect::Type<Too>::meta()
@@ -349,15 +335,8 @@ void Too::from_json(const std::string& json)
 
 std::string Too::to_json() const
 {
-    reflect::encoding::StringBuffer buffer;
-    buffer.push_line("{");
     // Parent class Foo properties
-    buffer.push_line("    \"a\": ", a, ",");
-    buffer.push_line("    \"b\": ", b, ",");
-    buffer.push_line("    \"enabled\": ", enabled ? "true" : "false", ",");
     // Properties
-    buffer.push_line("    \"c\": ", c, ",");
-    buffer.push_line("}");
-    return buffer.string();
+    return "";
 }
 
