@@ -61,6 +61,7 @@ private:
 	static std::string encodePropertyReflection(const std::string& offset, const SymbolTable& symbolTable, const std::string& type);
 
 	static std::string encodePropertySerialization(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const Property& property);
+	static std::string encodePropertySerialization(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const std::string& name, const std::string& type);
 	
 	static NativeType parseNativeType(const SymbolTable& symbolTable, const std::string& type);
 	static DecoratorType parseDecoratorType(const SymbolTable& symbolTable, const std::string& type);
@@ -69,4 +70,8 @@ private:
 
 	static std::string toString(const NativeType type);
 	static std::string toString(const DecoratorType type);
+
+	static bool isValidListType(const NativeType type);
+	static bool isValidMapKeyType(const NativeType type);
+	static bool isValidMapValueType(const NativeType type);
 };

@@ -136,6 +136,21 @@ Poo::operator std::string() const
     stream << b;
     // Properties
     stream << c;
+    {
+        stream << numbers.size();
+        for(int i = 0; i < numbers.size(); ++i)
+        {
+            stream << numbers[i];
+        }
+    }
+    {
+        stream << dictionary.size();
+        for(const auto& pair : dictionary)
+        {
+            stream << pair.first;
+            stream << pair.second;
+        }
+    }
     stream << static_cast<int>(e);
     stream << static_cast<std::string>(type);
     
@@ -165,6 +180,27 @@ void Poo::from_string(const std::string& str)
     stream >> b;
     // Properties
     stream >> c;
+    {
+        std::size_t size;
+        stream >> size;
+        numbers.resize(size);
+        for(int i = 0; i < numbers.size(); ++i)
+        {
+            stream >> numbers[i];
+        }
+    }
+    {
+        std::size_t size;
+        stream >> size;
+        for(int i = 0; i < size; ++i)
+        {
+            std::string key;
+            stream >> key;
+            int value;
+            stream >> value;
+            dictionary.insert(std::make_pair(key, value));
+        }
+    }
     {
         int pack;
         stream >> pack;

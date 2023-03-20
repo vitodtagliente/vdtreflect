@@ -395,64 +395,130 @@ std::string Encoder::encodePropertyReflection(const std::string& offset, const S
 
 std::string Encoder::encodePropertySerialization(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const Property& property)
 {
-	const DecoratorType decoratorType = parseDecoratorType(symbolTable, property.type);
-	const NativeType nativeType = parseNativeType(symbolTable, property.type);
+	return encodePropertySerialization(offset, symbolTable, serialize, property.name, property.type);
+}
+
+std::string Encoder::encodePropertySerialization(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const std::string& name, const std::string& type)
+{
+	const DecoratorType decoratorType = parseDecoratorType(symbolTable, type);
+	const NativeType nativeType = parseNativeType(symbolTable, type);
 	EncodeBuffer buffer;
 
 	if (decoratorType != DecoratorType::D_raw) return "";
 
 	switch (nativeType)
 	{
-	case NativeType::T_bool: 
-	case NativeType::T_char: 
+	case NativeType::T_bool:
+	case NativeType::T_char:
 	case NativeType::T_double:
-	case NativeType::T_float: 
-	case NativeType::T_int: 
-	case NativeType::T_string: 
+	case NativeType::T_float:
+	case NativeType::T_int:
+	case NativeType::T_string:
 	{
-		buffer.push(offset, "stream ", serialize ? "<<" : ">>", " ", property.name, ";");
+		buffer.push(offset, "stream ", serialize ? "<<" : ">>", " ", name, ";");
 		break;
 	}
 	case NativeType::T_enum:
 	{
 		if (serialize)
 		{
-			buffer.push(offset, "stream << static_cast<int>(", property.name, ");");
+			buffer.push(offset, "stream << static_cast<int>(", name, ");");
 		}
 		else
 		{
 			buffer.push(offset, "{");
 			buffer.push("\n", offset, "    ", "int pack;");
 			buffer.push("\n", offset, "    ", "stream >> pack;");
-			buffer.push("\n", offset, "    ", property.name, " = static_cast<", property.type, ">(", property.name, ");");
+			buffer.push("\n", offset, "    ", name, " = static_cast<", type, ">(", name, ");");
 			buffer.push("\n", offset, "}");
 		}
 		break;
 	}
 	case NativeType::T_template:
 	{
+		std::vector<std::string> typenames;
+		typenames = extractTypenames(type);
 
+		if (typenames.empty()) break;
+
+		if (StringUtil::startsWith(type, "vector") || StringUtil::startsWith(type, "std::vector"))
+		{
+			if (!isValidListType(parseNativeType(symbolTable, typenames[0]))) break;
+
+			buffer.push(offset, "{");
+			if (serialize)
+			{
+				buffer.push("\n", offset, "    ", "stream << ", name, ".size();");
+			}
+			else
+			{
+				buffer.push("\n", offset, "    ", "std::size_t size;");
+				buffer.push("\n", offset, "    ", "stream >> size;");
+				buffer.push("\n", offset, "    ", name, ".resize(size);");
+			}
+			buffer.push("\n", offset, "    ", "for(int i = 0; i < ", name, ".size(); ++i)");
+			buffer.push("\n", offset, "    ", "{");
+			const std::string temp = encodePropertySerialization("    ", symbolTable, serialize, name + "[i]", typenames[0]);
+			buffer.push("\n", offset, "    ", temp);
+			buffer.push("\n", offset, "    ", "}");
+			buffer.push("\n", offset, "}");
+		}
+		else if (StringUtil::startsWith(type, "map") || StringUtil::startsWith(type, "std::map"))
+		{
+			if (typenames.size() < 2) break;
+			if (!isValidMapKeyType(parseNativeType(symbolTable, typenames[0]))
+				|| !isValidMapValueType(parseNativeType(symbolTable, typenames[1]))) break;
+
+			buffer.push(offset, "{");
+			if (serialize)
+			{
+				buffer.push("\n", offset, "    ", "stream << ", name, ".size();");
+				buffer.push("\n", offset, "    ", "for(const auto& pair : ", name, ")");
+				buffer.push("\n", offset, "    ", "{");
+				std::string temp = encodePropertySerialization("    ", symbolTable, serialize, "pair.first", typenames[0]);
+				buffer.push("\n", offset, "    ", temp);
+				temp = encodePropertySerialization("    ", symbolTable, serialize, "pair.second", typenames[1]);
+				buffer.push("\n", offset, "    ", temp);
+				buffer.push("\n", offset, "    ", "}");
+			}
+			else
+			{
+				buffer.push("\n", offset, "    ", "std::size_t size;");
+				buffer.push("\n", offset, "    ", "stream >> size;");
+				buffer.push("\n", offset, "    ", "for(int i = 0; i < size; ++i)");
+				buffer.push("\n", offset, "    ", "{");
+				buffer.push("\n", offset, "        ", typenames[0], " key;");
+				std::string temp = encodePropertySerialization("    ", symbolTable, serialize, "key", typenames[0]);
+				buffer.push("\n", offset, "    ", temp);
+				buffer.push("\n", offset, "        ", typenames[1], " value;");
+				temp = encodePropertySerialization("    ", symbolTable, serialize, "value", typenames[1]);
+				buffer.push("\n", offset, "    ", temp);
+				buffer.push("\n", offset, "        ", name, ".insert(std::make_pair(key, value));");
+				buffer.push("\n", offset, "    ", "}");
+			}
+			buffer.push("\n", offset, "}");
+		}
 		break;
 	}
-	case NativeType::T_type: 
+	case NativeType::T_type:
 	{
 		if (serialize)
 		{
-			buffer.push(offset, "stream << static_cast<std::string>(", property.name, ");");
+			buffer.push(offset, "stream << static_cast<std::string>(", name, ");");
 		}
 		else
 		{
 			buffer.push(offset, "{");
 			buffer.push("\n", offset, "    ", "std::string pack;");
 			buffer.push("\n", offset, "    ", "stream >> pack;");
-			buffer.push("\n", offset, "    ", property.name, ".from_string(pack);");
+			buffer.push("\n", offset, "    ", name, ".from_string(pack);");
 			buffer.push("\n", offset, "}");
 		}
 		break;
 	}
 	default:
-	case NativeType::T_void: 
-	case NativeType::T_unknown: 
+	case NativeType::T_void:
+	case NativeType::T_unknown:
 		break;
 	}
 
@@ -558,4 +624,25 @@ std::string Encoder::toString(const DecoratorType type)
 	default:
 	case DecoratorType::D_raw: return "reflect::NativeType::DecoratorType::D_raw";
 	}
+}
+
+bool Encoder::isValidListType(const NativeType type)
+{
+	return type != NativeType::T_template
+		&& type != NativeType::T_void
+		&& type != NativeType::T_unknown;
+}
+
+bool Encoder::isValidMapKeyType(const NativeType type)
+{
+	return type != NativeType::T_template
+		&& type != NativeType::T_void
+		&& type != NativeType::T_unknown;
+}
+
+bool Encoder::isValidMapValueType(const NativeType type)
+{
+	return type != NativeType::T_template
+		&& type != NativeType::T_void
+		&& type != NativeType::T_unknown;
 }
