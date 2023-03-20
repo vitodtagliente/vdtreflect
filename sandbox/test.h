@@ -24,6 +24,7 @@ public:
 	PROPERTY(JsonExport = true) int a{ 4 };
 	PROPERTY() int b = 5;
 	PROPERTY() bool enabled = false;
+	PROPERTY() std::string name = "foo";
 
 	GENERATED_BODY()
 };

@@ -8,6 +8,7 @@
 #include <iterator>
 #include <map>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <variant>
 #include <vector>
@@ -177,7 +178,7 @@ namespace reflect
 		virtual void from_string(const std::string& str) = 0;
 		std::string to_string() const { return static_cast<std::string>(*this); }
 		virtual void from_json(const std::string& json) = 0;
-		virtual std::string to_json() const = 0;
+		virtual std::string to_json(const std::string& offset = "") const = 0;
 	};
 
 	template <typename T>
@@ -445,6 +446,89 @@ namespace reflect
 			// reading byte index
 			std::size_t m_index;
 		};
+
+		namespace json
+		{
+			class Serializer final
+			{
+			public:
+				Serializer() = delete;
+				~Serializer() = delete;
+
+				template <typename T>
+				static std::string to_string(const T value)
+				{
+					return std::to_string(value);
+				}
+				static std::string to_string(const bool value)
+				{
+					return value ? "true" : "false";
+				}
+				static std::string to_string(const char* const value)
+				{
+					return std::string{ quote }.append(value).append(quote);
+				}
+				static std::string to_string(const std::string& value)
+				{
+					return std::string{ quote }.append(value).append(quote);
+				}
+
+				template <typename T>
+				static std::string to_string(const std::list<T>& value)
+				{
+					std::string result{ "[" };
+
+					for (const auto& element : value)
+					{
+						result.append(to_string(element)).append(comma);
+					}
+
+					result.append("]");
+					return result;
+				}
+
+				template <typename T>
+				static std::string to_string(const std::vector<T>& value)
+				{
+					std::string result{ "[" };
+
+					for (const auto& element : value)
+					{
+						result.append(to_string(element)).append(comma);
+					}
+
+					result.append("]");
+					return result;
+				}
+
+				template <typename K, typename V>
+				static std::string to_string(const std::map<K, V>& object)
+				{
+
+					std::string next{};
+
+					std::string result{ "{" };
+
+					for (const auto& pair : object)
+					{
+						result.append(next)
+							.append(quote)
+							.append(to_string(pair.first))
+							.append(quote_equals)
+							.append(to_string(pair.second));
+						next = comma;
+					}
+
+					return result.append("}");
+				}
+
+			private:
+				static constexpr char* comma = ",";
+				static constexpr char* equals = ":";
+				static constexpr char* quote = "\"";
+				static constexpr char* quote_equals = "\":";
+			};
+		}
 	}
 
 #define ENUM(...)
@@ -460,5 +544,5 @@ namespace reflect
 	virtual operator std::string() const override; \
 	virtual void from_string(const std::string& str) override; \
 	virtual void from_json(const std::string& json) override; \
-	virtual std::string to_json() const override;
+	virtual std::string to_json(const std::string& offset = "") const override;
 }

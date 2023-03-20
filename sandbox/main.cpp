@@ -69,6 +69,9 @@ int main()
 		in >> foo.a;
 		in >> foo.b;
 		in >> str;
+
+		Poo poo;
+		json = poo.to_json();
 	}
 
 }

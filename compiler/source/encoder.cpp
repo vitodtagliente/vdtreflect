@@ -324,8 +324,10 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	sourceBuffer.push_line("{");
 	sourceBuffer.push_line("}");
 	sourceBuffer.push_line("");
-	sourceBuffer.push_line("std::string ", type.name, "::to_json() const");
+	sourceBuffer.push_line("std::string ", type.name, "::to_json(const std::string& offset) const");
 	sourceBuffer.push_line("{");
+	sourceBuffer.push_line("    std::stringstream stream;");
+	sourceBuffer.push_line("    stream << \"{\" << std::endl;");
 	// look for parent classes
 	has_parent = false;
 	parent_name = type.parent;
@@ -361,7 +363,8 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 		if (!temp.empty())
 			sourceBuffer.push_line(temp);
 	}
-	sourceBuffer.push_line("    return \"\";");
+	sourceBuffer.push_line("    stream << offset << \"}\";");
+	sourceBuffer.push_line("    return stream.str();");
 	sourceBuffer.push_line("}");
 	sourceBuffer.push_line("");
 
@@ -584,7 +587,71 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 
 std::string Encoder::encodePropertySerializationToJson(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const Property& property)
 {
-	return "";
+	return encodePropertySerializationToJson(offset, symbolTable, serialize, property.name, property.type);
+}
+
+std::string Encoder::encodePropertySerializationToJson(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const std::string& name, const std::string& type)
+{
+	const DecoratorType decoratorType = parseDecoratorType(symbolTable, type);
+	const NativeType nativeType = parseNativeType(symbolTable, type);
+	EncodeBuffer buffer;
+
+	if (decoratorType != DecoratorType::D_raw) return "";
+
+	switch (nativeType)
+	{
+	case NativeType::T_bool:
+	case NativeType::T_double:
+	case NativeType::T_float:
+	case NativeType::T_int:
+	case NativeType::T_char:
+	case NativeType::T_string: 
+	{
+		buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(", name, ") << \",\" << std::endl;");
+		break;
+	}
+	case NativeType::T_enum:
+	{
+		buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(enumToString(", name, ")) << \",\" << std::endl;");
+		break;
+	}
+	case NativeType::T_template:
+	{
+		std::vector<std::string> typenames;
+		typenames = extractTypenames(type);
+
+		if (typenames.empty()) break;
+
+		if (StringUtil::startsWith(type, "vector") || StringUtil::startsWith(type, "std::vector")
+			|| StringUtil::startsWith(type, "list") || StringUtil::startsWith(type, "std::list"))
+		{
+			if (!isValidListType(parseNativeType(symbolTable, typenames[0]))) break;
+
+			buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(", name, ") << \",\" << std::endl;");
+		}
+		else if (StringUtil::startsWith(type, "map") || StringUtil::startsWith(type, "std::map")
+			|| StringUtil::startsWith(type, "unordered_map") || StringUtil::startsWith(type, "std::unordered_map"))
+		{
+			if (typenames.size() < 2) break;
+			if (!isValidMapKeyType(parseNativeType(symbolTable, typenames[0]))
+				|| !isValidMapValueType(parseNativeType(symbolTable, typenames[1]))) break;
+
+			buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(", name, ") << \",\" << std::endl;");
+		}
+		break;
+	}
+	case NativeType::T_type:
+	{
+		buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << ", name, ".to_json(offset + \"    \") << \",\" << std::endl;");
+		break;
+	}
+	default:
+	case NativeType::T_void:
+	case NativeType::T_unknown:
+		break;
+	}
+
+	return buffer.string(false);
 }
 
 NativeType Encoder::parseNativeType(const SymbolTable& symbolTable, const std::string& t)
