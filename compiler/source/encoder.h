@@ -33,7 +33,7 @@ public:
 		push_line(str);
 	}
 
-	std::string string() const;
+	std::string string(bool useEndline = true) const;
 
 private:
 
@@ -56,10 +56,17 @@ public:
 private:
 	static bool encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, const SymbolTable& symbolTable, const TypeCollection& collection, TypeClass& type);
 	static bool encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, const SymbolTable& symbolTable, TypeEnum& type);
-	static std::string encode(const SymbolTable& symbolTable, const std::string& name, const std::string& offset, const Property& property);
-	static std::string encode(const SymbolTable& symbolTable, const std::string& type, const std::string& offset);
-	static std::string encodeToTypeEnum(const SymbolTable& symbolTable, const std::string& type);
-	static std::string encodeToDecoratorTypeEnum(const SymbolTable& symbolTable, const std::string& type);
+
+	static std::string encodePropertyReflection(const std::string& offset, const SymbolTable& symbolTable, const Property& property, const std::string& name);
+	static std::string encodePropertyReflection(const std::string& offset, const SymbolTable& symbolTable, const std::string& type);
+
+	static std::string encodePropertySerialization(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const Property& property);
+	
+	static NativeType parseNativeType(const SymbolTable& symbolTable, const std::string& type);
+	static DecoratorType parseDecoratorType(const SymbolTable& symbolTable, const std::string& type);
 	static std::vector<std::string> extractTypenames(const std::string& token);
 	static std::string sanitizeTemplate(const std::string& token);
+
+	static std::string toString(const NativeType type);
+	static std::string toString(const DecoratorType type);
 };

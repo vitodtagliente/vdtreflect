@@ -36,8 +36,8 @@ const char* const reflect::Type<Foo>::name() { return "Foo"; }
 const reflect::properties_t& Type<Foo>::properties()
 {
     static reflect::properties_t s_properties {
-        { "a", reflect::Property{ offsetof(Foo, a), reflect::meta_t {{"JsonExport", "true"} }, "a", NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
-        { "b", reflect::Property{ offsetof(Foo, b), reflect::meta_t { }, "b", NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
+        { "a", reflect::Property{ offsetof(Foo, a), reflect::meta_t {{"JsonExport", "true"} }, "a", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
+        { "b", reflect::Property{ offsetof(Foo, b), reflect::meta_t { }, "b", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
     };
     return s_properties;
 }
@@ -45,6 +45,40 @@ const reflect::properties_t& Type<Foo>::properties()
 const reflect::meta_t& Foo::type_meta() const { return reflect::Type<Foo>::meta(); }
 const char* const Foo::type_name() const { return reflect::Type<Foo>::name(); }
 const reflect::properties_t& Foo::type_properties() const { return reflect::Type<Foo>::properties(); }
+
+Foo::operator std::string() const
+{
+    reflect::encoding::ByteBuffer buffer;
+    reflect::encoding::OutputByteStream stream(buffer);
+    stream << type_name();
+    
+    stream << a;
+    stream << b;
+    
+    return std::string(reinterpret_cast<const char*>(&stream.getBuffer()[0]), stream.getBuffer().size());
+}
+
+void Foo::from_string(const std::string& str)
+{
+    reflect::encoding::ByteBuffer buffer;
+    std::transform(
+        std::begin(str),
+        std::end(str),
+        std::back_inserter(buffer),
+        [](const char c)
+        {
+            return std::byte(c);
+        }
+    );
+    
+    reflect::encoding::InputByteStream stream(buffer);
+    std::string _name;
+    stream >> _name;
+    if (_name != type_name()) return;
+    
+    stream >> a;
+    stream >> b;
+}
 
 const reflect::meta_t& reflect::Type<Poo>::meta()
 {
@@ -58,31 +92,31 @@ const reflect::properties_t& Type<Poo>::properties()
 {
     static reflect::properties_t s_properties {
         // Parent class Foo properties
-        { "a", reflect::Property{ offsetof(Poo, a), reflect::meta_t {{"JsonExport", "true"} }, "a", NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
-        { "b", reflect::Property{ offsetof(Poo, b), reflect::meta_t { }, "b", NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
+        { "a", reflect::Property{ offsetof(Poo, a), reflect::meta_t {{"JsonExport", "true"} }, "a", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
+        { "b", reflect::Property{ offsetof(Poo, b), reflect::meta_t { }, "b", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
         // Properties
-        { "c", reflect::Property{ offsetof(Poo, c), reflect::meta_t { }, "c", NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
-        { "numbers", reflect::Property{ offsetof(Poo, numbers), reflect::meta_t { }, "numbers", NativeType{ "std::vector<int>", { 
-            NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
+        { "c", reflect::Property{ offsetof(Poo, c), reflect::meta_t { }, "c", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
+        { "numbers", reflect::Property{ offsetof(Poo, numbers), reflect::meta_t { }, "numbers", reflect::NativeType{ "std::vector<int>", { 
+            reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
         }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::vector<int>), reflect::NativeType::Type::T_template } } },
-        { "dictionary", reflect::Property{ offsetof(Poo, dictionary), reflect::meta_t { }, "dictionary", NativeType{ "std::map<std::string, int>", { 
-            NativeType{ "std::string", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::string), reflect::NativeType::Type::T_string },
-            NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
+        { "dictionary", reflect::Property{ offsetof(Poo, dictionary), reflect::meta_t { }, "dictionary", reflect::NativeType{ "std::map<std::string, int>", { 
+            reflect::NativeType{ "std::string", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::string), reflect::NativeType::Type::T_string },
+            reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
         }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::map<std::string, int>), reflect::NativeType::Type::T_template } } },
-        { "tuple", reflect::Property{ offsetof(Poo, tuple), reflect::meta_t { }, "tuple", NativeType{ "std::tuple<int, float, bool, double>", { 
-            NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
-            NativeType{ "float", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(float), reflect::NativeType::Type::T_float },
-            NativeType{ "bool", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(bool), reflect::NativeType::Type::T_bool },
-            NativeType{ "double", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(double), reflect::NativeType::Type::T_double },
+        { "tuple", reflect::Property{ offsetof(Poo, tuple), reflect::meta_t { }, "tuple", reflect::NativeType{ "std::tuple<int, float, bool, double>", { 
+            reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
+            reflect::NativeType{ "float", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(float), reflect::NativeType::Type::T_float },
+            reflect::NativeType{ "bool", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(bool), reflect::NativeType::Type::T_bool },
+            reflect::NativeType{ "double", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(double), reflect::NativeType::Type::T_double },
         }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::tuple<int, float, bool, double>), reflect::NativeType::Type::T_template } } },
-        { "power_dictionary", reflect::Property{ offsetof(Poo, power_dictionary), reflect::meta_t { }, "power_dictionary", NativeType{ "std::map<std::string, std::vector<int>>", { 
-            NativeType{ "std::string", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::string), reflect::NativeType::Type::T_string },
-            NativeType{ "std::vector<int>", { 
-                NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
+        { "power_dictionary", reflect::Property{ offsetof(Poo, power_dictionary), reflect::meta_t { }, "power_dictionary", reflect::NativeType{ "std::map<std::string, std::vector<int>>", { 
+            reflect::NativeType{ "std::string", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::string), reflect::NativeType::Type::T_string },
+            reflect::NativeType{ "std::vector<int>", { 
+                reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
             }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::vector<int>), reflect::NativeType::Type::T_template },
         }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::map<std::string, std::vector<int>>), reflect::NativeType::Type::T_template } } },
-        { "e", reflect::Property{ offsetof(Poo, e), reflect::meta_t { }, "e", NativeType{ "TestEnum", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(TestEnum), reflect::NativeType::Type::T_enum } } },
-        { "type", reflect::Property{ offsetof(Poo, type), reflect::meta_t { }, "type", NativeType{ "Foo", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(Foo), reflect::NativeType::Type::T_type } } },
+        { "e", reflect::Property{ offsetof(Poo, e), reflect::meta_t { }, "e", reflect::NativeType{ "TestEnum", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(TestEnum), reflect::NativeType::Type::T_enum } } },
+        { "type", reflect::Property{ offsetof(Poo, type), reflect::meta_t { }, "type", reflect::NativeType{ "Foo", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(Foo), reflect::NativeType::Type::T_type } } },
     };
     return s_properties;
 }
@@ -90,6 +124,58 @@ const reflect::properties_t& Type<Poo>::properties()
 const reflect::meta_t& Poo::type_meta() const { return reflect::Type<Poo>::meta(); }
 const char* const Poo::type_name() const { return reflect::Type<Poo>::name(); }
 const reflect::properties_t& Poo::type_properties() const { return reflect::Type<Poo>::properties(); }
+
+Poo::operator std::string() const
+{
+    reflect::encoding::ByteBuffer buffer;
+    reflect::encoding::OutputByteStream stream(buffer);
+    stream << type_name();
+    
+    // Parent class Foo properties
+    stream << a;
+    stream << b;
+    // Properties
+    stream << c;
+    stream << static_cast<int>(e);
+    stream << static_cast<std::string>(type);
+    
+    return std::string(reinterpret_cast<const char*>(&stream.getBuffer()[0]), stream.getBuffer().size());
+}
+
+void Poo::from_string(const std::string& str)
+{
+    reflect::encoding::ByteBuffer buffer;
+    std::transform(
+        std::begin(str),
+        std::end(str),
+        std::back_inserter(buffer),
+        [](const char c)
+        {
+            return std::byte(c);
+        }
+    );
+    
+    reflect::encoding::InputByteStream stream(buffer);
+    std::string _name;
+    stream >> _name;
+    if (_name != type_name()) return;
+    
+    // Parent class Foo properties
+    stream >> a;
+    stream >> b;
+    // Properties
+    stream >> c;
+    {
+        int pack;
+        stream >> pack;
+        e = static_cast<TestEnum>(e);
+    }
+    {
+        std::string pack;
+        stream >> pack;
+        type.from_string(pack);
+    }
+}
 
 const reflect::meta_t& reflect::Type<Too>::meta()
 {
@@ -103,10 +189,10 @@ const reflect::properties_t& Type<Too>::properties()
 {
     static reflect::properties_t s_properties {
         // Parent class Foo properties
-        { "a", reflect::Property{ offsetof(Too, a), reflect::meta_t {{"JsonExport", "true"} }, "a", NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
-        { "b", reflect::Property{ offsetof(Too, b), reflect::meta_t { }, "b", NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
+        { "a", reflect::Property{ offsetof(Too, a), reflect::meta_t {{"JsonExport", "true"} }, "a", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
+        { "b", reflect::Property{ offsetof(Too, b), reflect::meta_t { }, "b", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
         // Properties
-        { "c", reflect::Property{ offsetof(Too, c), reflect::meta_t { }, "c", NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
+        { "c", reflect::Property{ offsetof(Too, c), reflect::meta_t { }, "c", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
     };
     return s_properties;
 }
@@ -114,4 +200,44 @@ const reflect::properties_t& Type<Too>::properties()
 const reflect::meta_t& Too::type_meta() const { return reflect::Type<Too>::meta(); }
 const char* const Too::type_name() const { return reflect::Type<Too>::name(); }
 const reflect::properties_t& Too::type_properties() const { return reflect::Type<Too>::properties(); }
+
+Too::operator std::string() const
+{
+    reflect::encoding::ByteBuffer buffer;
+    reflect::encoding::OutputByteStream stream(buffer);
+    stream << type_name();
+    
+    // Parent class Foo properties
+    stream << a;
+    stream << b;
+    // Properties
+    stream << c;
+    
+    return std::string(reinterpret_cast<const char*>(&stream.getBuffer()[0]), stream.getBuffer().size());
+}
+
+void Too::from_string(const std::string& str)
+{
+    reflect::encoding::ByteBuffer buffer;
+    std::transform(
+        std::begin(str),
+        std::end(str),
+        std::back_inserter(buffer),
+        [](const char c)
+        {
+            return std::byte(c);
+        }
+    );
+    
+    reflect::encoding::InputByteStream stream(buffer);
+    std::string _name;
+    stream >> _name;
+    if (_name != type_name()) return;
+    
+    // Parent class Foo properties
+    stream >> a;
+    stream >> b;
+    // Properties
+    stream >> c;
+}
 

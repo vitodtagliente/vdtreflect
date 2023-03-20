@@ -58,6 +58,7 @@ int main()
 		out << foo.a;
 		out << foo.b;
 		out << std::string("mondo");
+		std::string t = foo.to_string();
 		reflect::encoding::ByteBufferFile::save(buffer, "test.txt");
 
 		Foo foo1;

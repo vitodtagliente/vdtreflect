@@ -9,6 +9,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace reflect
@@ -171,6 +172,10 @@ namespace reflect
 		virtual const char* const type_name() const = 0;
 		virtual const meta_t& type_meta() const = 0;
 		virtual const properties_t& type_properties() const = 0;
+
+		virtual operator std::string() const = 0;
+		virtual void from_string(const std::string& str) = 0;
+		std::string to_string() const { return static_cast<std::string>(*this); }
 	};
 
 	template <typename T>
@@ -318,7 +323,7 @@ namespace reflect
 				file.flush();
 				file.close();
 			}
-		};		
+		};
 
 		class ByteStream
 		{
@@ -372,6 +377,19 @@ namespace reflect
 						return std::byte(c);
 					}
 				);
+
+				return *this;
+			}
+
+			OutputByteStream& operator<< (const char* str)
+			{
+				const std::size_t size = std::strlen(str);
+				*this << size;
+
+				const std::byte* begin = reinterpret_cast<const std::byte*>(str);
+				const std::byte* end = begin + size;
+
+				m_buffer.insert(m_buffer.end(), begin, end);
 
 				return *this;
 			}
@@ -436,5 +454,7 @@ namespace reflect
 	friend struct Type; \
 	virtual const meta_t& type_meta() const override; \
 	virtual const char* const type_name() const override; \
-	virtual const properties_t& type_properties() const override;
+	virtual const properties_t& type_properties() const override; \
+	virtual operator std::string() const override; \
+	virtual void from_string(const std::string& str) override;
 }

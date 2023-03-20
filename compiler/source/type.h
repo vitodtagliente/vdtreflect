@@ -8,6 +8,29 @@
 
 typedef std::map<std::string, std::string> meta_t;
 
+enum class NativeType
+{
+	T_unknown,
+
+	T_bool,
+	T_char,
+	T_double,
+	T_enum,
+	T_float,
+	T_int,
+	T_string,
+	T_template,
+	T_type,
+	T_void
+};
+
+enum class DecoratorType
+{
+	D_raw,
+	D_pointer,
+	D_reference
+};
+
 class Type
 {
 public:
