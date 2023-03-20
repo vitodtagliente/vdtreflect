@@ -327,7 +327,8 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	sourceBuffer.push_line("std::string ", type.name, "::to_json(const std::string& offset) const");
 	sourceBuffer.push_line("{");
 	sourceBuffer.push_line("    std::stringstream stream;");
-	sourceBuffer.push_line("    stream << \"{\" << std::endl;");
+	sourceBuffer.push_line("    stream << \"{\" << std::endl;"); 
+	sourceBuffer.push_line("    stream << offset << \"    \" << \"\\\"type_id\\\": \" << \"", type.name, "\" << \",\" << std::endl;");
 	// look for parent classes
 	has_parent = false;
 	parent_name = type.parent;
@@ -764,9 +765,8 @@ bool Encoder::isValidListType(const NativeType type)
 
 bool Encoder::isValidMapKeyType(const NativeType type)
 {
-	return type != NativeType::T_template
-		&& type != NativeType::T_void
-		&& type != NativeType::T_unknown;
+	return type == NativeType::T_enum
+		|| type == NativeType::T_string;
 }
 
 bool Encoder::isValidMapValueType(const NativeType type)

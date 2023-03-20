@@ -94,6 +94,7 @@ std::string Foo::to_json(const std::string& offset) const
 {
     std::stringstream stream;
     stream << "{" << std::endl;
+    stream << offset << "    " << "\"type_id\": " << "Foo" << "," << std::endl;
     stream << offset << "    " << "\"a\": " << reflect::encoding::json::Serializer::to_string(a) << "," << std::endl;
     stream << offset << "    " << "\"b\": " << reflect::encoding::json::Serializer::to_string(b) << "," << std::endl;
     stream << offset << "    " << "\"enabled\": " << reflect::encoding::json::Serializer::to_string(enabled) << "," << std::endl;
@@ -272,6 +273,7 @@ std::string Poo::to_json(const std::string& offset) const
 {
     std::stringstream stream;
     stream << "{" << std::endl;
+    stream << offset << "    " << "\"type_id\": " << "Poo" << "," << std::endl;
     // Parent class Foo properties
     stream << offset << "    " << "\"a\": " << reflect::encoding::json::Serializer::to_string(a) << "," << std::endl;
     stream << offset << "    " << "\"b\": " << reflect::encoding::json::Serializer::to_string(b) << "," << std::endl;
@@ -366,6 +368,7 @@ std::string Too::to_json(const std::string& offset) const
 {
     std::stringstream stream;
     stream << "{" << std::endl;
+    stream << offset << "    " << "\"type_id\": " << "Too" << "," << std::endl;
     // Parent class Foo properties
     stream << offset << "    " << "\"a\": " << reflect::encoding::json::Serializer::to_string(a) << "," << std::endl;
     stream << offset << "    " << "\"b\": " << reflect::encoding::json::Serializer::to_string(b) << "," << std::endl;

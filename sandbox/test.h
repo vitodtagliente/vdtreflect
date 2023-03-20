@@ -39,7 +39,7 @@ public:
 	PROPERTY() std::map<std::string, int> dictionary;
 	PROPERTY() std::tuple<int, float, bool, double> tuple;
 	PROPERTY() std::map<std::string, std::vector<int>> power_dictionary;
-	PROPERTY() TestEnum e;
+	PROPERTY() TestEnum e = TestEnum::A;
 	PROPERTY() Foo type;
 
 	GENERATED_BODY()
