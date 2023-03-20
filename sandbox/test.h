@@ -23,6 +23,7 @@ class Foo : public IType
 public:
 	PROPERTY(JsonExport = true) int a{ 4 };
 	PROPERTY() int b = 5;
+	PROPERTY() bool enabled = false;
 
 	GENERATED_BODY()
 };

@@ -38,6 +38,7 @@ const reflect::properties_t& Type<Foo>::properties()
     static reflect::properties_t s_properties {
         { "a", reflect::Property{ offsetof(Foo, a), reflect::meta_t {{"JsonExport", "true"} }, "a", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
         { "b", reflect::Property{ offsetof(Foo, b), reflect::meta_t { }, "b", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
+        { "enabled", reflect::Property{ offsetof(Foo, enabled), reflect::meta_t { }, "enabled", reflect::NativeType{ "bool", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(bool), reflect::NativeType::Type::T_bool } } },
     };
     return s_properties;
 }
@@ -54,6 +55,7 @@ Foo::operator std::string() const
     
     stream << a;
     stream << b;
+    stream << enabled;
     
     return std::string(reinterpret_cast<const char*>(&stream.getBuffer()[0]), stream.getBuffer().size());
 }
@@ -78,6 +80,22 @@ void Foo::from_string(const std::string& str)
     
     stream >> a;
     stream >> b;
+    stream >> enabled;
+}
+
+void Foo::from_json(const std::string& json)
+{
+}
+
+std::string Foo::to_json() const
+{
+    reflect::encoding::StringBuffer buffer;
+    buffer.push_line("{");
+    buffer.push_line("    \"a\": ", a, ",");
+    buffer.push_line("    \"b\": ", b, ",");
+    buffer.push_line("    \"enabled\": ", enabled ? "true" : "false", ",");
+    buffer.push_line("}");
+    return buffer.string();
 }
 
 const reflect::meta_t& reflect::Type<Poo>::meta()
@@ -94,6 +112,7 @@ const reflect::properties_t& Type<Poo>::properties()
         // Parent class Foo properties
         { "a", reflect::Property{ offsetof(Poo, a), reflect::meta_t {{"JsonExport", "true"} }, "a", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
         { "b", reflect::Property{ offsetof(Poo, b), reflect::meta_t { }, "b", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
+        { "enabled", reflect::Property{ offsetof(Poo, enabled), reflect::meta_t { }, "enabled", reflect::NativeType{ "bool", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(bool), reflect::NativeType::Type::T_bool } } },
         // Properties
         { "c", reflect::Property{ offsetof(Poo, c), reflect::meta_t { }, "c", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
         { "numbers", reflect::Property{ offsetof(Poo, numbers), reflect::meta_t { }, "numbers", reflect::NativeType{ "std::vector<int>", { 
@@ -137,6 +156,7 @@ Poo::operator std::string() const
     // Parent class Foo properties
     stream << a;
     stream << b;
+    stream << enabled;
     // Properties
     stream << c;
     {
@@ -188,6 +208,7 @@ void Poo::from_string(const std::string& str)
     // Parent class Foo properties
     stream >> a;
     stream >> b;
+    stream >> enabled;
     // Properties
     stream >> c;
     {
@@ -236,6 +257,25 @@ void Poo::from_string(const std::string& str)
     }
 }
 
+void Poo::from_json(const std::string& json)
+{
+}
+
+std::string Poo::to_json() const
+{
+    reflect::encoding::StringBuffer buffer;
+    buffer.push_line("{");
+    // Parent class Foo properties
+    buffer.push_line("    \"a\": ", a, ",");
+    buffer.push_line("    \"b\": ", b, ",");
+    buffer.push_line("    \"enabled\": ", enabled ? "true" : "false", ",");
+    // Properties
+    buffer.push_line("    \"c\": ", c, ",");
+    buffer.push_line("    \"e\": ", "\"", enumToString(e), "\"", ",");
+    buffer.push_line("}");
+    return buffer.string();
+}
+
 const reflect::meta_t& reflect::Type<Too>::meta()
 {
     static reflect::meta_t s_meta {
@@ -250,6 +290,7 @@ const reflect::properties_t& Type<Too>::properties()
         // Parent class Foo properties
         { "a", reflect::Property{ offsetof(Too, a), reflect::meta_t {{"JsonExport", "true"} }, "a", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
         { "b", reflect::Property{ offsetof(Too, b), reflect::meta_t { }, "b", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
+        { "enabled", reflect::Property{ offsetof(Too, enabled), reflect::meta_t { }, "enabled", reflect::NativeType{ "bool", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(bool), reflect::NativeType::Type::T_bool } } },
         // Properties
         { "c", reflect::Property{ offsetof(Too, c), reflect::meta_t { }, "c", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
     };
@@ -269,6 +310,7 @@ Too::operator std::string() const
     // Parent class Foo properties
     stream << a;
     stream << b;
+    stream << enabled;
     // Properties
     stream << c;
     
@@ -296,7 +338,26 @@ void Too::from_string(const std::string& str)
     // Parent class Foo properties
     stream >> a;
     stream >> b;
+    stream >> enabled;
     // Properties
     stream >> c;
+}
+
+void Too::from_json(const std::string& json)
+{
+}
+
+std::string Too::to_json() const
+{
+    reflect::encoding::StringBuffer buffer;
+    buffer.push_line("{");
+    // Parent class Foo properties
+    buffer.push_line("    \"a\": ", a, ",");
+    buffer.push_line("    \"b\": ", b, ",");
+    buffer.push_line("    \"enabled\": ", enabled ? "true" : "false", ",");
+    // Properties
+    buffer.push_line("    \"c\": ", c, ",");
+    buffer.push_line("}");
+    return buffer.string();
 }
 

@@ -60,6 +60,7 @@ int main()
 		out << std::string("mondo");
 		std::string t = foo.to_string();
 		reflect::encoding::ByteBufferFile::save(buffer, "test.txt");
+		std::string json = foo.to_json();
 
 		Foo foo1;
 		std::string str;

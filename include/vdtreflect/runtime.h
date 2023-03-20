@@ -8,6 +8,7 @@
 #include <iterator>
 #include <map>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <variant>
 #include <vector>
@@ -176,6 +177,8 @@ namespace reflect
 		virtual operator std::string() const = 0;
 		virtual void from_string(const std::string& str) = 0;
 		std::string to_string() const { return static_cast<std::string>(*this); }
+		virtual void from_json(const std::string& json) = 0;
+		virtual std::string to_json() const = 0;
 	};
 
 	template <typename T>
@@ -443,6 +446,49 @@ namespace reflect
 			// reading byte index
 			std::size_t m_index;
 		};
+
+		class StringBuffer
+		{
+		public:
+			void push(const std::string& token);
+			template<typename... Ts>
+			void push(Ts const&... ts)
+			{
+				const std::string str = string_format(ts...);
+				push(str);
+			}
+
+			void push_line(const std::string& line){ m_lines.push_back(line); }
+			template<typename... Ts>
+			void push_line(Ts const&... ts)
+			{
+				const std::string str = string_format(ts...);
+				push_line(str);
+			}
+
+			std::string string() const
+			{
+				std::string content;
+				for (const std::string& line : m_lines)
+				{
+					if (!content.empty())
+						content += "\n";
+					content += line;
+				}
+				return content;
+			}
+
+		private:
+			template<typename... Ts>
+			std::string string_format(Ts const&... ts) {
+				std::stringstream s;
+				int dummy[] = { 0, ((s << ts), 0)... };
+				static_cast<void>(dummy); // Avoid warning for unused variable
+				return s.str();
+			}
+
+			std::vector<std::string> m_lines;
+		};
 	}
 
 #define ENUM(...)
@@ -456,5 +502,7 @@ namespace reflect
 	virtual const char* const type_name() const override; \
 	virtual const properties_t& type_properties() const override; \
 	virtual operator std::string() const override; \
-	virtual void from_string(const std::string& str) override;
+	virtual void from_string(const std::string& str) override; \
+	virtual void from_json(const std::string& json) override; \
+	virtual std::string to_json() const override;
 }

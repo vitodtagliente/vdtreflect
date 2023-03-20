@@ -62,6 +62,9 @@ private:
 
 	static std::string encodePropertySerialization(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const Property& property);
 	static std::string encodePropertySerialization(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const std::string& name, const std::string& type);
+
+	static std::string encodePropertySerializationToJson(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const Property& property);
+	static std::string encodePropertySerializationToJson(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const std::string& name, const std::string& type);
 	
 	static NativeType parseNativeType(const SymbolTable& symbolTable, const std::string& type);
 	static DecoratorType parseDecoratorType(const SymbolTable& symbolTable, const std::string& type);
