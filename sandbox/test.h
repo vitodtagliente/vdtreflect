@@ -1,6 +1,7 @@
 // Copyright (c) Vito Domenico Tagliente
 #pragma once
 
+#include <list>
 #include <map>
 #include <string>
 #include <vector>
@@ -32,6 +33,7 @@ class Poo : public Foo
 public:
 	PROPERTY() int c = 15;
 	PROPERTY() std::vector<int> numbers;
+	PROPERTY() std::list<int> list;
 	PROPERTY() std::map<std::string, int> dictionary;
 	PROPERTY() std::tuple<int, float, bool, double> tuple;
 	PROPERTY() std::map<std::string, std::vector<int>> power_dictionary;

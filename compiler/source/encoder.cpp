@@ -441,7 +441,8 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 
 		if (typenames.empty()) break;
 
-		if (StringUtil::startsWith(type, "vector") || StringUtil::startsWith(type, "std::vector"))
+		if (StringUtil::startsWith(type, "vector") || StringUtil::startsWith(type, "std::vector")
+			|| StringUtil::startsWith(type, "list") || StringUtil::startsWith(type, "std::list"))
 		{
 			if (!isValidListType(parseNativeType(symbolTable, typenames[0]))) break;
 
@@ -449,21 +450,33 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 			if (serialize)
 			{
 				buffer.push("\n", offset, "    ", "stream << ", name, ".size();");
+				buffer.push("\n", offset, "    ", "for (const auto& element : ", name, ")");
 			}
 			else
 			{
 				buffer.push("\n", offset, "    ", "std::size_t size;");
 				buffer.push("\n", offset, "    ", "stream >> size;");
 				buffer.push("\n", offset, "    ", name, ".resize(size);");
+				buffer.push("\n", offset, "    ", "for (int i = 0; i < ", name, ".size(); ++i)");
 			}
-			buffer.push("\n", offset, "    ", "for(int i = 0; i < ", name, ".size(); ++i)");
 			buffer.push("\n", offset, "    ", "{");
-			const std::string temp = encodePropertySerialization("    ", symbolTable, serialize, name + "[i]", typenames[0]);
-			buffer.push("\n", offset, "    ", temp);
+			if (serialize)
+			{
+				const std::string temp = encodePropertySerialization("    ", symbolTable, serialize, "element", typenames[0]);
+				buffer.push("\n", offset, "    ", temp);
+			}
+			else
+			{
+				buffer.push("\n", offset, "        ", typenames[0], " element;");
+				const std::string temp = encodePropertySerialization("", symbolTable, serialize, "element", typenames[0]);
+				buffer.push("\n", offset, "        ", temp);
+				buffer.push("\n", offset, "        ", name, ".push_back(element);");
+			}
 			buffer.push("\n", offset, "    ", "}");
 			buffer.push("\n", offset, "}");
 		}
-		else if (StringUtil::startsWith(type, "map") || StringUtil::startsWith(type, "std::map"))
+		else if (StringUtil::startsWith(type, "map") || StringUtil::startsWith(type, "std::map")
+			|| StringUtil::startsWith(type, "unordered_map") || StringUtil::startsWith(type, "std::unordered_map"))
 		{
 			if (typenames.size() < 2) break;
 			if (!isValidMapKeyType(parseNativeType(symbolTable, typenames[0]))
@@ -473,7 +486,7 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 			if (serialize)
 			{
 				buffer.push("\n", offset, "    ", "stream << ", name, ".size();");
-				buffer.push("\n", offset, "    ", "for(const auto& pair : ", name, ")");
+				buffer.push("\n", offset, "    ", "for (const auto& pair : ", name, ")");
 				buffer.push("\n", offset, "    ", "{");
 				std::string temp = encodePropertySerialization("    ", symbolTable, serialize, "pair.first", typenames[0]);
 				buffer.push("\n", offset, "    ", temp);
@@ -485,7 +498,7 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 			{
 				buffer.push("\n", offset, "    ", "std::size_t size;");
 				buffer.push("\n", offset, "    ", "stream >> size;");
-				buffer.push("\n", offset, "    ", "for(int i = 0; i < size; ++i)");
+				buffer.push("\n", offset, "    ", "for (int i = 0; i < size; ++i)");
 				buffer.push("\n", offset, "    ", "{");
 				buffer.push("\n", offset, "        ", typenames[0], " key;");
 				std::string temp = encodePropertySerialization("    ", symbolTable, serialize, "key", typenames[0]);

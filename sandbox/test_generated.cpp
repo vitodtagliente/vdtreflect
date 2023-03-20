@@ -99,6 +99,9 @@ const reflect::properties_t& Type<Poo>::properties()
         { "numbers", reflect::Property{ offsetof(Poo, numbers), reflect::meta_t { }, "numbers", reflect::NativeType{ "std::vector<int>", { 
             reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
         }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::vector<int>), reflect::NativeType::Type::T_template } } },
+        { "list", reflect::Property{ offsetof(Poo, list), reflect::meta_t { }, "list", reflect::NativeType{ "std::list<int>", { 
+            reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
+        }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::list<int>), reflect::NativeType::Type::T_template } } },
         { "dictionary", reflect::Property{ offsetof(Poo, dictionary), reflect::meta_t { }, "dictionary", reflect::NativeType{ "std::map<std::string, int>", { 
             reflect::NativeType{ "std::string", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::string), reflect::NativeType::Type::T_string },
             reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
@@ -138,14 +141,21 @@ Poo::operator std::string() const
     stream << c;
     {
         stream << numbers.size();
-        for(int i = 0; i < numbers.size(); ++i)
+        for (const auto& element : numbers)
         {
-            stream << numbers[i];
+            stream << element;
+        }
+    }
+    {
+        stream << list.size();
+        for (const auto& element : list)
+        {
+            stream << element;
         }
     }
     {
         stream << dictionary.size();
-        for(const auto& pair : dictionary)
+        for (const auto& pair : dictionary)
         {
             stream << pair.first;
             stream << pair.second;
@@ -184,15 +194,28 @@ void Poo::from_string(const std::string& str)
         std::size_t size;
         stream >> size;
         numbers.resize(size);
-        for(int i = 0; i < numbers.size(); ++i)
+        for (int i = 0; i < numbers.size(); ++i)
         {
-            stream >> numbers[i];
+            int element;
+            stream >> element;
+            numbers.push_back(element);
         }
     }
     {
         std::size_t size;
         stream >> size;
-        for(int i = 0; i < size; ++i)
+        list.resize(size);
+        for (int i = 0; i < list.size(); ++i)
+        {
+            int element;
+            stream >> element;
+            list.push_back(element);
+        }
+    }
+    {
+        std::size_t size;
+        stream >> size;
+        for (int i = 0; i < size; ++i)
         {
             std::string key;
             stream >> key;
