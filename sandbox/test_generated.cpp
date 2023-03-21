@@ -36,10 +36,17 @@ const char* const reflect::Type<Foo>::name() { return "Foo"; }
 const reflect::properties_t& Type<Foo>::properties()
 {
     static reflect::properties_t s_properties {
-        { "a", reflect::Property{ offsetof(Foo, a), reflect::meta_t {{"JsonExport", "true"} }, "a", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
-        { "b", reflect::Property{ offsetof(Foo, b), reflect::meta_t { }, "b", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
-        { "enabled", reflect::Property{ offsetof(Foo, enabled), reflect::meta_t { }, "enabled", reflect::NativeType{ "bool", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(bool), reflect::NativeType::Type::T_bool } } },
-        { "name", reflect::Property{ offsetof(Foo, name), reflect::meta_t { }, "name", reflect::NativeType{ "std::string", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::string), reflect::NativeType::Type::T_string } } },
+        { "m_int", reflect::Property{ offsetof(Foo, m_int), reflect::meta_t {{"JsonExport", "true"} }, "m_int", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
+        { "m_enum", reflect::Property{ offsetof(Foo, m_enum), reflect::meta_t { }, "m_enum", reflect::NativeType{ "TestEnum", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(TestEnum), reflect::NativeType::Type::T_enum } } },
+        { "m_bool", reflect::Property{ offsetof(Foo, m_bool), reflect::meta_t { }, "m_bool", reflect::NativeType{ "bool", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(bool), reflect::NativeType::Type::T_bool } } },
+        { "m_string", reflect::Property{ offsetof(Foo, m_string), reflect::meta_t { }, "m_string", reflect::NativeType{ "std::string", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::string), reflect::NativeType::Type::T_string } } },
+        { "list", reflect::Property{ offsetof(Foo, list), reflect::meta_t { }, "list", reflect::NativeType{ "std::list<int>", { 
+            reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
+        }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::list<int>), reflect::NativeType::Type::T_template } } },
+        { "dictionary", reflect::Property{ offsetof(Foo, dictionary), reflect::meta_t { }, "dictionary", reflect::NativeType{ "std::map<std::string, int>", { 
+            reflect::NativeType{ "std::string", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::string), reflect::NativeType::Type::T_string },
+            reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
+        }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::map<std::string, int>), reflect::NativeType::Type::T_template } } },
     };
     return s_properties;
 }
@@ -54,10 +61,25 @@ Foo::operator std::string() const
     reflect::encoding::OutputByteStream stream(buffer);
     stream << type_name();
     
-    stream << a;
-    stream << b;
-    stream << enabled;
-    stream << name;
+    stream << m_int;
+    stream << static_cast<int>(m_enum);
+    stream << m_bool;
+    stream << m_string;
+    {
+        stream << list.size();
+        for (const auto& element : list)
+        {
+            stream << element;
+        }
+    }
+    {
+        stream << dictionary.size();
+        for (const auto& pair : dictionary)
+        {
+            stream << pair.first;
+            stream << pair.second;
+        }
+    }
     
     return std::string(reinterpret_cast<const char*>(&stream.getBuffer()[0]), stream.getBuffer().size());
 }
@@ -80,10 +102,37 @@ void Foo::from_string(const std::string& str)
     stream >> _name;
     if (_name != type_name()) return;
     
-    stream >> a;
-    stream >> b;
-    stream >> enabled;
-    stream >> name;
+    stream >> m_int;
+    {
+        int pack;
+        stream >> pack;
+        m_enum = static_cast<TestEnum>(m_enum);
+    }
+    stream >> m_bool;
+    stream >> m_string;
+    {
+        std::size_t size;
+        stream >> size;
+        list.resize(size);
+        for (int i = 0; i < list.size(); ++i)
+        {
+            int element;
+            stream >> element;
+            list.push_back(element);
+        }
+    }
+    {
+        std::size_t size;
+        stream >> size;
+        for (int i = 0; i < size; ++i)
+        {
+            std::string key;
+            stream >> key;
+            int value;
+            stream >> value;
+            dictionary.insert(std::make_pair(key, value));
+        }
+    }
 }
 
 void Foo::from_json(const std::string& json)
@@ -100,10 +149,17 @@ void Foo::from_json(const std::string& json)
         index = reflect::encoding::json::Deserializer::next_value(src, value);
         if (index != std::string::npos)
         {
-            if (key == "a") reflect::encoding::json::Deserializer::parse(value, a);
-            if (key == "b") reflect::encoding::json::Deserializer::parse(value, b);
-            if (key == "enabled") reflect::encoding::json::Deserializer::parse(value, enabled);
-            if (key == "name") reflect::encoding::json::Deserializer::parse(value, name);
+            if (key == "m_int") reflect::encoding::json::Deserializer::parse(value, m_int);
+            if (key == "m_enum")
+            {
+                std::string temp;
+                reflect::encoding::json::Deserializer::parse(value, temp);
+                stringToEnum(value, m_enum);
+            }
+            if (key == "m_bool") reflect::encoding::json::Deserializer::parse(value, m_bool);
+            if (key == "m_string") reflect::encoding::json::Deserializer::parse(value, m_string);
+            if (key == "list") reflect::encoding::json::Deserializer::parse(value, list);
+            if (key == "dictionary") reflect::encoding::json::Deserializer::parse(value, dictionary);
             src = src.substr(index + 1);
         }
         else break;
@@ -115,10 +171,12 @@ std::string Foo::to_json(const std::string& offset) const
     std::stringstream stream;
     stream << "{" << std::endl;
     stream << offset << "    " << "\"type_id\": " << "Foo" << "," << std::endl;
-    stream << offset << "    " << "\"a\": " << reflect::encoding::json::Serializer::to_string(a) << "," << std::endl;
-    stream << offset << "    " << "\"b\": " << reflect::encoding::json::Serializer::to_string(b) << "," << std::endl;
-    stream << offset << "    " << "\"enabled\": " << reflect::encoding::json::Serializer::to_string(enabled) << "," << std::endl;
-    stream << offset << "    " << "\"name\": " << reflect::encoding::json::Serializer::to_string(name) << "," << std::endl;
+    stream << offset << "    " << "\"m_int\": " << reflect::encoding::json::Serializer::to_string(m_int) << "," << std::endl;
+    stream << offset << "    " << "\"m_enum\": " << reflect::encoding::json::Serializer::to_string(enumToString(m_enum)) << "," << std::endl;
+    stream << offset << "    " << "\"m_bool\": " << reflect::encoding::json::Serializer::to_string(m_bool) << "," << std::endl;
+    stream << offset << "    " << "\"m_string\": " << reflect::encoding::json::Serializer::to_string(m_string) << "," << std::endl;
+    stream << offset << "    " << "\"list\": " << reflect::encoding::json::Serializer::to_string(list) << "," << std::endl;
+    stream << offset << "    " << "\"dictionary\": " << reflect::encoding::json::Serializer::to_string(dictionary) << "," << std::endl;
     stream << offset << "}";
     return stream.str();
 }
@@ -135,15 +193,10 @@ const reflect::properties_t& Type<Poo>::properties()
 {
     static reflect::properties_t s_properties {
         // Parent class Foo properties
-        { "a", reflect::Property{ offsetof(Poo, a), reflect::meta_t {{"JsonExport", "true"} }, "a", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
-        { "b", reflect::Property{ offsetof(Poo, b), reflect::meta_t { }, "b", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
-        { "enabled", reflect::Property{ offsetof(Poo, enabled), reflect::meta_t { }, "enabled", reflect::NativeType{ "bool", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(bool), reflect::NativeType::Type::T_bool } } },
-        { "name", reflect::Property{ offsetof(Poo, name), reflect::meta_t { }, "name", reflect::NativeType{ "std::string", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::string), reflect::NativeType::Type::T_string } } },
-        // Properties
-        { "c", reflect::Property{ offsetof(Poo, c), reflect::meta_t { }, "c", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
-        { "numbers", reflect::Property{ offsetof(Poo, numbers), reflect::meta_t { }, "numbers", reflect::NativeType{ "std::vector<int>", { 
-            reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
-        }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::vector<int>), reflect::NativeType::Type::T_template } } },
+        { "m_int", reflect::Property{ offsetof(Poo, m_int), reflect::meta_t {{"JsonExport", "true"} }, "m_int", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
+        { "m_enum", reflect::Property{ offsetof(Poo, m_enum), reflect::meta_t { }, "m_enum", reflect::NativeType{ "TestEnum", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(TestEnum), reflect::NativeType::Type::T_enum } } },
+        { "m_bool", reflect::Property{ offsetof(Poo, m_bool), reflect::meta_t { }, "m_bool", reflect::NativeType{ "bool", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(bool), reflect::NativeType::Type::T_bool } } },
+        { "m_string", reflect::Property{ offsetof(Poo, m_string), reflect::meta_t { }, "m_string", reflect::NativeType{ "std::string", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::string), reflect::NativeType::Type::T_string } } },
         { "list", reflect::Property{ offsetof(Poo, list), reflect::meta_t { }, "list", reflect::NativeType{ "std::list<int>", { 
             reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
         }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::list<int>), reflect::NativeType::Type::T_template } } },
@@ -151,6 +204,8 @@ const reflect::properties_t& Type<Poo>::properties()
             reflect::NativeType{ "std::string", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::string), reflect::NativeType::Type::T_string },
             reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
         }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::map<std::string, int>), reflect::NativeType::Type::T_template } } },
+        // Properties
+        { "c", reflect::Property{ offsetof(Poo, c), reflect::meta_t { }, "c", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
         { "tuple", reflect::Property{ offsetof(Poo, tuple), reflect::meta_t { }, "tuple", reflect::NativeType{ "std::tuple<int, float, bool, double>", { 
             reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
             reflect::NativeType{ "float", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(float), reflect::NativeType::Type::T_float },
@@ -163,18 +218,17 @@ const reflect::properties_t& Type<Poo>::properties()
                 reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
             }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::vector<int>), reflect::NativeType::Type::T_template },
         }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::map<std::string, std::vector<int>>), reflect::NativeType::Type::T_template } } },
-        { "e", reflect::Property{ offsetof(Poo, e), reflect::meta_t { }, "e", reflect::NativeType{ "TestEnum", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(TestEnum), reflect::NativeType::Type::T_enum } } },
-        { "type", reflect::Property{ offsetof(Poo, type), reflect::meta_t { }, "type", reflect::NativeType{ "Foo", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(Foo), reflect::NativeType::Type::T_type } } },
-        { "s_foos", reflect::Property{ offsetof(Poo, s_foos), reflect::meta_t { }, "s_foos", reflect::NativeType{ "std::vector<std::shared_ptr<Foo>>", { 
+        { "shared_foos", reflect::Property{ offsetof(Poo, shared_foos), reflect::meta_t { }, "shared_foos", reflect::NativeType{ "std::vector<std::shared_ptr<Foo>>", { 
             reflect::NativeType{ "std::shared_ptr<Foo>", { 
                 reflect::NativeType{ "Foo", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(Foo), reflect::NativeType::Type::T_type },
             }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::shared_ptr<Foo>), reflect::NativeType::Type::T_template },
         }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::vector<std::shared_ptr<Foo>>), reflect::NativeType::Type::T_template } } },
-        { "u_foos", reflect::Property{ offsetof(Poo, u_foos), reflect::meta_t { }, "u_foos", reflect::NativeType{ "std::vector<std::unique_ptr<Foo>>", { 
+        { "unique_foos", reflect::Property{ offsetof(Poo, unique_foos), reflect::meta_t { }, "unique_foos", reflect::NativeType{ "std::vector<std::unique_ptr<Foo>>", { 
             reflect::NativeType{ "std::unique_ptr<Foo>", { 
                 reflect::NativeType{ "Foo", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(Foo), reflect::NativeType::Type::T_type },
             }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::unique_ptr<Foo>), reflect::NativeType::Type::T_template },
         }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::vector<std::unique_ptr<Foo>>), reflect::NativeType::Type::T_template } } },
+        { "type", reflect::Property{ offsetof(Poo, type), reflect::meta_t { }, "type", reflect::NativeType{ "Foo", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(Foo), reflect::NativeType::Type::T_type } } },
     };
     return s_properties;
 }
@@ -190,19 +244,10 @@ Poo::operator std::string() const
     stream << type_name();
     
     // Parent class Foo properties
-    stream << a;
-    stream << b;
-    stream << enabled;
-    stream << name;
-    // Properties
-    stream << c;
-    {
-        stream << numbers.size();
-        for (const auto& element : numbers)
-        {
-            stream << element;
-        }
-    }
+    stream << m_int;
+    stream << static_cast<int>(m_enum);
+    stream << m_bool;
+    stream << m_string;
     {
         stream << list.size();
         for (const auto& element : list)
@@ -218,7 +263,8 @@ Poo::operator std::string() const
             stream << pair.second;
         }
     }
-    stream << static_cast<int>(e);
+    // Properties
+    stream << c;
     stream << static_cast<std::string>(type);
     
     return std::string(reinterpret_cast<const char*>(&stream.getBuffer()[0]), stream.getBuffer().size());
@@ -243,23 +289,14 @@ void Poo::from_string(const std::string& str)
     if (_name != type_name()) return;
     
     // Parent class Foo properties
-    stream >> a;
-    stream >> b;
-    stream >> enabled;
-    stream >> name;
-    // Properties
-    stream >> c;
+    stream >> m_int;
     {
-        std::size_t size;
-        stream >> size;
-        numbers.resize(size);
-        for (int i = 0; i < numbers.size(); ++i)
-        {
-            int element;
-            stream >> element;
-            numbers.push_back(element);
-        }
+        int pack;
+        stream >> pack;
+        m_enum = static_cast<TestEnum>(m_enum);
     }
+    stream >> m_bool;
+    stream >> m_string;
     {
         std::size_t size;
         stream >> size;
@@ -283,11 +320,8 @@ void Poo::from_string(const std::string& str)
             dictionary.insert(std::make_pair(key, value));
         }
     }
-    {
-        int pack;
-        stream >> pack;
-        e = static_cast<TestEnum>(e);
-    }
+    // Properties
+    stream >> c;
     {
         std::string pack;
         stream >> pack;
@@ -310,21 +344,19 @@ void Poo::from_json(const std::string& json)
         if (index != std::string::npos)
         {
             // Parent class Foo properties
-            if (key == "a") reflect::encoding::json::Deserializer::parse(value, a);
-            if (key == "b") reflect::encoding::json::Deserializer::parse(value, b);
-            if (key == "enabled") reflect::encoding::json::Deserializer::parse(value, enabled);
-            if (key == "name") reflect::encoding::json::Deserializer::parse(value, name);
-            // Properties
-            if (key == "c") reflect::encoding::json::Deserializer::parse(value, c);
-            if (key == "numbers") reflect::encoding::json::Deserializer::parse(value, numbers);
-            if (key == "list") reflect::encoding::json::Deserializer::parse(value, list);
-            if (key == "dictionary") reflect::encoding::json::Deserializer::parse(value, dictionary);
-            if (key == "e")
+            if (key == "m_int") reflect::encoding::json::Deserializer::parse(value, m_int);
+            if (key == "m_enum")
             {
                 std::string temp;
                 reflect::encoding::json::Deserializer::parse(value, temp);
-                stringToEnum(value, e);
+                stringToEnum(value, m_enum);
             }
+            if (key == "m_bool") reflect::encoding::json::Deserializer::parse(value, m_bool);
+            if (key == "m_string") reflect::encoding::json::Deserializer::parse(value, m_string);
+            if (key == "list") reflect::encoding::json::Deserializer::parse(value, list);
+            if (key == "dictionary") reflect::encoding::json::Deserializer::parse(value, dictionary);
+            // Properties
+            if (key == "c") reflect::encoding::json::Deserializer::parse(value, c);
             if (key == "type") type.from_json(value);
             src = src.substr(index + 1);
         }
@@ -338,130 +370,15 @@ std::string Poo::to_json(const std::string& offset) const
     stream << "{" << std::endl;
     stream << offset << "    " << "\"type_id\": " << "Poo" << "," << std::endl;
     // Parent class Foo properties
-    stream << offset << "    " << "\"a\": " << reflect::encoding::json::Serializer::to_string(a) << "," << std::endl;
-    stream << offset << "    " << "\"b\": " << reflect::encoding::json::Serializer::to_string(b) << "," << std::endl;
-    stream << offset << "    " << "\"enabled\": " << reflect::encoding::json::Serializer::to_string(enabled) << "," << std::endl;
-    stream << offset << "    " << "\"name\": " << reflect::encoding::json::Serializer::to_string(name) << "," << std::endl;
-    // Properties
-    stream << offset << "    " << "\"c\": " << reflect::encoding::json::Serializer::to_string(c) << "," << std::endl;
-    stream << offset << "    " << "\"numbers\": " << reflect::encoding::json::Serializer::to_string(numbers) << "," << std::endl;
+    stream << offset << "    " << "\"m_int\": " << reflect::encoding::json::Serializer::to_string(m_int) << "," << std::endl;
+    stream << offset << "    " << "\"m_enum\": " << reflect::encoding::json::Serializer::to_string(enumToString(m_enum)) << "," << std::endl;
+    stream << offset << "    " << "\"m_bool\": " << reflect::encoding::json::Serializer::to_string(m_bool) << "," << std::endl;
+    stream << offset << "    " << "\"m_string\": " << reflect::encoding::json::Serializer::to_string(m_string) << "," << std::endl;
     stream << offset << "    " << "\"list\": " << reflect::encoding::json::Serializer::to_string(list) << "," << std::endl;
     stream << offset << "    " << "\"dictionary\": " << reflect::encoding::json::Serializer::to_string(dictionary) << "," << std::endl;
-    stream << offset << "    " << "\"e\": " << reflect::encoding::json::Serializer::to_string(enumToString(e)) << "," << std::endl;
-    stream << offset << "    " << "\"type\": " << type.to_json(offset + "    ") << "," << std::endl;
-    stream << offset << "}";
-    return stream.str();
-}
-
-const reflect::meta_t& reflect::Type<Too>::meta()
-{
-    static reflect::meta_t s_meta {
-    };
-    return s_meta;
-}
-const char* const reflect::Type<Too>::name() { return "Too"; }
-
-const reflect::properties_t& Type<Too>::properties()
-{
-    static reflect::properties_t s_properties {
-        // Parent class Foo properties
-        { "a", reflect::Property{ offsetof(Too, a), reflect::meta_t {{"JsonExport", "true"} }, "a", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
-        { "b", reflect::Property{ offsetof(Too, b), reflect::meta_t { }, "b", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
-        { "enabled", reflect::Property{ offsetof(Too, enabled), reflect::meta_t { }, "enabled", reflect::NativeType{ "bool", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(bool), reflect::NativeType::Type::T_bool } } },
-        { "name", reflect::Property{ offsetof(Too, name), reflect::meta_t { }, "name", reflect::NativeType{ "std::string", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::string), reflect::NativeType::Type::T_string } } },
-        // Properties
-        { "c", reflect::Property{ offsetof(Too, c), reflect::meta_t { }, "c", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
-    };
-    return s_properties;
-}
-
-const reflect::meta_t& Too::type_meta() const { return reflect::Type<Too>::meta(); }
-const char* const Too::type_name() const { return reflect::Type<Too>::name(); }
-const reflect::properties_t& Too::type_properties() const { return reflect::Type<Too>::properties(); }
-
-Too::operator std::string() const
-{
-    reflect::encoding::ByteBuffer buffer;
-    reflect::encoding::OutputByteStream stream(buffer);
-    stream << type_name();
-    
-    // Parent class Foo properties
-    stream << a;
-    stream << b;
-    stream << enabled;
-    stream << name;
-    // Properties
-    stream << c;
-    
-    return std::string(reinterpret_cast<const char*>(&stream.getBuffer()[0]), stream.getBuffer().size());
-}
-
-void Too::from_string(const std::string& str)
-{
-    reflect::encoding::ByteBuffer buffer;
-    std::transform(
-        std::begin(str),
-        std::end(str),
-        std::back_inserter(buffer),
-        [](const char c)
-        {
-            return std::byte(c);
-        }
-    );
-    
-    reflect::encoding::InputByteStream stream(buffer);
-    std::string _name;
-    stream >> _name;
-    if (_name != type_name()) return;
-    
-    // Parent class Foo properties
-    stream >> a;
-    stream >> b;
-    stream >> enabled;
-    stream >> name;
-    // Properties
-    stream >> c;
-}
-
-void Too::from_json(const std::string& json)
-{
-    std::string src{ reflect::encoding::json::Deserializer::trim(json, reflect::encoding::json::Deserializer::space) };
-    
-    size_t index = 0;
-    std::string key;
-    while ((index = reflect::encoding::json::Deserializer::next_key(src, key)) != std::string::npos)
-    {
-        src = src.substr(index + 2);
-        src = reflect::encoding::json::Deserializer::ltrim(src, reflect::encoding::json::Deserializer::space);
-        std::string value;
-        index = reflect::encoding::json::Deserializer::next_value(src, value);
-        if (index != std::string::npos)
-        {
-            // Parent class Foo properties
-            if (key == "a") reflect::encoding::json::Deserializer::parse(value, a);
-            if (key == "b") reflect::encoding::json::Deserializer::parse(value, b);
-            if (key == "enabled") reflect::encoding::json::Deserializer::parse(value, enabled);
-            if (key == "name") reflect::encoding::json::Deserializer::parse(value, name);
-            // Properties
-            if (key == "c") reflect::encoding::json::Deserializer::parse(value, c);
-            src = src.substr(index + 1);
-        }
-        else break;
-    };
-}
-
-std::string Too::to_json(const std::string& offset) const
-{
-    std::stringstream stream;
-    stream << "{" << std::endl;
-    stream << offset << "    " << "\"type_id\": " << "Too" << "," << std::endl;
-    // Parent class Foo properties
-    stream << offset << "    " << "\"a\": " << reflect::encoding::json::Serializer::to_string(a) << "," << std::endl;
-    stream << offset << "    " << "\"b\": " << reflect::encoding::json::Serializer::to_string(b) << "," << std::endl;
-    stream << offset << "    " << "\"enabled\": " << reflect::encoding::json::Serializer::to_string(enabled) << "," << std::endl;
-    stream << offset << "    " << "\"name\": " << reflect::encoding::json::Serializer::to_string(name) << "," << std::endl;
     // Properties
     stream << offset << "    " << "\"c\": " << reflect::encoding::json::Serializer::to_string(c) << "," << std::endl;
+    stream << offset << "    " << "\"type\": " << type.to_json(offset + "    ") << "," << std::endl;
     stream << offset << "}";
     return stream.str();
 }

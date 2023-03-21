@@ -42,13 +42,3 @@ struct reflect::Type<class Poo> : reflect::RegisteredInTypeFactory<class Poo>
     static bool registered() { return value; };
 };
 
-template <>
-struct reflect::Type<struct Too> : reflect::RegisteredInTypeFactory<struct Too>
-{
-    static const reflect::meta_t& meta();
-    static const char* const name();
-    static const reflect::properties_t& properties();
-
-    static bool registered() { return value; };
-};
-

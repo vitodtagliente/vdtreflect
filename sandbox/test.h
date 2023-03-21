@@ -22,10 +22,12 @@ CLASS(Category = MyClass, Serializable = true)
 class Foo : public IType
 {
 public:
-	PROPERTY(JsonExport = true) int a{ 4 };
-	PROPERTY() int b = 5;
-	PROPERTY() bool enabled = false;
-	PROPERTY() std::string name = "foo";
+	PROPERTY(JsonExport = true) int m_int{ 4 };
+	PROPERTY() TestEnum m_enum = TestEnum::A;
+	PROPERTY() bool m_bool = false;
+	PROPERTY() std::string m_string = "foo";
+	PROPERTY() std::list<int> list;
+	PROPERTY() std::map<std::string, int> dictionary;
 
 	GENERATED_BODY()
 };
@@ -35,24 +37,11 @@ class Poo : public Foo
 {
 public:
 	PROPERTY() int c = 15;
-	PROPERTY() std::vector<int> numbers;
-	PROPERTY() std::list<int> list;
-	PROPERTY() std::map<std::string, int> dictionary;
 	PROPERTY() std::tuple<int, float, bool, double> tuple;
 	PROPERTY() std::map<std::string, std::vector<int>> power_dictionary;
-	PROPERTY() TestEnum e = TestEnum::A;
+	PROPERTY() std::vector<std::shared_ptr<Foo>> shared_foos;
+	PROPERTY() std::vector<std::unique_ptr<Foo>> unique_foos;	
 	PROPERTY() Foo type;
-	PROPERTY() std::vector<std::shared_ptr<Foo>> s_foos;
-	PROPERTY() std::vector<std::unique_ptr<Foo>> u_foos;
-
-	GENERATED_BODY()
-};
-
-CLASS()
-struct Too : public Foo
-{
-public:
-	PROPERTY() int c = 14;
 
 	GENERATED_BODY()
 };

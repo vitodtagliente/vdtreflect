@@ -50,32 +50,13 @@ int main()
 	}
 
 	{
-		Foo foo;
-		foo.a = 17;
-		foo.b = 12;
-		reflect::encoding::ByteBuffer buffer;
-		reflect::encoding::OutputByteStream out(buffer);
-		out << foo.a;
-		out << foo.b;
-		out << std::string("mondo");
-		std::string t = foo.to_string();
-		reflect::encoding::ByteBufferFile::save(buffer, "test.txt");
-		std::string json = foo.to_json();
-
-		Foo foo1;
-		std::string str;
-		reflect::encoding::ByteBufferFile::load(buffer, "test.txt");
-		reflect::encoding::InputByteStream in(buffer);
-		in >> foo.a;
-		in >> foo.b;
-		in >> str;
-
 		Poo poo;
-		json = poo.to_json();
-		poo.a = 0;
-		poo.b = 0;
+		poo.m_int = 17;
+		std::string json = poo.to_json();
+		poo.m_int = 0;
 		poo.from_json(json);
-		poo.a = 6;
+
+		Foo foo;
 	}
 
 }
