@@ -543,7 +543,7 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 		if (StringUtil::startsWith(type, "vector") || StringUtil::startsWith(type, "std::vector")
 			|| StringUtil::startsWith(type, "list") || StringUtil::startsWith(type, "std::list"))
 		{
-			if (!isValidListType(parseNativeType(symbolTable, typenames[0]))) break;
+			if (!isValidListType(symbolTable, parseNativeType(symbolTable, typenames[0]), typenames[0])) break;
 
 			buffer.push(offset, "{");
 			if (serialize)
@@ -561,15 +561,15 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 			buffer.push("\n", offset, "    ", "{");
 			if (serialize)
 			{
-				const std::string temp = encodePropertySerialization("    ", symbolTable, serialize, "element", typenames[0]);
-				buffer.push("\n", offset, "    ", temp);
+				const std::string temp = encodePropertySerialization("        ", symbolTable, serialize, "element", typenames[0]);
+				buffer.push("\n", temp);
 			}
 			else
 			{
 				buffer.push("\n", offset, "        ", typenames[0], " element;");
-				const std::string temp = encodePropertySerialization("", symbolTable, serialize, "element", typenames[0]);
-				buffer.push("\n", offset, "        ", temp);
-				buffer.push("\n", offset, "        ", name, ".push_back(element);");
+				const std::string temp = encodePropertySerialization(offset + "        ", symbolTable, serialize, "element", typenames[0]);
+				buffer.push("\n", temp);
+				buffer.push("\n", offset, "        ", name, ".push_back(std::move(element));");
 			}
 			buffer.push("\n", offset, "    ", "}");
 			buffer.push("\n", offset, "}");
@@ -579,7 +579,7 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 		{
 			if (typenames.size() < 2) break;
 			if (!isValidMapKeyType(parseNativeType(symbolTable, typenames[0]))
-				|| !isValidMapValueType(parseNativeType(symbolTable, typenames[1]))) break;
+				|| !isValidMapValueType(symbolTable, parseNativeType(symbolTable, typenames[1]), typenames[1])) break;
 
 			buffer.push(offset, "{");
 			if (serialize)
@@ -587,10 +587,10 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 				buffer.push("\n", offset, "    ", "stream << ", name, ".size();");
 				buffer.push("\n", offset, "    ", "for (const auto& pair : ", name, ")");
 				buffer.push("\n", offset, "    ", "{");
-				std::string temp = encodePropertySerialization("    ", symbolTable, serialize, "pair.first", typenames[0]);
-				buffer.push("\n", offset, "    ", temp);
-				temp = encodePropertySerialization("    ", symbolTable, serialize, "pair.second", typenames[1]);
-				buffer.push("\n", offset, "    ", temp);
+				std::string temp = encodePropertySerialization(offset + "    ", symbolTable, serialize, "pair.first", typenames[0]);
+				buffer.push("\n", temp);
+				temp = encodePropertySerialization(offset + "    ", symbolTable, serialize, "pair.second", typenames[1]);
+				buffer.push("\n", temp);
 				buffer.push("\n", offset, "    ", "}");
 			}
 			else
@@ -600,15 +600,51 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 				buffer.push("\n", offset, "    ", "for (int i = 0; i < size; ++i)");
 				buffer.push("\n", offset, "    ", "{");
 				buffer.push("\n", offset, "        ", typenames[0], " key;");
-				std::string temp = encodePropertySerialization("    ", symbolTable, serialize, "key", typenames[0]);
-				buffer.push("\n", offset, "    ", temp);
+				std::string temp = encodePropertySerialization(offset + "    ", symbolTable, serialize, "key", typenames[0]);
+				buffer.push("\n", temp);
 				buffer.push("\n", offset, "        ", typenames[1], " value;");
-				temp = encodePropertySerialization("    ", symbolTable, serialize, "value", typenames[1]);
-				buffer.push("\n", offset, "    ", temp);
+				temp = encodePropertySerialization(offset + "    ", symbolTable, serialize, "value", typenames[1]);
+				buffer.push("\n", temp);
 				buffer.push("\n", offset, "        ", name, ".insert(std::make_pair(key, value));");
 				buffer.push("\n", offset, "    ", "}");
 			}
 			buffer.push("\n", offset, "}");
+		}
+		else if (StringUtil::startsWith(type, "shared_ptr") || StringUtil::startsWith(type, "std::shared_ptr"))
+		{
+			if (parseNativeType(symbolTable, typenames[0]) != NativeType::T_type) break;
+
+			if (serialize)
+			{
+				buffer.push(offset, "if(", name, ") stream << static_cast<std::string>(*", name, ");");
+			}
+			else
+			{
+				buffer.push(offset, name, " = std::make_shared<", extractTypenames(type)[0], ">();");
+				buffer.push("\n", offset, "{");
+				buffer.push("\n", offset, "    ", "std::string pack;");
+				buffer.push("\n", offset, "    ", "stream >> pack;");
+				buffer.push("\n", offset, "    ", name, "->from_string(pack);");
+				buffer.push("\n", offset, "}");
+			}
+		}
+		else if (StringUtil::startsWith(type, "unique_ptr") || StringUtil::startsWith(type, "std::unique_ptr"))
+		{
+			if (parseNativeType(symbolTable, typenames[0]) != NativeType::T_type) break;
+
+			if (serialize)
+			{
+				buffer.push(offset, "if(", name, ") stream << static_cast<std::string>(*", name, ");");
+			}
+			else
+			{
+				buffer.push(offset, name, " = std::make_unique<", extractTypenames(type)[0], ">();");
+				buffer.push("\n", offset, "{");
+				buffer.push("\n", offset, "    ", "std::string pack;");
+				buffer.push("\n", offset, "    ", "stream >> pack;");
+				buffer.push("\n", offset, "    ", name, "->from_string(pack);");
+				buffer.push("\n", offset, "}");
+			}
 		}
 		break;
 	}
@@ -696,7 +732,7 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 		if (StringUtil::startsWith(type, "vector") || StringUtil::startsWith(type, "std::vector")
 			|| StringUtil::startsWith(type, "list") || StringUtil::startsWith(type, "std::list"))
 		{
-			if (!isValidListType(parseNativeType(symbolTable, typenames[0]))) break;
+			if (!isValidListType(symbolTable, parseNativeType(symbolTable, typenames[0]), typenames[0])) break;
 
 			if (serialize)
 			{
@@ -712,7 +748,33 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 		{
 			if (typenames.size() < 2) break;
 			if (!isValidMapKeyType(parseNativeType(symbolTable, typenames[0]))
-				|| !isValidMapValueType(parseNativeType(symbolTable, typenames[1]))) break;
+				|| !isValidMapValueType(symbolTable, parseNativeType(symbolTable, typenames[1]), typenames[1])) break;
+
+			if (serialize)
+			{
+				buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(", name, ") << \",\" << std::endl;");
+			}
+			else
+			{
+				buffer.push(offset, "if (key == \"", name, "\") reflect::encoding::json::Deserializer::parse(value, ", name, ");");
+			}
+		}
+		else if (StringUtil::startsWith(type, "shared_ptr") || StringUtil::startsWith(type, "std::shared_ptr"))
+		{
+			if (parseNativeType(symbolTable, typenames[0]) != NativeType::T_type) break;
+
+			if (serialize)
+			{
+				buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(", name, ") << \",\" << std::endl;");
+			}
+			else
+			{
+				buffer.push(offset, "if (key == \"", name, "\") reflect::encoding::json::Deserializer::parse(value, ", name, ");");
+			}
+		}
+		else if (StringUtil::startsWith(type, "unique_ptr") || StringUtil::startsWith(type, "std::unique_ptr"))
+		{
+			if (parseNativeType(symbolTable, typenames[0]) != NativeType::T_type) break;
 
 			if (serialize)
 			{
@@ -847,11 +909,24 @@ std::string Encoder::toString(const DecoratorType type)
 	}
 }
 
-bool Encoder::isValidListType(const NativeType type)
+bool Encoder::isValidListType(const SymbolTable& symbolTable, const NativeType type, const std::string& token)
 {
-	return type != NativeType::T_template
-		&& type != NativeType::T_void
-		&& type != NativeType::T_unknown;
+	if (type == NativeType::T_void
+		|| type == NativeType::T_unknown)
+		return false;
+
+	if (type == NativeType::T_template)
+	{
+		if (StringUtil::startsWith(token, "shared_ptr") || StringUtil::startsWith(token, "std::shared_ptr")
+			|| StringUtil::startsWith(token, "unique_ptr") || StringUtil::startsWith(token, "std::unique_ptr"))
+		{
+			std::string sub_type = sanitizeTemplate(token);
+			const auto& it = symbolTable.find(sub_type);
+			return it != symbolTable.end();
+		}
+		return false;
+	}
+	return true;
 }
 
 bool Encoder::isValidMapKeyType(const NativeType type)
@@ -860,9 +935,22 @@ bool Encoder::isValidMapKeyType(const NativeType type)
 		|| type == NativeType::T_string;
 }
 
-bool Encoder::isValidMapValueType(const NativeType type)
+bool Encoder::isValidMapValueType(const SymbolTable& symbolTable, const NativeType type, const std::string& token)
 {
-	return type != NativeType::T_template
-		&& type != NativeType::T_void
-		&& type != NativeType::T_unknown;
+	if (type == NativeType::T_void
+		|| type == NativeType::T_unknown)
+		return false;
+
+	if (type == NativeType::T_template)
+	{
+		if (StringUtil::startsWith(token, "shared_ptr") || StringUtil::startsWith(token, "std::shared_ptr")
+			|| StringUtil::startsWith(token, "unique_ptr") || StringUtil::startsWith(token, "std::unique_ptr"))
+		{
+			std::string sub_type = sanitizeTemplate(token);
+			const auto& it = symbolTable.find(sub_type);
+			return it != symbolTable.end();
+		}		
+		return false;
+	}
+	return true;
 }

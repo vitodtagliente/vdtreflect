@@ -69,15 +69,15 @@ Foo::operator std::string() const
         stream << list.size();
         for (const auto& element : list)
         {
-            stream << element;
+        stream << element;
         }
     }
     {
         stream << dictionary.size();
         for (const auto& pair : dictionary)
         {
-            stream << pair.first;
-            stream << pair.second;
+        stream << pair.first;
+        stream << pair.second;
         }
     }
     
@@ -118,7 +118,7 @@ void Foo::from_string(const std::string& str)
         {
             int element;
             stream >> element;
-            list.push_back(element);
+            list.push_back(std::move(element));
         }
     }
     {
@@ -127,9 +127,9 @@ void Foo::from_string(const std::string& str)
         for (int i = 0; i < size; ++i)
         {
             std::string key;
-            stream >> key;
+        stream >> key;
             int value;
-            stream >> value;
+        stream >> value;
             dictionary.insert(std::make_pair(key, value));
         }
     }
@@ -229,6 +229,12 @@ const reflect::properties_t& Type<Poo>::properties()
             }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::unique_ptr<Foo>), reflect::NativeType::Type::T_template },
         }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::vector<std::unique_ptr<Foo>>), reflect::NativeType::Type::T_template } } },
         { "type", reflect::Property{ offsetof(Poo, type), reflect::meta_t { }, "type", reflect::NativeType{ "Foo", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(Foo), reflect::NativeType::Type::T_type } } },
+        { "s_type", reflect::Property{ offsetof(Poo, s_type), reflect::meta_t { }, "s_type", reflect::NativeType{ "std::shared_ptr<Foo>", { 
+            reflect::NativeType{ "Foo", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(Foo), reflect::NativeType::Type::T_type },
+        }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::shared_ptr<Foo>), reflect::NativeType::Type::T_template } } },
+        { "u_type", reflect::Property{ offsetof(Poo, u_type), reflect::meta_t { }, "u_type", reflect::NativeType{ "std::unique_ptr<Foo>", { 
+            reflect::NativeType{ "Foo", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(Foo), reflect::NativeType::Type::T_type },
+        }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::unique_ptr<Foo>), reflect::NativeType::Type::T_template } } },
     };
     return s_properties;
 }
@@ -252,20 +258,36 @@ Poo::operator std::string() const
         stream << list.size();
         for (const auto& element : list)
         {
-            stream << element;
+        stream << element;
         }
     }
     {
         stream << dictionary.size();
         for (const auto& pair : dictionary)
         {
-            stream << pair.first;
-            stream << pair.second;
+        stream << pair.first;
+        stream << pair.second;
         }
     }
     // Properties
     stream << c;
+    {
+        stream << shared_foos.size();
+        for (const auto& element : shared_foos)
+        {
+        if(element) stream << static_cast<std::string>(*element);
+        }
+    }
+    {
+        stream << unique_foos.size();
+        for (const auto& element : unique_foos)
+        {
+        if(element) stream << static_cast<std::string>(*element);
+        }
+    }
     stream << static_cast<std::string>(type);
+    if(s_type) stream << static_cast<std::string>(*s_type);
+    if(u_type) stream << static_cast<std::string>(*u_type);
     
     return std::string(reinterpret_cast<const char*>(&stream.getBuffer()[0]), stream.getBuffer().size());
 }
@@ -305,7 +327,7 @@ void Poo::from_string(const std::string& str)
         {
             int element;
             stream >> element;
-            list.push_back(element);
+            list.push_back(std::move(element));
         }
     }
     {
@@ -314,18 +336,62 @@ void Poo::from_string(const std::string& str)
         for (int i = 0; i < size; ++i)
         {
             std::string key;
-            stream >> key;
+        stream >> key;
             int value;
-            stream >> value;
+        stream >> value;
             dictionary.insert(std::make_pair(key, value));
         }
     }
     // Properties
     stream >> c;
     {
+        std::size_t size;
+        stream >> size;
+        shared_foos.resize(size);
+        for (int i = 0; i < shared_foos.size(); ++i)
+        {
+            std::shared_ptr<Foo> element;
+            element = std::make_shared<Foo>();
+            {
+                std::string pack;
+                stream >> pack;
+                element->from_string(pack);
+            }
+            shared_foos.push_back(std::move(element));
+        }
+    }
+    {
+        std::size_t size;
+        stream >> size;
+        unique_foos.resize(size);
+        for (int i = 0; i < unique_foos.size(); ++i)
+        {
+            std::unique_ptr<Foo> element;
+            element = std::make_unique<Foo>();
+            {
+                std::string pack;
+                stream >> pack;
+                element->from_string(pack);
+            }
+            unique_foos.push_back(std::move(element));
+        }
+    }
+    {
         std::string pack;
         stream >> pack;
         type.from_string(pack);
+    }
+    s_type = std::make_shared<Foo>();
+    {
+        std::string pack;
+        stream >> pack;
+        s_type->from_string(pack);
+    }
+    u_type = std::make_unique<Foo>();
+    {
+        std::string pack;
+        stream >> pack;
+        u_type->from_string(pack);
     }
 }
 
@@ -357,7 +423,11 @@ void Poo::from_json(const std::string& json)
             if (key == "dictionary") reflect::encoding::json::Deserializer::parse(value, dictionary);
             // Properties
             if (key == "c") reflect::encoding::json::Deserializer::parse(value, c);
+            if (key == "shared_foos") reflect::encoding::json::Deserializer::parse(value, shared_foos);
+            if (key == "unique_foos") reflect::encoding::json::Deserializer::parse(value, unique_foos);
             if (key == "type") type.from_json(value);
+            if (key == "s_type") reflect::encoding::json::Deserializer::parse(value, s_type);
+            if (key == "u_type") reflect::encoding::json::Deserializer::parse(value, u_type);
             src = src.substr(index + 1);
         }
         else break;
@@ -378,7 +448,11 @@ std::string Poo::to_json(const std::string& offset) const
     stream << offset << "    " << "\"dictionary\": " << reflect::encoding::json::Serializer::to_string(dictionary) << "," << std::endl;
     // Properties
     stream << offset << "    " << "\"c\": " << reflect::encoding::json::Serializer::to_string(c) << "," << std::endl;
+    stream << offset << "    " << "\"shared_foos\": " << reflect::encoding::json::Serializer::to_string(shared_foos) << "," << std::endl;
+    stream << offset << "    " << "\"unique_foos\": " << reflect::encoding::json::Serializer::to_string(unique_foos) << "," << std::endl;
     stream << offset << "    " << "\"type\": " << type.to_json(offset + "    ") << "," << std::endl;
+    stream << offset << "    " << "\"s_type\": " << reflect::encoding::json::Serializer::to_string(s_type) << "," << std::endl;
+    stream << offset << "    " << "\"u_type\": " << reflect::encoding::json::Serializer::to_string(u_type) << "," << std::endl;
     stream << offset << "}";
     return stream.str();
 }

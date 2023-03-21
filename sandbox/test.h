@@ -22,6 +22,9 @@ CLASS(Category = MyClass, Serializable = true)
 class Foo : public IType
 {
 public:
+	Foo() = default;
+	virtual ~Foo() = default;
+
 	PROPERTY(JsonExport = true) int m_int{ 4 };
 	PROPERTY() TestEnum m_enum = TestEnum::A;
 	PROPERTY() bool m_bool = false;
@@ -42,6 +45,8 @@ public:
 	PROPERTY() std::vector<std::shared_ptr<Foo>> shared_foos;
 	PROPERTY() std::vector<std::unique_ptr<Foo>> unique_foos;	
 	PROPERTY() Foo type;
+	PROPERTY() std::shared_ptr<Foo> s_type;
+	PROPERTY() std::unique_ptr<Foo> u_type;
 
 	GENERATED_BODY()
 };

@@ -74,7 +74,7 @@ private:
 	static std::string toString(const NativeType type);
 	static std::string toString(const DecoratorType type);
 
-	static bool isValidListType(const NativeType type);
+	static bool isValidListType(const SymbolTable& symbolTable, const NativeType type, const std::string& token);
 	static bool isValidMapKeyType(const NativeType type);
-	static bool isValidMapValueType(const NativeType type);
+	static bool isValidMapValueType(const SymbolTable& symbolTable, const NativeType type, const std::string& token);
 };

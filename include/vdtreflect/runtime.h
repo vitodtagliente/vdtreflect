@@ -475,6 +475,26 @@ namespace reflect
 					return std::string{ quote }.append(value).append(quote);
 				}
 
+				template <typename T = IType>
+				static std::string to_string(const std::shared_ptr<T>& value)
+				{
+					if (value == nullptr)
+					{
+						return "null";
+					}
+					return value->to_json();
+				}
+
+				template <typename T = IType>
+				static std::string to_string(const std::unique_ptr<T>& value)
+				{
+					if (value == nullptr)
+					{
+						return "null";
+					}
+					return value->to_json();
+				}
+
 				template <typename T>
 				static std::string to_string(const std::list<T>& value)
 				{
@@ -551,6 +571,26 @@ namespace reflect
 				static void parse(const std::string& source, std::string& value)
 				{
 					value = trim(trim(source, space), quote);
+				}
+
+				template <typename T = IType>
+				static void parse(const std::string& source, std::shared_ptr<T>& value)
+				{
+					if (value == nullptr)
+					{
+						value = std::make_shared<T>();
+					}
+					value->from_json(source);
+				}
+
+				template <typename T = IType>
+				static void parse(const std::string& source, std::unique_ptr<T>& value)
+				{
+					if (value == nullptr)
+					{
+						value = std::make_unique<T>();
+					}
+					value->from_json(source);
 				}
 
 				template <typename T>
