@@ -7,22 +7,22 @@ using namespace std;
 
 int main()
 {
+	cout << "Registered types: " << endl;
+	{
+		for (const auto& [name, def] : reflect::TypeFactory::list())
+		{
+			cout << name << ": ";
+			reflect::IType* const type = std::get<1>(def)();
+			cout << (type != nullptr ? "can instantiate" : "cannot instantiate") << endl;
+		}
+	}
+
 	cout << "Testing Foo's properties: " << endl;
 	{
 		Foo foo;
 		for (const auto& [name, prop] : foo.type_properties())
 		{
 			cout << name << " " << prop.value<int>(&foo) << endl;
-		}
-	}
-
-	cout << "Registered types: " << endl;
-	{
-		for (const auto& [name, def] : TypeFactory::list())
-		{
-			cout << name << ": ";
-			IType* const type = std::get<1>(def)();
-			cout << (type != nullptr ? "can instantiate" : "cannot instantiate") << endl;
 		}
 	}
 
@@ -58,5 +58,4 @@ int main()
 
 		Foo foo;
 	}
-
 }
