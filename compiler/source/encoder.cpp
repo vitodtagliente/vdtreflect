@@ -322,6 +322,57 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	sourceBuffer.push_line("");
 	sourceBuffer.push_line("void ", type.name, "::from_json(const std::string& json)");
 	sourceBuffer.push_line("{");
+	sourceBuffer.push_line("    std::string src{ reflect::encoding::json::Deserializer::trim(json, reflect::encoding::json::Deserializer::space) };");
+	sourceBuffer.push_line("    ");
+	sourceBuffer.push_line("    size_t index = 0;");
+	sourceBuffer.push_line("    std::string key;");
+	sourceBuffer.push_line("    while ((index = reflect::encoding::json::Deserializer::next_key(src, key)) != std::string::npos)");
+	sourceBuffer.push_line("    {");
+	sourceBuffer.push_line("        src = src.substr(index + 2);");
+	sourceBuffer.push_line("        src = reflect::encoding::json::Deserializer::ltrim(src, reflect::encoding::json::Deserializer::space);");
+	sourceBuffer.push_line("        std::string value;");
+	sourceBuffer.push_line("        index = reflect::encoding::json::Deserializer::next_value(src, value);");
+	sourceBuffer.push_line("        if (index != std::string::npos)");
+	sourceBuffer.push_line("        {");
+	// look for parent classes
+	has_parent = false;
+	parent_name = type.parent;
+	while (parent_name != "IType")
+	{
+		has_parent = true;
+		TypeClass* const parentClass = collection.findClass(parent_name);
+		if (parentClass == nullptr)
+		{
+			std::cout << "Cannot find the parent class " << parent_name << std::endl;
+			return false;
+		}
+
+		sourceBuffer.push_line("            // Parent class ", parent_name, " properties");
+		for (const Property& property : parentClass->properties)
+		{
+			const bool serialize = false;
+			std::string temp = encodePropertySerializationToJson("            ", symbolTable, serialize, property);
+			if (!temp.empty())
+				sourceBuffer.push_line(temp);
+		}
+
+		parent_name = parentClass->parent;
+	}
+	if (has_parent)
+	{
+		sourceBuffer.push_line("            // Properties");
+	}
+	for (const Property& property : type.properties)
+	{
+		const bool serialize = false;
+		std::string temp = encodePropertySerializationToJson("            ", symbolTable, serialize, property);
+		if (!temp.empty())
+			sourceBuffer.push_line(temp);
+	}
+	sourceBuffer.push_line("            src = src.substr(index + 1);");
+	sourceBuffer.push_line("        }");
+	sourceBuffer.push_line("        else break;");
+	sourceBuffer.push_line("    };");
 	sourceBuffer.push_line("}");
 	sourceBuffer.push_line("");
 	sourceBuffer.push_line("std::string ", type.name, "::to_json(const std::string& offset) const");
@@ -608,12 +659,31 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 	case NativeType::T_char:
 	case NativeType::T_string: 
 	{
-		buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(", name, ") << \",\" << std::endl;");
+		if (serialize)
+		{
+			buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(", name, ") << \",\" << std::endl;");
+		}
+		else
+		{
+			buffer.push(offset, "if (key == \"", name, "\") reflect::encoding::json::Deserializer::parse(value, ", name, ");");
+		}
 		break;
 	}
 	case NativeType::T_enum:
 	{
-		buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(enumToString(", name, ")) << \",\" << std::endl;");
+		if (serialize)
+		{
+			buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(enumToString(", name, ")) << \",\" << std::endl;");
+		}
+		else
+		{
+			buffer.push(offset, "if (key == \"", name, "\")");
+			buffer.push("\n", offset, "{");
+			buffer.push("\n", offset, "    std::string temp;");
+			buffer.push("\n", offset, "    reflect::encoding::json::Deserializer::parse(value, temp);");
+			buffer.push("\n", offset, "    stringToEnum(value, ", name, ");");
+			buffer.push("\n", offset, "}");
+		}
 		break;
 	}
 	case NativeType::T_template:
@@ -628,7 +698,14 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 		{
 			if (!isValidListType(parseNativeType(symbolTable, typenames[0]))) break;
 
-			buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(", name, ") << \",\" << std::endl;");
+			if (serialize)
+			{
+				buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(", name, ") << \",\" << std::endl;");
+			}
+			else
+			{
+				buffer.push(offset, "if (key == \"", name, "\") reflect::encoding::json::Deserializer::parse(value, ", name, ");");
+			}
 		}
 		else if (StringUtil::startsWith(type, "map") || StringUtil::startsWith(type, "std::map")
 			|| StringUtil::startsWith(type, "unordered_map") || StringUtil::startsWith(type, "std::unordered_map"))
@@ -637,13 +714,27 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 			if (!isValidMapKeyType(parseNativeType(symbolTable, typenames[0]))
 				|| !isValidMapValueType(parseNativeType(symbolTable, typenames[1]))) break;
 
-			buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(", name, ") << \",\" << std::endl;");
+			if (serialize)
+			{
+				buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(", name, ") << \",\" << std::endl;");
+			}
+			else
+			{
+				buffer.push(offset, "if (key == \"", name, "\") reflect::encoding::json::Deserializer::parse(value, ", name, ");");
+			}
 		}
 		break;
 	}
 	case NativeType::T_type:
 	{
-		buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << ", name, ".to_json(offset + \"    \") << \",\" << std::endl;");
+		if (serialize)
+		{
+			buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << ", name, ".to_json(offset + \"    \") << \",\" << std::endl;");
+		}
+		else
+		{
+			buffer.push(offset, "if (key == \"", name, "\") ", name, ".from_json(value);");
+		}
 		break;
 	}
 	default:

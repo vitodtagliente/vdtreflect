@@ -449,9 +449,8 @@ namespace reflect
 
 		namespace json
 		{
-			class Serializer final
+			struct Serializer final
 			{
-			public:
 				Serializer() = delete;
 				~Serializer() = delete;
 
@@ -460,14 +459,17 @@ namespace reflect
 				{
 					return std::to_string(value);
 				}
+
 				static std::string to_string(const bool value)
 				{
 					return value ? "true" : "false";
 				}
+
 				static std::string to_string(const char* const value)
 				{
 					return std::string{ quote }.append(value).append(quote);
 				}
+
 				static std::string to_string(const std::string& value)
 				{
 					return std::string{ quote }.append(value).append(quote);
@@ -522,11 +524,278 @@ namespace reflect
 					return result.append("}");
 				}
 
-			private:
 				static constexpr char* comma = ",";
 				static constexpr char* equals = ":";
 				static constexpr char* quote = "\"";
 				static constexpr char* quote_equals = "\":";
+			};
+
+			struct Deserializer final
+			{
+				Deserializer() = delete;
+				~Deserializer() = delete;
+
+				template <typename T>
+				static void parse(const std::string& source, T& value)
+				{
+					value = static_cast<T>(std::stod(source));
+				}
+
+				static void parse(const std::string& source, bool& value)
+				{
+					static const std::string pattern{ "true" };
+
+					value = to_lower(source).find(pattern) != std::string::npos;
+				}
+
+				static void parse(const std::string& source, std::string& value)
+				{
+					value = trim(trim(source, space), quote);
+				}
+
+				template <typename T>
+				static void parse(const std::string& source, std::list<T>& list)
+				{
+					std::string src{ trim(source, space) };
+					src = src.substr(1, src.length() - 2);
+
+					size_t index = 0;
+					std::string element_source;
+					while (!src.empty() && (index = next_value(src, element_source)) != std::string::npos)
+					{
+						T element;
+						parse(element_source, element);
+						list.push_back(std::move(element));
+						const size_t minIndex = src.length() < index + 1 ? src.length() : index + 1;
+						src = src.substr(minIndex);
+					};
+				}
+
+				template <typename T>
+				static void parse(const std::string& source, std::vector<T>& list)
+				{
+					std::string src{ trim(source, space) };
+					src = src.substr(1, src.length() - 2);
+
+					size_t index = 0;
+					std::string element_source;
+					while (!src.empty() && (index = next_value(src, element_source)) != std::string::npos)
+					{
+						T element;
+						parse(element_source, element);
+						list.push_back(std::move(element));
+						const size_t minIndex = src.length() < index + 1 ? src.length() : index + 1;
+						src = src.substr(minIndex);
+					};
+				}
+
+				template <typename K, typename V>
+				static void parse(const std::string& source, std::map<K, V>& obj)
+				{
+					std::string src{ trim(source, space) };
+
+					size_t index = 0;
+					std::string key_source, value_source;
+					while ((index = next_key(src, key_source)) != std::string::npos)
+					{
+						src = src.substr(index + 2);
+						index = next_value(src, value_source);
+						if (index != std::string::npos)
+						{
+							K key;
+							parse(key_source, key);
+							V value;
+							parse(value_source, value);
+							obj.insert({ std::move(key), std::move(value) });
+							src = src.substr(index + 1);
+						}
+						else
+						{
+							break;
+						}
+					};
+				}
+
+				static bool is_array(const std::string& source)
+				{
+					const std::string src = trim(source, space);
+					if (src.empty()) return false;
+					return src.at(0) == lsquareb && src.at(src.length() - 1) == rsquareb;
+				}
+
+				static bool is_bool(const std::string& source)
+				{
+					const std::string src = to_lower(trim(source, space));
+					return src == "true"
+						|| src == "false";
+				}
+
+				static bool is_null(const std::string& source)
+				{
+					const std::string src = to_lower(trim(source, space));
+					return src == "null";
+				}
+
+				static bool is_number(const std::string& source)
+				{
+					const std::string src = trim(source, space);
+					return !src.empty() && src.find_first_not_of("-.0123456789") == std::string::npos;
+				}
+
+				static bool is_object(const std::string& source)
+				{
+					const std::string src = trim(source, space);
+					if (src.empty()) return false;
+					return src.at(0) == lgraphb && src.at(src.length() - 1) == rgraphb;
+				}
+
+				static bool is_string(const std::string& source)
+				{
+					const std::string src = trim(source, space);
+					if (src.empty()) return false;
+					return src.at(0) == quote && src.at(src.length() - 1) == quote;
+				}
+
+				static std::string to_lower(const std::string& str)
+				{
+					std::string result;
+					std::transform(str.begin(), str.end(), std::back_inserter(result),
+						[](const char c) -> char { return static_cast<char>(std::tolower(c)); }
+					);
+					return result;
+				}
+
+				static std::string ltrim(const std::string& str, const char character)
+				{
+					std::string result(str);
+					auto it2 = std::find_if(
+						result.begin(),
+						result.end(),
+						[character](char ch)
+						{ return ch != character; }
+					);
+					result.erase(result.begin(), it2);
+					return result;
+				}
+
+				static std::string rtrim(const std::string& str, const char character)
+				{
+					std::string result(str);
+					auto it1 = std::find_if(
+						result.rbegin(),
+						result.rend(),
+						[character](char ch)
+						{ return ch != character; }
+					);
+					result.erase(it1.base(), result.end());
+					return result;
+				}
+
+				static std::string trim(const std::string& str, const char character)
+				{
+					return ltrim(rtrim(str, character), character);
+				}
+
+				static size_t next_closure(const std::string& text, const char left, const char right)
+				{
+					size_t n = 0;
+					for (size_t i = 1; i < text.length(); ++i)
+					{
+						const char c = text.at(i);
+						if (c == left)
+						{
+							++n;
+						}
+						else if (c == right)
+						{
+							if (n == 0)
+							{
+								return (i + 1);
+							}
+							--n;
+						}
+					}
+
+					return std::string::npos;
+				}
+
+				static size_t until_next(const std::string& text, const std::vector<char>& characters)
+				{
+					for (size_t i = 0; i < text.length(); ++i)
+					{
+						if (std::find(characters.begin(), characters.end(), text.at(i)) != characters.end())
+						{
+							return i;
+						}
+					}
+					return text.length();
+				}
+
+				static size_t until_not(const std::string& text, const std::vector<char>& characters)
+				{
+					for (size_t i = 0; i < text.length(); ++i)
+					{
+						if (std::find(characters.begin(), characters.end(), text.at(i)) == characters.end())
+						{
+							return i;
+						}
+					}
+					return text.length();
+				}
+
+				static size_t next_key(const std::string& text, std::string& key)
+				{
+					key.clear();
+					const size_t end = text.find(quote_equals);
+					if (end != std::string::npos)
+					{
+						const size_t begin = text.find_last_of(quote, end - 1);
+						if (begin != std::string::npos)
+						{
+							key = text.substr(begin + 1, end - 1 - begin);
+						}
+					}
+					return end;
+				}
+
+				static size_t next_value(const std::string& text, std::string& value)
+				{
+					value.clear();
+
+					if (text.empty())
+					{
+						return 0;
+					}
+
+					size_t pos = 0;
+					if (text.at(0) == lgraphb)
+					{
+						pos = next_closure(text, lgraphb, rgraphb);
+					}
+					else if (text.at(0) == lsquareb)
+					{
+						pos = next_closure(text, lsquareb, rsquareb);
+					}
+					else
+					{
+						pos = until_next(text, { comma, rsquareb, rgraphb });
+					}
+
+					value = text.substr(0, pos);
+					return pos;
+				}
+
+				static constexpr char comma = ',';
+				static constexpr char endline = '\n';
+				static constexpr char equals = ':';
+				static constexpr char lsquareb = '[';
+				static constexpr char lgraphb = '{';
+				static constexpr char rsquareb = ']';
+				static constexpr char rgraphb = '}';
+				static constexpr char space = ' ';
+				static constexpr char quote = '"';
+				static constexpr char* quote_equals = "\":";
+				static constexpr char tab = '\t';
 			};
 		}
 	}

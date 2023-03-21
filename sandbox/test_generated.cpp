@@ -88,6 +88,26 @@ void Foo::from_string(const std::string& str)
 
 void Foo::from_json(const std::string& json)
 {
+    std::string src{ reflect::encoding::json::Deserializer::trim(json, reflect::encoding::json::Deserializer::space) };
+    
+    size_t index = 0;
+    std::string key;
+    while ((index = reflect::encoding::json::Deserializer::next_key(src, key)) != std::string::npos)
+    {
+        src = src.substr(index + 2);
+        src = reflect::encoding::json::Deserializer::ltrim(src, reflect::encoding::json::Deserializer::space);
+        std::string value;
+        index = reflect::encoding::json::Deserializer::next_value(src, value);
+        if (index != std::string::npos)
+        {
+            if (key == "a") reflect::encoding::json::Deserializer::parse(value, a);
+            if (key == "b") reflect::encoding::json::Deserializer::parse(value, b);
+            if (key == "enabled") reflect::encoding::json::Deserializer::parse(value, enabled);
+            if (key == "name") reflect::encoding::json::Deserializer::parse(value, name);
+            src = src.substr(index + 1);
+        }
+        else break;
+    };
 }
 
 std::string Foo::to_json(const std::string& offset) const
@@ -145,6 +165,16 @@ const reflect::properties_t& Type<Poo>::properties()
         }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::map<std::string, std::vector<int>>), reflect::NativeType::Type::T_template } } },
         { "e", reflect::Property{ offsetof(Poo, e), reflect::meta_t { }, "e", reflect::NativeType{ "TestEnum", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(TestEnum), reflect::NativeType::Type::T_enum } } },
         { "type", reflect::Property{ offsetof(Poo, type), reflect::meta_t { }, "type", reflect::NativeType{ "Foo", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(Foo), reflect::NativeType::Type::T_type } } },
+        { "s_foos", reflect::Property{ offsetof(Poo, s_foos), reflect::meta_t { }, "s_foos", reflect::NativeType{ "std::vector<std::shared_ptr<Foo>>", { 
+            reflect::NativeType{ "std::shared_ptr<Foo>", { 
+                reflect::NativeType{ "Foo", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(Foo), reflect::NativeType::Type::T_type },
+            }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::shared_ptr<Foo>), reflect::NativeType::Type::T_template },
+        }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::vector<std::shared_ptr<Foo>>), reflect::NativeType::Type::T_template } } },
+        { "u_foos", reflect::Property{ offsetof(Poo, u_foos), reflect::meta_t { }, "u_foos", reflect::NativeType{ "std::vector<std::unique_ptr<Foo>>", { 
+            reflect::NativeType{ "std::unique_ptr<Foo>", { 
+                reflect::NativeType{ "Foo", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(Foo), reflect::NativeType::Type::T_type },
+            }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::unique_ptr<Foo>), reflect::NativeType::Type::T_template },
+        }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::vector<std::unique_ptr<Foo>>), reflect::NativeType::Type::T_template } } },
     };
     return s_properties;
 }
@@ -267,6 +297,39 @@ void Poo::from_string(const std::string& str)
 
 void Poo::from_json(const std::string& json)
 {
+    std::string src{ reflect::encoding::json::Deserializer::trim(json, reflect::encoding::json::Deserializer::space) };
+    
+    size_t index = 0;
+    std::string key;
+    while ((index = reflect::encoding::json::Deserializer::next_key(src, key)) != std::string::npos)
+    {
+        src = src.substr(index + 2);
+        src = reflect::encoding::json::Deserializer::ltrim(src, reflect::encoding::json::Deserializer::space);
+        std::string value;
+        index = reflect::encoding::json::Deserializer::next_value(src, value);
+        if (index != std::string::npos)
+        {
+            // Parent class Foo properties
+            if (key == "a") reflect::encoding::json::Deserializer::parse(value, a);
+            if (key == "b") reflect::encoding::json::Deserializer::parse(value, b);
+            if (key == "enabled") reflect::encoding::json::Deserializer::parse(value, enabled);
+            if (key == "name") reflect::encoding::json::Deserializer::parse(value, name);
+            // Properties
+            if (key == "c") reflect::encoding::json::Deserializer::parse(value, c);
+            if (key == "numbers") reflect::encoding::json::Deserializer::parse(value, numbers);
+            if (key == "list") reflect::encoding::json::Deserializer::parse(value, list);
+            if (key == "dictionary") reflect::encoding::json::Deserializer::parse(value, dictionary);
+            if (key == "e")
+            {
+                std::string temp;
+                reflect::encoding::json::Deserializer::parse(value, temp);
+                stringToEnum(value, e);
+            }
+            if (key == "type") type.from_json(value);
+            src = src.substr(index + 1);
+        }
+        else break;
+    };
 }
 
 std::string Poo::to_json(const std::string& offset) const
@@ -362,6 +425,29 @@ void Too::from_string(const std::string& str)
 
 void Too::from_json(const std::string& json)
 {
+    std::string src{ reflect::encoding::json::Deserializer::trim(json, reflect::encoding::json::Deserializer::space) };
+    
+    size_t index = 0;
+    std::string key;
+    while ((index = reflect::encoding::json::Deserializer::next_key(src, key)) != std::string::npos)
+    {
+        src = src.substr(index + 2);
+        src = reflect::encoding::json::Deserializer::ltrim(src, reflect::encoding::json::Deserializer::space);
+        std::string value;
+        index = reflect::encoding::json::Deserializer::next_value(src, value);
+        if (index != std::string::npos)
+        {
+            // Parent class Foo properties
+            if (key == "a") reflect::encoding::json::Deserializer::parse(value, a);
+            if (key == "b") reflect::encoding::json::Deserializer::parse(value, b);
+            if (key == "enabled") reflect::encoding::json::Deserializer::parse(value, enabled);
+            if (key == "name") reflect::encoding::json::Deserializer::parse(value, name);
+            // Properties
+            if (key == "c") reflect::encoding::json::Deserializer::parse(value, c);
+            src = src.substr(index + 1);
+        }
+        else break;
+    };
 }
 
 std::string Too::to_json(const std::string& offset) const

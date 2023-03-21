@@ -72,6 +72,10 @@ int main()
 
 		Poo poo;
 		json = poo.to_json();
+		poo.a = 0;
+		poo.b = 0;
+		poo.from_json(json);
+		poo.a = 6;
 	}
 
 }

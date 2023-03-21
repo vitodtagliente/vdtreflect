@@ -3,6 +3,7 @@
 
 #include <list>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -41,6 +42,8 @@ public:
 	PROPERTY() std::map<std::string, std::vector<int>> power_dictionary;
 	PROPERTY() TestEnum e = TestEnum::A;
 	PROPERTY() Foo type;
+	PROPERTY() std::vector<std::shared_ptr<Foo>> s_foos;
+	PROPERTY() std::vector<std::unique_ptr<Foo>> u_foos;
 
 	GENERATED_BODY()
 };
