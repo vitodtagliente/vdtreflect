@@ -47,6 +47,7 @@ const reflect::properties_t& Type<Foo>::properties()
             reflect::NativeType{ "std::string", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::string), reflect::NativeType::Type::T_string },
             reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
         }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::map<std::string, int>), reflect::NativeType::Type::T_template } } },
+        { "position", reflect::Property{ offsetof(Foo, position), reflect::meta_t { }, "position", reflect::NativeType{ "math::vec3", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(math::vec3), reflect::NativeType::Type::T_unknown } } },
     };
     return s_properties;
 }
@@ -127,9 +128,9 @@ void Foo::from_string(const std::string& str)
         for (int i = 0; i < size; ++i)
         {
             std::string key;
-        stream >> key;
+            stream >> key;
             int value;
-        stream >> value;
+            stream >> value;
             dictionary.insert(std::make_pair(key, value));
         }
     }
@@ -204,6 +205,7 @@ const reflect::properties_t& Type<Poo>::properties()
             reflect::NativeType{ "std::string", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::string), reflect::NativeType::Type::T_string },
             reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int },
         }, reflect::NativeType::DecoratorType::D_raw, sizeof(std::map<std::string, int>), reflect::NativeType::Type::T_template } } },
+        { "position", reflect::Property{ offsetof(Poo, position), reflect::meta_t { }, "position", reflect::NativeType{ "math::vec3", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(math::vec3), reflect::NativeType::Type::T_unknown } } },
         // Properties
         { "c", reflect::Property{ offsetof(Poo, c), reflect::meta_t { }, "c", reflect::NativeType{ "int", {  }, reflect::NativeType::DecoratorType::D_raw, sizeof(int), reflect::NativeType::Type::T_int } } },
         { "tuple", reflect::Property{ offsetof(Poo, tuple), reflect::meta_t { }, "tuple", reflect::NativeType{ "std::tuple<int, float, bool, double>", { 
@@ -336,9 +338,9 @@ void Poo::from_string(const std::string& str)
         for (int i = 0; i < size; ++i)
         {
             std::string key;
-        stream >> key;
+            stream >> key;
             int value;
-        stream >> value;
+            stream >> value;
             dictionary.insert(std::make_pair(key, value));
         }
     }

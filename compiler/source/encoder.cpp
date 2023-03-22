@@ -600,10 +600,10 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 				buffer.push("\n", offset, "    ", "for (int i = 0; i < size; ++i)");
 				buffer.push("\n", offset, "    ", "{");
 				buffer.push("\n", offset, "        ", typenames[0], " key;");
-				std::string temp = encodePropertySerialization(offset + "    ", symbolTable, serialize, "key", typenames[0]);
+				std::string temp = encodePropertySerialization(offset + "        ", symbolTable, serialize, "key", typenames[0]);
 				buffer.push("\n", temp);
 				buffer.push("\n", offset, "        ", typenames[1], " value;");
-				temp = encodePropertySerialization(offset + "    ", symbolTable, serialize, "value", typenames[1]);
+				temp = encodePropertySerialization(offset + "        ", symbolTable, serialize, "value", typenames[1]);
 				buffer.push("\n", temp);
 				buffer.push("\n", offset, "        ", name, ".insert(std::make_pair(key, value));");
 				buffer.push("\n", offset, "    ", "}");
