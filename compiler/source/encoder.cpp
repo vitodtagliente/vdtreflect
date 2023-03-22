@@ -690,7 +690,7 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 
 std::string Encoder::encodePropertySerializationToJson(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const Property& property)
 {
-	return encodePropertySerializationToJson(offset, symbolTable, serialize, "type." + property.name, property.type);
+	return encodePropertySerializationToJson(offset, symbolTable, serialize, property.name, property.type);
 }
 
 std::string Encoder::encodePropertySerializationToJson(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const std::string& name, const std::string& type)
@@ -712,11 +712,11 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 	{
 		if (serialize)
 		{
-			buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(", name, ") << \",\" << std::endl;");
+			buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(type.", name, ") << \",\" << std::endl;");
 		}
 		else
 		{
-			buffer.push(offset, "if (key == \"", name, "\") reflect::encoding::json::Deserializer::parse(value, ", name, ");");
+			buffer.push(offset, "if (key == \"", name, "\") reflect::encoding::json::Deserializer::parse(value, type.", name, ");");
 		}
 		break;
 	}
@@ -724,7 +724,7 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 	{
 		if (serialize)
 		{
-			buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(enumToString(", name, ")) << \",\" << std::endl;");
+			buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(enumToString(type.", name, ")) << \",\" << std::endl;");
 		}
 		else
 		{
@@ -732,7 +732,7 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 			buffer.push("\n", offset, "{");
 			buffer.push("\n", offset, "    std::string temp;");
 			buffer.push("\n", offset, "    reflect::encoding::json::Deserializer::parse(value, temp);");
-			buffer.push("\n", offset, "    stringToEnum(value, ", name, ");");
+			buffer.push("\n", offset, "    stringToEnum(value, type.", name, ");");
 			buffer.push("\n", offset, "}");
 		}
 		break;
@@ -751,11 +751,11 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 
 			if (serialize)
 			{
-				buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(", name, ") << \",\" << std::endl;");
+				buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(type.", name, ") << \",\" << std::endl;");
 			}
 			else
 			{
-				buffer.push(offset, "if (key == \"", name, "\") reflect::encoding::json::Deserializer::parse(value, ", name, ");");
+				buffer.push(offset, "if (key == \"", name, "\") reflect::encoding::json::Deserializer::parse(value, type.", name, ");");
 			}
 		}
 		else if (StringUtil::startsWith(type, "map") || StringUtil::startsWith(type, "std::map")
@@ -767,11 +767,11 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 
 			if (serialize)
 			{
-				buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(", name, ") << \",\" << std::endl;");
+				buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(type.", name, ") << \",\" << std::endl;");
 			}
 			else
 			{
-				buffer.push(offset, "if (key == \"", name, "\") reflect::encoding::json::Deserializer::parse(value, ", name, ");");
+				buffer.push(offset, "if (key == \"", name, "\") reflect::encoding::json::Deserializer::parse(value, type.", name, ");");
 			}
 		}
 		else if (StringUtil::startsWith(type, "shared_ptr") || StringUtil::startsWith(type, "std::shared_ptr"))
@@ -780,11 +780,11 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 
 			if (serialize)
 			{
-				buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(", name, ") << \",\" << std::endl;");
+				buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(type.", name, ") << \",\" << std::endl;");
 			}
 			else
 			{
-				buffer.push(offset, "if (key == \"", name, "\") reflect::encoding::json::Deserializer::parse(value, ", name, ");");
+				buffer.push(offset, "if (key == \"", name, "\") reflect::encoding::json::Deserializer::parse(value, type.", name, ");");
 			}
 		}
 		else if (StringUtil::startsWith(type, "unique_ptr") || StringUtil::startsWith(type, "std::unique_ptr"))
@@ -793,11 +793,11 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 
 			if (serialize)
 			{
-				buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(", name, ") << \",\" << std::endl;");
+				buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::encoding::json::Serializer::to_string(type.", name, ") << \",\" << std::endl;");
 			}
 			else
 			{
-				buffer.push(offset, "if (key == \"", name, "\") reflect::encoding::json::Deserializer::parse(value, ", name, ");");
+				buffer.push(offset, "if (key == \"", name, "\") reflect::encoding::json::Deserializer::parse(value, type.", name, ");");
 			}
 		}
 		break;

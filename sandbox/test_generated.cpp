@@ -151,17 +151,17 @@ void reflect::Type<Foo>::from_json(const std::string& json, Foo& type)
         index = reflect::encoding::json::Deserializer::next_value(src, value);
         if (index != std::string::npos)
         {
-            if (key == "type.m_int") reflect::encoding::json::Deserializer::parse(value, type.m_int);
-            if (key == "type.m_enum")
+            if (key == "m_int") reflect::encoding::json::Deserializer::parse(value, type.m_int);
+            if (key == "m_enum")
             {
                 std::string temp;
                 reflect::encoding::json::Deserializer::parse(value, temp);
                 stringToEnum(value, type.m_enum);
             }
-            if (key == "type.m_bool") reflect::encoding::json::Deserializer::parse(value, type.m_bool);
-            if (key == "type.m_string") reflect::encoding::json::Deserializer::parse(value, type.m_string);
-            if (key == "type.list") reflect::encoding::json::Deserializer::parse(value, type.list);
-            if (key == "type.dictionary") reflect::encoding::json::Deserializer::parse(value, type.dictionary);
+            if (key == "m_bool") reflect::encoding::json::Deserializer::parse(value, type.m_bool);
+            if (key == "m_string") reflect::encoding::json::Deserializer::parse(value, type.m_string);
+            if (key == "list") reflect::encoding::json::Deserializer::parse(value, type.list);
+            if (key == "dictionary") reflect::encoding::json::Deserializer::parse(value, type.dictionary);
             src = src.substr(index + 1);
         }
         else break;
@@ -173,12 +173,12 @@ std::string reflect::Type<Foo>::to_json(const Foo& type, const std::string& offs
     std::stringstream stream;
     stream << "{" << std::endl;
     stream << offset << "    " << "\"type_id\": " << "Foo" << "," << std::endl;
-    stream << offset << "    " << "\"type.m_int\": " << reflect::encoding::json::Serializer::to_string(type.m_int) << "," << std::endl;
-    stream << offset << "    " << "\"type.m_enum\": " << reflect::encoding::json::Serializer::to_string(enumToString(type.m_enum)) << "," << std::endl;
-    stream << offset << "    " << "\"type.m_bool\": " << reflect::encoding::json::Serializer::to_string(type.m_bool) << "," << std::endl;
-    stream << offset << "    " << "\"type.m_string\": " << reflect::encoding::json::Serializer::to_string(type.m_string) << "," << std::endl;
-    stream << offset << "    " << "\"type.list\": " << reflect::encoding::json::Serializer::to_string(type.list) << "," << std::endl;
-    stream << offset << "    " << "\"type.dictionary\": " << reflect::encoding::json::Serializer::to_string(type.dictionary) << "," << std::endl;
+    stream << offset << "    " << "\"m_int\": " << reflect::encoding::json::Serializer::to_string(type.m_int) << "," << std::endl;
+    stream << offset << "    " << "\"m_enum\": " << reflect::encoding::json::Serializer::to_string(enumToString(type.m_enum)) << "," << std::endl;
+    stream << offset << "    " << "\"m_bool\": " << reflect::encoding::json::Serializer::to_string(type.m_bool) << "," << std::endl;
+    stream << offset << "    " << "\"m_string\": " << reflect::encoding::json::Serializer::to_string(type.m_string) << "," << std::endl;
+    stream << offset << "    " << "\"list\": " << reflect::encoding::json::Serializer::to_string(type.list) << "," << std::endl;
+    stream << offset << "    " << "\"dictionary\": " << reflect::encoding::json::Serializer::to_string(type.dictionary) << "," << std::endl;
     stream << offset << "}";
     return stream.str();
 }
@@ -422,24 +422,24 @@ void reflect::Type<Poo>::from_json(const std::string& json, Poo& type)
         if (index != std::string::npos)
         {
             // Parent class Foo properties
-            if (key == "type.m_int") reflect::encoding::json::Deserializer::parse(value, type.m_int);
-            if (key == "type.m_enum")
+            if (key == "m_int") reflect::encoding::json::Deserializer::parse(value, type.m_int);
+            if (key == "m_enum")
             {
                 std::string temp;
                 reflect::encoding::json::Deserializer::parse(value, temp);
                 stringToEnum(value, type.m_enum);
             }
-            if (key == "type.m_bool") reflect::encoding::json::Deserializer::parse(value, type.m_bool);
-            if (key == "type.m_string") reflect::encoding::json::Deserializer::parse(value, type.m_string);
-            if (key == "type.list") reflect::encoding::json::Deserializer::parse(value, type.list);
-            if (key == "type.dictionary") reflect::encoding::json::Deserializer::parse(value, type.dictionary);
+            if (key == "m_bool") reflect::encoding::json::Deserializer::parse(value, type.m_bool);
+            if (key == "m_string") reflect::encoding::json::Deserializer::parse(value, type.m_string);
+            if (key == "list") reflect::encoding::json::Deserializer::parse(value, type.list);
+            if (key == "dictionary") reflect::encoding::json::Deserializer::parse(value, type.dictionary);
             // Properties
-            if (key == "type.c") reflect::encoding::json::Deserializer::parse(value, type.c);
-            if (key == "type.shared_foos") reflect::encoding::json::Deserializer::parse(value, type.shared_foos);
-            if (key == "type.unique_foos") reflect::encoding::json::Deserializer::parse(value, type.unique_foos);
-            if (key == "type.type") type.type.from_json(value);
-            if (key == "type.s_type") reflect::encoding::json::Deserializer::parse(value, type.s_type);
-            if (key == "type.u_type") reflect::encoding::json::Deserializer::parse(value, type.u_type);
+            if (key == "c") reflect::encoding::json::Deserializer::parse(value, type.c);
+            if (key == "shared_foos") reflect::encoding::json::Deserializer::parse(value, type.shared_foos);
+            if (key == "unique_foos") reflect::encoding::json::Deserializer::parse(value, type.unique_foos);
+            if (key == "type") type.from_json(value);
+            if (key == "s_type") reflect::encoding::json::Deserializer::parse(value, type.s_type);
+            if (key == "u_type") reflect::encoding::json::Deserializer::parse(value, type.u_type);
             src = src.substr(index + 1);
         }
         else break;
@@ -452,19 +452,19 @@ std::string reflect::Type<Poo>::to_json(const Poo& type, const std::string& offs
     stream << "{" << std::endl;
     stream << offset << "    " << "\"type_id\": " << "Poo" << "," << std::endl;
     // Parent class Foo properties
-    stream << offset << "    " << "\"type.m_int\": " << reflect::encoding::json::Serializer::to_string(type.m_int) << "," << std::endl;
-    stream << offset << "    " << "\"type.m_enum\": " << reflect::encoding::json::Serializer::to_string(enumToString(type.m_enum)) << "," << std::endl;
-    stream << offset << "    " << "\"type.m_bool\": " << reflect::encoding::json::Serializer::to_string(type.m_bool) << "," << std::endl;
-    stream << offset << "    " << "\"type.m_string\": " << reflect::encoding::json::Serializer::to_string(type.m_string) << "," << std::endl;
-    stream << offset << "    " << "\"type.list\": " << reflect::encoding::json::Serializer::to_string(type.list) << "," << std::endl;
-    stream << offset << "    " << "\"type.dictionary\": " << reflect::encoding::json::Serializer::to_string(type.dictionary) << "," << std::endl;
+    stream << offset << "    " << "\"m_int\": " << reflect::encoding::json::Serializer::to_string(type.m_int) << "," << std::endl;
+    stream << offset << "    " << "\"m_enum\": " << reflect::encoding::json::Serializer::to_string(enumToString(type.m_enum)) << "," << std::endl;
+    stream << offset << "    " << "\"m_bool\": " << reflect::encoding::json::Serializer::to_string(type.m_bool) << "," << std::endl;
+    stream << offset << "    " << "\"m_string\": " << reflect::encoding::json::Serializer::to_string(type.m_string) << "," << std::endl;
+    stream << offset << "    " << "\"list\": " << reflect::encoding::json::Serializer::to_string(type.list) << "," << std::endl;
+    stream << offset << "    " << "\"dictionary\": " << reflect::encoding::json::Serializer::to_string(type.dictionary) << "," << std::endl;
     // Properties
-    stream << offset << "    " << "\"type.c\": " << reflect::encoding::json::Serializer::to_string(type.c) << "," << std::endl;
-    stream << offset << "    " << "\"type.shared_foos\": " << reflect::encoding::json::Serializer::to_string(type.shared_foos) << "," << std::endl;
-    stream << offset << "    " << "\"type.unique_foos\": " << reflect::encoding::json::Serializer::to_string(type.unique_foos) << "," << std::endl;
-    stream << offset << "    " << "\"type.type\": " << type.type.to_json(offset + "    ") << "," << std::endl;
-    stream << offset << "    " << "\"type.s_type\": " << reflect::encoding::json::Serializer::to_string(type.s_type) << "," << std::endl;
-    stream << offset << "    " << "\"type.u_type\": " << reflect::encoding::json::Serializer::to_string(type.u_type) << "," << std::endl;
+    stream << offset << "    " << "\"c\": " << reflect::encoding::json::Serializer::to_string(type.c) << "," << std::endl;
+    stream << offset << "    " << "\"shared_foos\": " << reflect::encoding::json::Serializer::to_string(type.shared_foos) << "," << std::endl;
+    stream << offset << "    " << "\"unique_foos\": " << reflect::encoding::json::Serializer::to_string(type.unique_foos) << "," << std::endl;
+    stream << offset << "    " << "\"type\": " << type.to_json(offset + "    ") << "," << std::endl;
+    stream << offset << "    " << "\"s_type\": " << reflect::encoding::json::Serializer::to_string(type.s_type) << "," << std::endl;
+    stream << offset << "    " << "\"u_type\": " << reflect::encoding::json::Serializer::to_string(type.u_type) << "," << std::endl;
     stream << offset << "}";
     return stream.str();
 }
