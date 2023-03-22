@@ -437,7 +437,7 @@ void reflect::Type<Poo>::from_json(const std::string& json, Poo& type)
             if (key == "c") reflect::encoding::json::Deserializer::parse(value, type.c);
             if (key == "shared_foos") reflect::encoding::json::Deserializer::parse(value, type.shared_foos);
             if (key == "unique_foos") reflect::encoding::json::Deserializer::parse(value, type.unique_foos);
-            if (key == "type") type.from_json(value);
+            if (key == "type") type.type.from_json(value);
             if (key == "s_type") reflect::encoding::json::Deserializer::parse(value, type.s_type);
             if (key == "u_type") reflect::encoding::json::Deserializer::parse(value, type.u_type);
             src = src.substr(index + 1);
@@ -462,7 +462,7 @@ std::string reflect::Type<Poo>::to_json(const Poo& type, const std::string& offs
     stream << offset << "    " << "\"c\": " << reflect::encoding::json::Serializer::to_string(type.c) << "," << std::endl;
     stream << offset << "    " << "\"shared_foos\": " << reflect::encoding::json::Serializer::to_string(type.shared_foos) << "," << std::endl;
     stream << offset << "    " << "\"unique_foos\": " << reflect::encoding::json::Serializer::to_string(type.unique_foos) << "," << std::endl;
-    stream << offset << "    " << "\"type\": " << type.to_json(offset + "    ") << "," << std::endl;
+    stream << offset << "    " << "\"type\": " << type.type.to_json(offset + "    ") << "," << std::endl;
     stream << offset << "    " << "\"s_type\": " << reflect::encoding::json::Serializer::to_string(type.s_type) << "," << std::endl;
     stream << offset << "    " << "\"u_type\": " << reflect::encoding::json::Serializer::to_string(type.u_type) << "," << std::endl;
     stream << offset << "}";

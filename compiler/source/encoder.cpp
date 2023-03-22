@@ -806,11 +806,11 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 	{
 		if (serialize)
 		{
-			buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << ", name, ".to_json(offset + \"    \") << \",\" << std::endl;");
+			buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << type.", name, ".to_json(offset + \"    \") << \",\" << std::endl;");
 		}
 		else
 		{
-			buffer.push(offset, "if (key == \"", name, "\") ", name, ".from_json(value);");
+			buffer.push(offset, "if (key == \"", name, "\") type.", name, ".from_json(value);");
 		}
 		break;
 	}
