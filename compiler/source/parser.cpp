@@ -83,6 +83,13 @@ bool Parser::parse(TypeCollection& collection, SymbolTable& symbolTable, SymbolL
 				return false;
 			}
 		}
+		else if (keyword == "NATIVE_CLASS")
+		{
+			if (!parseNativeClass(collection, symbolTable, symbolList, tokens, index))
+			{
+				return false;
+			}
+		}
 		++index;
 	}
 
@@ -233,6 +240,11 @@ bool Parser::parseEnum(TypeCollection& collection, SymbolTable& symbolTable, Sym
 		}
 	}
 	return false;
+}
+
+bool Parser::parseNativeClass(TypeCollection& collection, SymbolTable& symbolTable, SymbolList& symbolList, const std::vector<std::string>& tokens, size_t& index)
+{
+	return true;
 }
 
 bool Parser::parseMeta(const std::vector<std::string>& tokens, size_t index, meta_t& meta)

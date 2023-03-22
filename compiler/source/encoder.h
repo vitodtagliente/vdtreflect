@@ -66,15 +66,15 @@ private:
 	static std::string encodePropertySerializationToJson(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const Property& property);
 	static std::string encodePropertySerializationToJson(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const std::string& name, const std::string& type);
 	
-	static NativeType parseNativeType(const SymbolTable& symbolTable, const std::string& type);
+	static PropertyType parsePropertyType(const SymbolTable& symbolTable, const std::string& type);
 	static DecoratorType parseDecoratorType(const SymbolTable& symbolTable, const std::string& type);
 	static std::vector<std::string> extractTypenames(const std::string& token);
 	static std::string sanitizeTemplate(const std::string& token);
 
-	static std::string toString(const NativeType type);
+	static std::string toString(const PropertyType type);
 	static std::string toString(const DecoratorType type);
 
-	static bool isValidListType(const SymbolTable& symbolTable, const NativeType type, const std::string& token);
-	static bool isValidMapKeyType(const NativeType type);
-	static bool isValidMapValueType(const SymbolTable& symbolTable, const NativeType type, const std::string& token);
+	static bool isValidListType(const SymbolTable& symbolTable, const PropertyType type, const std::string& token);
+	static bool isValidMapKeyType(const PropertyType type);
+	static bool isValidMapValueType(const SymbolTable& symbolTable, const PropertyType type, const std::string& token);
 };

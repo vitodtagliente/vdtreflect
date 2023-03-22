@@ -19,6 +19,14 @@ namespace math
 	};
 }
 
+NATIVE_CLASS(math::vec3)
+struct Vec3
+{
+	PROPERTY() float x{ 0.0f };
+	PROPERTY() float y{ 0.0f };
+	PROPERTY() float z{ 0.0f };
+};
+
 ENUM(Category = MyEnums)
 enum class TestEnum
 {
@@ -27,12 +35,8 @@ enum class TestEnum
 };
 
 CLASS(Category = MyClass, Serializable = true)
-class Foo : public IType
+struct Foo : public IType
 {
-public:
-	Foo() = default;
-	virtual ~Foo() = default;
-
 	PROPERTY(JsonExport = true) int m_int{ 4 };
 	PROPERTY() TestEnum m_enum = TestEnum::A;
 	PROPERTY() bool m_bool = false;
@@ -45,9 +49,8 @@ public:
 };
 
 CLASS()
-class Poo : public Foo
+struct Poo : public Foo
 {
-public:
 	PROPERTY() int c = 15;
 	PROPERTY() std::tuple<int, float, bool, double> tuple;
 	PROPERTY() std::map<std::string, std::vector<int>> power_dictionary;

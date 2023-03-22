@@ -121,7 +121,7 @@ namespace reflect
 	typedef std::map<std::string, std::string> meta_t;
 	typedef unsigned long long member_address_t;
 
-	struct NativeType
+	struct PropertyType
 	{
 		enum class Type
 		{
@@ -133,6 +133,7 @@ namespace reflect
 			T_enum,
 			T_float,
 			T_int,
+			T_native,
 			T_string,
 			T_template,
 			T_type,
@@ -147,7 +148,7 @@ namespace reflect
 		};
 
 		std::string name;
-		std::vector<NativeType> children;
+		std::vector<PropertyType> children;
 		DecoratorType decorator;
 		std::size_t size;
 		Type type;
@@ -158,7 +159,7 @@ namespace reflect
 		std::size_t offset;
 		const meta_t meta;
 		const std::string name;
-		const NativeType type;
+		const PropertyType type;
 
 		template<typename T, typename O>
 		T& value(O* const object) const
@@ -170,6 +171,9 @@ namespace reflect
 
 	struct IType
 	{
+		IType() = default;
+		virtual ~IType() = default;
+
 		virtual const char* const type_name() const = 0;
 		virtual const meta_t& type_meta() const = 0;
 		virtual const properties_t& type_properties() const = 0;
@@ -186,13 +190,25 @@ namespace reflect
 	{
 		Type() = delete;
 
-		static const meta_t& meta() {
+		static const meta_t& meta() 
+		{
 			static meta_t s_meta;
 			return s_meta;
 		}
 		static const char* const name() { return ""; }
+		static const properties_t& properties()
+		{
+			static properties_t s_properties;
+			return s_properties;
+		}
 		static std::size_t size() { return sizeof(T); }
+
+		static void from_string(const std::string& str, T& type) {}
+		static std::string to_string(const T& type) { return ""; }
+		static void from_json(const std::string& json, T& type) {}
+		static std::string to_json(const T& type, const std::string& offset = "") { return ""; }
 	};
+
 	typedef std::function<IType* ()> constructor_t;
 
 	class TypeFactory final
@@ -842,6 +858,7 @@ namespace reflect
 
 #define ENUM(...)
 #define CLASS(...)
+#define NATIVE_CLASS(T)
 #define PROPERTY(...)
 #define FUNCTION(...)
 #define GENERATED_BODY() \

@@ -23,21 +23,33 @@ struct reflect::Enum<enum class ApplicationMode> : reflect::RegisteredInEnumFact
 };
 
 template <>
-struct reflect::Type<class Foo> : reflect::RegisteredInTypeFactory<class Foo>
+struct reflect::Type<struct Foo> : reflect::RegisteredInTypeFactory<struct Foo>
 {
     static const reflect::meta_t& meta();
     static const char* const name();
     static const reflect::properties_t& properties();
+    static std::size_t size();
+
+    static void from_string(const std::string& str, Foo& type);
+    static std::string to_string(const Foo& type);
+    static void from_json(const std::string& json, Foo& type);
+    static std::string to_json(const Foo& type, const std::string& offset = "");
 
     static bool registered() { return value; };
 };
 
 template <>
-struct reflect::Type<class Poo> : reflect::RegisteredInTypeFactory<class Poo>
+struct reflect::Type<struct Poo> : reflect::RegisteredInTypeFactory<struct Poo>
 {
     static const reflect::meta_t& meta();
     static const char* const name();
     static const reflect::properties_t& properties();
+    static std::size_t size();
+
+    static void from_string(const std::string& str, Poo& type);
+    static std::string to_string(const Poo& type);
+    static void from_json(const std::string& json, Poo& type);
+    static std::string to_json(const Poo& type, const std::string& offset = "");
 
     static bool registered() { return value; };
 };

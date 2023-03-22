@@ -15,5 +15,6 @@ public:
 private:
 	static bool parseClass(TypeCollection& collection, SymbolTable& symbolTable, SymbolList& symbolList, const std::vector<std::string>& tokens, size_t& index);
 	static bool parseEnum(TypeCollection& collection, SymbolTable& symbolTable, SymbolList& symbolList, const std::vector<std::string>& tokens, size_t& index);
+	static bool parseNativeClass(TypeCollection& collection, SymbolTable& symbolTable, SymbolList& symbolList, const std::vector<std::string>& tokens, size_t& index);
 	static bool parseMeta(const std::vector<std::string>& tokens, size_t index, meta_t& meta);
 };

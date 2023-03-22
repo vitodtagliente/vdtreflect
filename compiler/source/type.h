@@ -8,7 +8,7 @@
 
 typedef std::map<std::string, std::string> meta_t;
 
-enum class NativeType
+enum class PropertyType
 {
 	T_unknown,
 

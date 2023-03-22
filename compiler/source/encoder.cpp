@@ -162,6 +162,12 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	headerBuffer.push_line("    static const reflect::meta_t& meta();");
 	headerBuffer.push_line("    static const char* const name();");
 	headerBuffer.push_line("    static const reflect::properties_t& properties();");
+	headerBuffer.push_line("    static std::size_t size();");
+	headerBuffer.push_line("");
+	headerBuffer.push_line("    static void from_string(const std::string& str, ", type.name, "& type);");
+	headerBuffer.push_line("    static std::string to_string(const ", type.name, "& type);");
+	headerBuffer.push_line("    static void from_json(const std::string& json, ", type.name, "& type);");
+	headerBuffer.push_line("    static std::string to_json(const ", type.name, "& type, const std::string& offset = \"\");");
 	headerBuffer.push_line("");
 	headerBuffer.push_line("    static bool registered() { return value; };");
 	headerBuffer.push_line("};");
@@ -216,15 +222,71 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	sourceBuffer.push_line("    return s_properties;");
 	sourceBuffer.push_line("}");
 	sourceBuffer.push_line("");
-	sourceBuffer.push_line("const reflect::meta_t& ", type.name, "::type_meta() const { return reflect::Type<", type.name, ">::meta(); }");
-	sourceBuffer.push_line("const char* const ", type.name, "::type_name() const { return reflect::Type<", type.name, ">::name(); }");
-	sourceBuffer.push_line("const reflect::properties_t& ", type.name, "::type_properties() const { return reflect::Type<", type.name, ">::properties(); }");
+	sourceBuffer.push_line("std::size_t reflect::Type<", type.name, ">::size()");
+	sourceBuffer.push_line("{");
+	sourceBuffer.push_line("    return sizeof(", type.name, ");");
+	sourceBuffer.push_line("}");
 	sourceBuffer.push_line("");
-	sourceBuffer.push_line(type.name, "::operator std::string() const");
+	sourceBuffer.push_line("void reflect::Type<", type.name, ">::from_string(const std::string& str, ", type.name, "& type)");
+	sourceBuffer.push_line("{");
+	sourceBuffer.push_line("    reflect::encoding::ByteBuffer buffer;");
+	sourceBuffer.push_line("    std::transform(");
+	sourceBuffer.push_line("        std::begin(str),");
+	sourceBuffer.push_line("        std::end(str),");
+	sourceBuffer.push_line("        std::back_inserter(buffer),");
+	sourceBuffer.push_line("        [](const char c)");
+	sourceBuffer.push_line("        {");
+	sourceBuffer.push_line("            return std::byte(c);");
+	sourceBuffer.push_line("        }");
+	sourceBuffer.push_line("    );");
+	sourceBuffer.push_line("    ");
+	sourceBuffer.push_line("    reflect::encoding::InputByteStream stream(buffer);");
+	sourceBuffer.push_line("    std::string _name;");
+	sourceBuffer.push_line("    stream >> _name;");
+	sourceBuffer.push_line("    if (_name != name()) return;");
+	sourceBuffer.push_line("    ");
+	// look for parent classes
+	has_parent = false;
+	parent_name = type.parent;
+	while (parent_name != "IType")
+	{
+		has_parent = true;
+		TypeClass* const parentClass = collection.findClass(parent_name);
+		if (parentClass == nullptr)
+		{
+			std::cout << "Cannot find the parent class " << parent_name << std::endl;
+			return false;
+		}
+
+		sourceBuffer.push_line("    // Parent class ", parent_name, " properties");
+		for (const Property& property : parentClass->properties)
+		{
+			const bool serialize = false;
+			std::string temp = encodePropertySerialization("    ", symbolTable, serialize, property);
+			if (!temp.empty())
+				sourceBuffer.push_line(temp);
+		}
+
+		parent_name = parentClass->parent;
+	}
+	if (has_parent)
+	{
+		sourceBuffer.push_line("    // Properties");
+	}
+	for (const Property& property : type.properties)
+	{
+		const bool serialize = false;
+		std::string temp = encodePropertySerialization("    ", symbolTable, serialize, property);
+		if (!temp.empty())
+			sourceBuffer.push_line(temp);
+	}
+	sourceBuffer.push_line("}");
+	sourceBuffer.push_line("");
+	sourceBuffer.push_line("std::string reflect::Type<", type.name, ">::to_string(const ", type.name, "& type)");
 	sourceBuffer.push_line("{");
 	sourceBuffer.push_line("    reflect::encoding::ByteBuffer buffer;");
 	sourceBuffer.push_line("    reflect::encoding::OutputByteStream stream(buffer);");
-	sourceBuffer.push_line("    stream << type_name();");
+	sourceBuffer.push_line("    stream << name();");
 	sourceBuffer.push_line("    ");
 	// look for parent classes
 	has_parent = false;
@@ -265,62 +327,7 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	sourceBuffer.push_line("    return std::string(reinterpret_cast<const char*>(&stream.getBuffer()[0]), stream.getBuffer().size());");
 	sourceBuffer.push_line("}");
 	sourceBuffer.push_line("");
-	sourceBuffer.push_line("void ", type.name, "::from_string(const std::string& str)");
-	sourceBuffer.push_line("{");
-	sourceBuffer.push_line("    reflect::encoding::ByteBuffer buffer;");
-	sourceBuffer.push_line("    std::transform(");
-	sourceBuffer.push_line("        std::begin(str),");
-	sourceBuffer.push_line("        std::end(str),");
-	sourceBuffer.push_line("        std::back_inserter(buffer),");
-	sourceBuffer.push_line("        [](const char c)");
-	sourceBuffer.push_line("        {");
-	sourceBuffer.push_line("            return std::byte(c);");
-	sourceBuffer.push_line("        }");
-	sourceBuffer.push_line("    );");
-	sourceBuffer.push_line("    ");
-	sourceBuffer.push_line("    reflect::encoding::InputByteStream stream(buffer);");
-	sourceBuffer.push_line("    std::string _name;");
-	sourceBuffer.push_line("    stream >> _name;");
-	sourceBuffer.push_line("    if (_name != type_name()) return;");
-	sourceBuffer.push_line("    ");
-	// look for parent classes
-	has_parent = false;
-	parent_name = type.parent;
-	while (parent_name != "IType")
-	{
-		has_parent = true;
-		TypeClass* const parentClass = collection.findClass(parent_name);
-		if (parentClass == nullptr)
-		{
-			std::cout << "Cannot find the parent class " << parent_name << std::endl;
-			return false;
-		}
-
-		sourceBuffer.push_line("    // Parent class ", parent_name, " properties");
-		for (const Property& property : parentClass->properties)
-		{
-			const bool serialize = false;
-			std::string temp = encodePropertySerialization("    ", symbolTable, serialize, property);
-			if (!temp.empty())
-				sourceBuffer.push_line(temp);
-		}
-
-		parent_name = parentClass->parent;
-	}
-	if (has_parent)
-	{
-		sourceBuffer.push_line("    // Properties");
-	}
-	for (const Property& property : type.properties)
-	{
-		const bool serialize = false;
-		std::string temp = encodePropertySerialization("    ", symbolTable, serialize, property);
-		if (!temp.empty())
-			sourceBuffer.push_line(temp);
-	}
-	sourceBuffer.push_line("}");
-	sourceBuffer.push_line("");
-	sourceBuffer.push_line("void ", type.name, "::from_json(const std::string& json)");
+	sourceBuffer.push_line("void reflect::Type<", type.name, ">::from_json(const std::string& json, ", type.name, "& type)");
 	sourceBuffer.push_line("{");
 	sourceBuffer.push_line("    std::string src{ reflect::encoding::json::Deserializer::trim(json, reflect::encoding::json::Deserializer::space) };");
 	sourceBuffer.push_line("    ");
@@ -375,10 +382,10 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	sourceBuffer.push_line("    };");
 	sourceBuffer.push_line("}");
 	sourceBuffer.push_line("");
-	sourceBuffer.push_line("std::string ", type.name, "::to_json(const std::string& offset) const");
+	sourceBuffer.push_line("std::string reflect::Type<", type.name, ">::to_json(const ", type.name, "& type, const std::string& offset)");
 	sourceBuffer.push_line("{");
 	sourceBuffer.push_line("    std::stringstream stream;");
-	sourceBuffer.push_line("    stream << \"{\" << std::endl;"); 
+	sourceBuffer.push_line("    stream << \"{\" << std::endl;");
 	sourceBuffer.push_line("    stream << offset << \"    \" << \"\\\"type_id\\\": \" << \"", type.name, "\" << \",\" << std::endl;");
 	// look for parent classes
 	has_parent = false;
@@ -418,6 +425,14 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	sourceBuffer.push_line("    stream << offset << \"}\";");
 	sourceBuffer.push_line("    return stream.str();");
 	sourceBuffer.push_line("}");
+	sourceBuffer.push_line("");
+	sourceBuffer.push_line("const reflect::meta_t& ", type.name, "::type_meta() const { return reflect::Type<", type.name, ">::meta(); }");
+	sourceBuffer.push_line("const char* const ", type.name, "::type_name() const { return reflect::Type<", type.name, ">::name(); }");
+	sourceBuffer.push_line("const reflect::properties_t& ", type.name, "::type_properties() const { return reflect::Type<", type.name, ">::properties(); }");
+	sourceBuffer.push_line(type.name, "::operator std::string() const { return reflect::Type<", type.name, ">::to_string(*this); }");
+	sourceBuffer.push_line("void ", type.name, "::from_string(const std::string& str) { reflect::Type<", type.name, ">::from_string(str, *this); }");
+	sourceBuffer.push_line("void ", type.name, "::from_json(const std::string& json) { reflect::Type<", type.name, ">::from_json(json, *this); }");
+	sourceBuffer.push_line("std::string ", type.name, "::to_json(const std::string& offset) const { return reflect::Type<", type.name, ">::to_json(*this, offset); }");
 	sourceBuffer.push_line("");
 
 	return true;
@@ -470,12 +485,12 @@ std::string Encoder::encodePropertyReflection(const std::string& offset, const S
 std::string Encoder::encodePropertyReflection(const std::string& offset, const SymbolTable& symbolTable, const std::string& type)
 {
 	const DecoratorType decoratorType = parseDecoratorType(symbolTable, type);
-	const NativeType nativeType = parseNativeType(symbolTable, type);
+	const PropertyType PropertyType = parsePropertyType(symbolTable, type);
 	std::vector<std::string> typenames;
 	EncodeBuffer buffer;
 
 	std::string off = offset + "    ";
-	if (nativeType == NativeType::T_template)
+	if (PropertyType == PropertyType::T_template)
 	{
 		typenames = extractTypenames(type);
 		for (const std::string& tname : typenames)
@@ -489,35 +504,35 @@ std::string Encoder::encodePropertyReflection(const std::string& offset, const S
 		buffer.push(" ");
 	}
 
-	return ("reflect::NativeType{ \"" + type + "\", { " + buffer.string(false) + "}, " + toString(decoratorType) + ", sizeof(" + type + "), " + toString(nativeType) + " }");
+	return ("reflect::PropertyType{ \"" + type + "\", { " + buffer.string(false) + "}, " + toString(decoratorType) + ", sizeof(" + type + "), " + toString(PropertyType) + " }");
 }
 
 std::string Encoder::encodePropertySerialization(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const Property& property)
 {
-	return encodePropertySerialization(offset, symbolTable, serialize, property.name, property.type);
+	return encodePropertySerialization(offset, symbolTable, serialize, "type." + property.name, property.type);
 }
 
 std::string Encoder::encodePropertySerialization(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const std::string& name, const std::string& type)
 {
 	const DecoratorType decoratorType = parseDecoratorType(symbolTable, type);
-	const NativeType nativeType = parseNativeType(symbolTable, type);
+	const PropertyType PropertyType = parsePropertyType(symbolTable, type);
 	EncodeBuffer buffer;
 
 	if (decoratorType != DecoratorType::D_raw) return "";
 
-	switch (nativeType)
+	switch (PropertyType)
 	{
-	case NativeType::T_bool:
-	case NativeType::T_char:
-	case NativeType::T_double:
-	case NativeType::T_float:
-	case NativeType::T_int:
-	case NativeType::T_string:
+	case PropertyType::T_bool:
+	case PropertyType::T_char:
+	case PropertyType::T_double:
+	case PropertyType::T_float:
+	case PropertyType::T_int:
+	case PropertyType::T_string:
 	{
 		buffer.push(offset, "stream ", serialize ? "<<" : ">>", " ", name, ";");
 		break;
 	}
-	case NativeType::T_enum:
+	case PropertyType::T_enum:
 	{
 		if (serialize)
 		{
@@ -533,7 +548,7 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 		}
 		break;
 	}
-	case NativeType::T_template:
+	case PropertyType::T_template:
 	{
 		std::vector<std::string> typenames;
 		typenames = extractTypenames(type);
@@ -543,7 +558,7 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 		if (StringUtil::startsWith(type, "vector") || StringUtil::startsWith(type, "std::vector")
 			|| StringUtil::startsWith(type, "list") || StringUtil::startsWith(type, "std::list"))
 		{
-			if (!isValidListType(symbolTable, parseNativeType(symbolTable, typenames[0]), typenames[0])) break;
+			if (!isValidListType(symbolTable, parsePropertyType(symbolTable, typenames[0]), typenames[0])) break;
 
 			buffer.push(offset, "{");
 			if (serialize)
@@ -578,8 +593,8 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 			|| StringUtil::startsWith(type, "unordered_map") || StringUtil::startsWith(type, "std::unordered_map"))
 		{
 			if (typenames.size() < 2) break;
-			if (!isValidMapKeyType(parseNativeType(symbolTable, typenames[0]))
-				|| !isValidMapValueType(symbolTable, parseNativeType(symbolTable, typenames[1]), typenames[1])) break;
+			if (!isValidMapKeyType(parsePropertyType(symbolTable, typenames[0]))
+				|| !isValidMapValueType(symbolTable, parsePropertyType(symbolTable, typenames[1]), typenames[1])) break;
 
 			buffer.push(offset, "{");
 			if (serialize)
@@ -612,7 +627,7 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 		}
 		else if (StringUtil::startsWith(type, "shared_ptr") || StringUtil::startsWith(type, "std::shared_ptr"))
 		{
-			if (parseNativeType(symbolTable, typenames[0]) != NativeType::T_type) break;
+			if (parsePropertyType(symbolTable, typenames[0]) != PropertyType::T_type) break;
 
 			if (serialize)
 			{
@@ -630,7 +645,7 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 		}
 		else if (StringUtil::startsWith(type, "unique_ptr") || StringUtil::startsWith(type, "std::unique_ptr"))
 		{
-			if (parseNativeType(symbolTable, typenames[0]) != NativeType::T_type) break;
+			if (parsePropertyType(symbolTable, typenames[0]) != PropertyType::T_type) break;
 
 			if (serialize)
 			{
@@ -648,7 +663,7 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 		}
 		break;
 	}
-	case NativeType::T_type:
+	case PropertyType::T_type:
 	{
 		if (serialize)
 		{
@@ -665,8 +680,8 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 		break;
 	}
 	default:
-	case NativeType::T_void:
-	case NativeType::T_unknown:
+	case PropertyType::T_void:
+	case PropertyType::T_unknown:
 		break;
 	}
 
@@ -675,25 +690,25 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 
 std::string Encoder::encodePropertySerializationToJson(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const Property& property)
 {
-	return encodePropertySerializationToJson(offset, symbolTable, serialize, property.name, property.type);
+	return encodePropertySerializationToJson(offset, symbolTable, serialize, "type." + property.name, property.type);
 }
 
 std::string Encoder::encodePropertySerializationToJson(const std::string& offset, const SymbolTable& symbolTable, const bool serialize, const std::string& name, const std::string& type)
 {
 	const DecoratorType decoratorType = parseDecoratorType(symbolTable, type);
-	const NativeType nativeType = parseNativeType(symbolTable, type);
+	const PropertyType PropertyType = parsePropertyType(symbolTable, type);
 	EncodeBuffer buffer;
 
 	if (decoratorType != DecoratorType::D_raw) return "";
 
-	switch (nativeType)
+	switch (PropertyType)
 	{
-	case NativeType::T_bool:
-	case NativeType::T_double:
-	case NativeType::T_float:
-	case NativeType::T_int:
-	case NativeType::T_char:
-	case NativeType::T_string: 
+	case PropertyType::T_bool:
+	case PropertyType::T_double:
+	case PropertyType::T_float:
+	case PropertyType::T_int:
+	case PropertyType::T_char:
+	case PropertyType::T_string: 
 	{
 		if (serialize)
 		{
@@ -705,7 +720,7 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 		}
 		break;
 	}
-	case NativeType::T_enum:
+	case PropertyType::T_enum:
 	{
 		if (serialize)
 		{
@@ -722,7 +737,7 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 		}
 		break;
 	}
-	case NativeType::T_template:
+	case PropertyType::T_template:
 	{
 		std::vector<std::string> typenames;
 		typenames = extractTypenames(type);
@@ -732,7 +747,7 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 		if (StringUtil::startsWith(type, "vector") || StringUtil::startsWith(type, "std::vector")
 			|| StringUtil::startsWith(type, "list") || StringUtil::startsWith(type, "std::list"))
 		{
-			if (!isValidListType(symbolTable, parseNativeType(symbolTable, typenames[0]), typenames[0])) break;
+			if (!isValidListType(symbolTable, parsePropertyType(symbolTable, typenames[0]), typenames[0])) break;
 
 			if (serialize)
 			{
@@ -747,8 +762,8 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 			|| StringUtil::startsWith(type, "unordered_map") || StringUtil::startsWith(type, "std::unordered_map"))
 		{
 			if (typenames.size() < 2) break;
-			if (!isValidMapKeyType(parseNativeType(symbolTable, typenames[0]))
-				|| !isValidMapValueType(symbolTable, parseNativeType(symbolTable, typenames[1]), typenames[1])) break;
+			if (!isValidMapKeyType(parsePropertyType(symbolTable, typenames[0]))
+				|| !isValidMapValueType(symbolTable, parsePropertyType(symbolTable, typenames[1]), typenames[1])) break;
 
 			if (serialize)
 			{
@@ -761,7 +776,7 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 		}
 		else if (StringUtil::startsWith(type, "shared_ptr") || StringUtil::startsWith(type, "std::shared_ptr"))
 		{
-			if (parseNativeType(symbolTable, typenames[0]) != NativeType::T_type) break;
+			if (parsePropertyType(symbolTable, typenames[0]) != PropertyType::T_type) break;
 
 			if (serialize)
 			{
@@ -774,7 +789,7 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 		}
 		else if (StringUtil::startsWith(type, "unique_ptr") || StringUtil::startsWith(type, "std::unique_ptr"))
 		{
-			if (parseNativeType(symbolTable, typenames[0]) != NativeType::T_type) break;
+			if (parsePropertyType(symbolTable, typenames[0]) != PropertyType::T_type) break;
 
 			if (serialize)
 			{
@@ -787,7 +802,7 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 		}
 		break;
 	}
-	case NativeType::T_type:
+	case PropertyType::T_type:
 	{
 		if (serialize)
 		{
@@ -800,45 +815,45 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 		break;
 	}
 	default:
-	case NativeType::T_void:
-	case NativeType::T_unknown:
+	case PropertyType::T_void:
+	case PropertyType::T_unknown:
 		break;
 	}
 
 	return buffer.string(false);
 }
 
-NativeType Encoder::parseNativeType(const SymbolTable& symbolTable, const std::string& t)
+PropertyType Encoder::parsePropertyType(const SymbolTable& symbolTable, const std::string& t)
 {
 	std::string type = StringUtil::replace(t, "std::", "");
-	if (type.empty()) return NativeType::T_unknown;
+	if (type.empty()) return PropertyType::T_unknown;
 
 	while (!type.empty() && (type[type.length() - 1] == '*' || type[type.length() - 1] == '&' || type[type.length() - 1] == ' '))
 	{
 		type.pop_back();
 	}
 
-	if (type == "bool") return NativeType::T_bool;
-	if (type == "char") return NativeType::T_char;
-	if (type == "double") return NativeType::T_double;
-	if (type == "float") return NativeType::T_float;
-	if (type == "int")  return NativeType::T_int;
-	if (type == "void")  return NativeType::T_void;
-	if (type == "string") return NativeType::T_string;
-	if (type.find("<") != std::string::npos) return NativeType::T_template;
+	if (type == "bool") return PropertyType::T_bool;
+	if (type == "char") return PropertyType::T_char;
+	if (type == "double") return PropertyType::T_double;
+	if (type == "float") return PropertyType::T_float;
+	if (type == "int")  return PropertyType::T_int;
+	if (type == "void")  return PropertyType::T_void;
+	if (type == "string") return PropertyType::T_string;
+	if (type.find("<") != std::string::npos) return PropertyType::T_template;
 
 	const auto& it = symbolTable.find(type);
 	if (it != symbolTable.end())
 	{
 		switch (it->second)
 		{
-		case SymbolType::S_class: return NativeType::T_type;
-		case SymbolType::S_enum: return NativeType::T_enum;
-		default: return NativeType::T_unknown;
+		case SymbolType::S_class: return PropertyType::T_type;
+		case SymbolType::S_enum: return PropertyType::T_enum;
+		default: return PropertyType::T_unknown;
 		}
 	}
 
-	return NativeType::T_unknown;
+	return PropertyType::T_unknown;
 }
 
 DecoratorType Encoder::parseDecoratorType(const SymbolTable& symbolTable, const std::string& t)
@@ -879,22 +894,22 @@ std::string Encoder::sanitizeTemplate(const std::string& token)
 	return content;
 }
 
-std::string Encoder::toString(const NativeType type)
+std::string Encoder::toString(const PropertyType type)
 {
 	switch (type)
 	{
-	case NativeType::T_bool: return "reflect::NativeType::Type::T_bool";
-	case NativeType::T_char: return "reflect::NativeType::Type::T_char";
-	case NativeType::T_double: return "reflect::NativeType::Type::T_double";
-	case NativeType::T_enum: return "reflect::NativeType::Type::T_enum";
-	case NativeType::T_float: return "reflect::NativeType::Type::T_float";
-	case NativeType::T_int: return "reflect::NativeType::Type::T_int";
-	case NativeType::T_string: return "reflect::NativeType::Type::T_string";
-	case NativeType::T_template: return "reflect::NativeType::Type::T_template";
-	case NativeType::T_type: return "reflect::NativeType::Type::T_type";
-	case NativeType::T_void: return "reflect::NativeType::Type::T_void";
+	case PropertyType::T_bool: return "reflect::PropertyType::Type::T_bool";
+	case PropertyType::T_char: return "reflect::PropertyType::Type::T_char";
+	case PropertyType::T_double: return "reflect::PropertyType::Type::T_double";
+	case PropertyType::T_enum: return "reflect::PropertyType::Type::T_enum";
+	case PropertyType::T_float: return "reflect::PropertyType::Type::T_float";
+	case PropertyType::T_int: return "reflect::PropertyType::Type::T_int";
+	case PropertyType::T_string: return "reflect::PropertyType::Type::T_string";
+	case PropertyType::T_template: return "reflect::PropertyType::Type::T_template";
+	case PropertyType::T_type: return "reflect::PropertyType::Type::T_type";
+	case PropertyType::T_void: return "reflect::PropertyType::Type::T_void";
 	default:
-	case NativeType::T_unknown: return "reflect::NativeType::Type::T_unknown";
+	case PropertyType::T_unknown: return "reflect::PropertyType::Type::T_unknown";
 	}
 }
 
@@ -902,20 +917,20 @@ std::string Encoder::toString(const DecoratorType type)
 {
 	switch (type)
 	{
-	case DecoratorType::D_pointer: return "reflect::NativeType::DecoratorType::D_pointer";
-	case DecoratorType::D_reference: return "reflect::NativeType::DecoratorType::D_reference";
+	case DecoratorType::D_pointer: return "reflect::PropertyType::DecoratorType::D_pointer";
+	case DecoratorType::D_reference: return "reflect::PropertyType::DecoratorType::D_reference";
 	default:
-	case DecoratorType::D_raw: return "reflect::NativeType::DecoratorType::D_raw";
+	case DecoratorType::D_raw: return "reflect::PropertyType::DecoratorType::D_raw";
 	}
 }
 
-bool Encoder::isValidListType(const SymbolTable& symbolTable, const NativeType type, const std::string& token)
+bool Encoder::isValidListType(const SymbolTable& symbolTable, const PropertyType type, const std::string& token)
 {
-	if (type == NativeType::T_void
-		|| type == NativeType::T_unknown)
+	if (type == PropertyType::T_void
+		|| type == PropertyType::T_unknown)
 		return false;
 
-	if (type == NativeType::T_template)
+	if (type == PropertyType::T_template)
 	{
 		if (StringUtil::startsWith(token, "shared_ptr") || StringUtil::startsWith(token, "std::shared_ptr")
 			|| StringUtil::startsWith(token, "unique_ptr") || StringUtil::startsWith(token, "std::unique_ptr"))
@@ -929,19 +944,19 @@ bool Encoder::isValidListType(const SymbolTable& symbolTable, const NativeType t
 	return true;
 }
 
-bool Encoder::isValidMapKeyType(const NativeType type)
+bool Encoder::isValidMapKeyType(const PropertyType type)
 {
-	return type == NativeType::T_enum
-		|| type == NativeType::T_string;
+	return type == PropertyType::T_enum
+		|| type == PropertyType::T_string;
 }
 
-bool Encoder::isValidMapValueType(const SymbolTable& symbolTable, const NativeType type, const std::string& token)
+bool Encoder::isValidMapValueType(const SymbolTable& symbolTable, const PropertyType type, const std::string& token)
 {
-	if (type == NativeType::T_void
-		|| type == NativeType::T_unknown)
+	if (type == PropertyType::T_void
+		|| type == PropertyType::T_unknown)
 		return false;
 
-	if (type == NativeType::T_template)
+	if (type == PropertyType::T_template)
 	{
 		if (StringUtil::startsWith(token, "shared_ptr") || StringUtil::startsWith(token, "std::shared_ptr")
 			|| StringUtil::startsWith(token, "unique_ptr") || StringUtil::startsWith(token, "std::unique_ptr"))
