@@ -158,6 +158,36 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 
 	// header
 	const std::string forward_keyword = type.isStruct ? "struct" : "class";
+	
+	if (isNativeClass)
+	{
+		if (StringUtil::contains(type.name, ":"))
+		{
+			const std::vector<std::string> pieces = StringUtil::split(type.name, ':');
+			for (int i = 0; i < pieces.size(); ++i)
+			{
+				if (pieces[i].empty()) continue;
+
+				if (i == pieces.size() - 1)
+				{
+					headerBuffer.push_line("    ", forward_keyword, " ", pieces[i], ";");
+				}
+				else
+				{
+					headerBuffer.push_line("namespace ", pieces[i]);
+					headerBuffer.push_line("{");
+				}
+			}
+			for (int i = 0; i < pieces.size() - 1; ++i)
+			{
+				if (pieces[i].empty()) continue;
+
+				headerBuffer.push_line("}");
+			}
+			headerBuffer.push_line("");
+		}
+	}
+	
 	headerBuffer.push_line("template <>");
 	if (!isNativeClass)
 	{

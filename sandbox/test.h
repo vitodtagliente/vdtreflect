@@ -11,12 +11,15 @@
 
 using namespace reflect;
 
-struct vec3
+namespace math
 {
-	float x{ 0.f }, y{ 0.f }, z{ 0.f };
-};
+	struct vec3
+	{
+		float x{ 0.f }, y{ 0.f }, z{ 0.f };
+	};
+}
 
-NATIVE_CLASS(vec3)
+NATIVE_CLASS(math::vec3)
 struct Vec3
 {
 	PROPERTY() float x{ 0.0f };
@@ -40,7 +43,7 @@ struct Foo : public IType
 	PROPERTY() std::string m_string = "foo";
 	PROPERTY() std::list<int> list;
 	PROPERTY() std::map<std::string, int> dictionary;
-	PROPERTY() vec3 position;
+	PROPERTY() math::vec3 position;
 
 	GENERATED_BODY()
 };

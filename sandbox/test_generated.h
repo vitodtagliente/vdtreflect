@@ -13,18 +13,23 @@ struct reflect::Enum<enum class ApplicationMode> : reflect::RegisteredInEnumFact
     static bool registered() { return value; };
 };
 
+namespace math
+{
+    struct vec3;
+}
+
 template <>
-struct reflect::Type<struct vec3>
+struct reflect::Type<struct math::vec3>
 {
     static const reflect::meta_t& meta();
     static const char* const name();
     static const reflect::properties_t& properties();
     static std::size_t size();
 
-    static void from_string(const std::string& str, vec3& type);
-    static std::string to_string(const vec3& type);
-    static void from_json(const std::string& json, vec3& type);
-    static std::string to_json(const vec3& type, const std::string& offset = "");
+    static void from_string(const std::string& str, math::vec3& type);
+    static std::string to_string(const math::vec3& type);
+    static void from_json(const std::string& json, math::vec3& type);
+    static std::string to_json(const math::vec3& type, const std::string& offset = "");
 };
 
 template <>
