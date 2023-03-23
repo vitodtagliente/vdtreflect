@@ -76,17 +76,7 @@ bool Encoder::encode(const SymbolList& symbolList, const TypeCollection& collect
 		}
 
 		SymbolType type = it->second;
-		if (type == SymbolType::S_class)
-		{
-			TypeClass* const eClass = collection.findClass(name);
-			if (eClass == nullptr)
-			{
-				std::cout << "Failed to find the class " << name << std::endl;
-				return false;
-			}
-			classes.push_back(eClass);
-		}
-		else
+		if (type == SymbolType::S_enum)
 		{
 			TypeEnum* const eEnum = collection.findEnum(name);
 			if (eEnum == nullptr)
@@ -95,6 +85,16 @@ bool Encoder::encode(const SymbolList& symbolList, const TypeCollection& collect
 				return false;
 			}
 			enums.push_back(eEnum);
+		}
+		else
+		{
+			TypeClass* const eClass = collection.findClass(name);
+			if (eClass == nullptr)
+			{
+				std::cout << "Failed to find the class " << name << std::endl;
+				return false;
+			}
+			classes.push_back(eClass);
 		}
 	}
 
@@ -154,10 +154,19 @@ bool Encoder::encode(const SymbolList& symbolList, const TypeCollection& collect
 
 bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, const SymbolTable& symbolTable, const TypeCollection& collection, TypeClass& type)
 {
+	const bool isNativeClass = symbolTable.find(type.name)->second == SymbolType::S_nativeClass;
+
 	// header
 	const std::string forward_keyword = type.isStruct ? "struct" : "class";
 	headerBuffer.push_line("template <>");
-	headerBuffer.push_line("struct reflect::Type<", forward_keyword, " ", type.name, "> : reflect::RegisteredInTypeFactory<", forward_keyword, " ", type.name, ">");
+	if (!isNativeClass)
+	{
+		headerBuffer.push_line("struct reflect::Type<", forward_keyword, " ", type.name, "> : reflect::RegisteredInTypeFactory<", forward_keyword, " ", type.name, ">");
+	}
+	else
+	{
+		headerBuffer.push_line("struct reflect::Type<", forward_keyword, " ", type.name, ">");
+	}
 	headerBuffer.push_line("{");
 	headerBuffer.push_line("    static const reflect::meta_t& meta();");
 	headerBuffer.push_line("    static const char* const name();");
@@ -168,8 +177,11 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	headerBuffer.push_line("    static std::string to_string(const ", type.name, "& type);");
 	headerBuffer.push_line("    static void from_json(const std::string& json, ", type.name, "& type);");
 	headerBuffer.push_line("    static std::string to_json(const ", type.name, "& type, const std::string& offset = \"\");");
-	headerBuffer.push_line("");
-	headerBuffer.push_line("    static bool registered() { return value; };");
+	if (!isNativeClass)
+	{
+		headerBuffer.push_line("");
+		headerBuffer.push_line("    static bool registered() { return value; };");
+	}
 	headerBuffer.push_line("};");
 	headerBuffer.push_line("");
 
@@ -192,7 +204,7 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	// look for parent classes
 	bool has_parent = false;
 	std::string parent_name = type.parent;
-	while (parent_name != "IType")
+	while (parent_name != "IType" && !isNativeClass)
 	{
 		has_parent = true;
 		TypeClass* const parentClass = collection.findClass(parent_name);
@@ -248,7 +260,7 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	// look for parent classes
 	has_parent = false;
 	parent_name = type.parent;
-	while (parent_name != "IType")
+	while (parent_name != "IType" && !isNativeClass)
 	{
 		has_parent = true;
 		TypeClass* const parentClass = collection.findClass(parent_name);
@@ -291,7 +303,7 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	// look for parent classes
 	has_parent = false;
 	parent_name = type.parent;
-	while (parent_name != "IType")
+	while (parent_name != "IType" && !isNativeClass)
 	{
 		has_parent = true;
 		TypeClass* const parentClass = collection.findClass(parent_name);
@@ -344,7 +356,7 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	// look for parent classes
 	has_parent = false;
 	parent_name = type.parent;
-	while (parent_name != "IType")
+	while (parent_name != "IType" && !isNativeClass)
 	{
 		has_parent = true;
 		TypeClass* const parentClass = collection.findClass(parent_name);
@@ -390,7 +402,7 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	// look for parent classes
 	has_parent = false;
 	parent_name = type.parent;
-	while (parent_name != "IType")
+	while (parent_name != "IType" && !isNativeClass)
 	{
 		has_parent = true;
 		TypeClass* const parentClass = collection.findClass(parent_name);
@@ -426,14 +438,17 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	sourceBuffer.push_line("    return stream.str();");
 	sourceBuffer.push_line("}");
 	sourceBuffer.push_line("");
-	sourceBuffer.push_line("const reflect::meta_t& ", type.name, "::type_meta() const { return reflect::Type<", type.name, ">::meta(); }");
-	sourceBuffer.push_line("const char* const ", type.name, "::type_name() const { return reflect::Type<", type.name, ">::name(); }");
-	sourceBuffer.push_line("const reflect::properties_t& ", type.name, "::type_properties() const { return reflect::Type<", type.name, ">::properties(); }");
-	sourceBuffer.push_line(type.name, "::operator std::string() const { return reflect::Type<", type.name, ">::to_string(*this); }");
-	sourceBuffer.push_line("void ", type.name, "::from_string(const std::string& str) { reflect::Type<", type.name, ">::from_string(str, *this); }");
-	sourceBuffer.push_line("void ", type.name, "::from_json(const std::string& json) { reflect::Type<", type.name, ">::from_json(json, *this); }");
-	sourceBuffer.push_line("std::string ", type.name, "::to_json(const std::string& offset) const { return reflect::Type<", type.name, ">::to_json(*this, offset); }");
-	sourceBuffer.push_line("");
+	if (!isNativeClass)
+	{
+		sourceBuffer.push_line("const reflect::meta_t& ", type.name, "::type_meta() const { return reflect::Type<", type.name, ">::meta(); }");
+		sourceBuffer.push_line("const char* const ", type.name, "::type_name() const { return reflect::Type<", type.name, ">::name(); }");
+		sourceBuffer.push_line("const reflect::properties_t& ", type.name, "::type_properties() const { return reflect::Type<", type.name, ">::properties(); }");
+		sourceBuffer.push_line(type.name, "::operator std::string() const { return reflect::Type<", type.name, ">::to_string(*this); }");
+		sourceBuffer.push_line("void ", type.name, "::from_string(const std::string& str) { reflect::Type<", type.name, ">::from_string(str, *this); }");
+		sourceBuffer.push_line("void ", type.name, "::from_json(const std::string& json) { reflect::Type<", type.name, ">::from_json(json, *this); }");
+		sourceBuffer.push_line("std::string ", type.name, "::to_json(const std::string& offset) const { return reflect::Type<", type.name, ">::to_json(*this, offset); }");
+		sourceBuffer.push_line("");
+	}
 
 	return true;
 }
@@ -548,6 +563,22 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 		}
 		break;
 	}
+	case PropertyType::T_native:
+	{
+		if (serialize)
+		{
+			buffer.push(offset, "stream << reflect::Type<", type, ">::to_string(", name, ");");
+		}
+		else
+		{
+			buffer.push(offset, "{");
+			buffer.push("\n", offset, "    ", "std::string pack;");
+			buffer.push("\n", offset, "    ", "stream >> pack;");
+			buffer.push("\n", offset, "    reflect::Type<", type, ">::from_string(pack, ", name, ");");
+			buffer.push("\n", offset, "}");
+		}
+		break;
+	}
 	case PropertyType::T_template:
 	{
 		std::vector<std::string> typenames;
@@ -576,7 +607,7 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 			buffer.push("\n", offset, "    ", "{");
 			if (serialize)
 			{
-				const std::string temp = encodePropertySerialization("        ", symbolTable, serialize, "element", typenames[0]);
+				const std::string temp = encodePropertySerialization(offset + "        ", symbolTable, serialize, "element", typenames[0]);
 				buffer.push("\n", temp);
 			}
 			else
@@ -602,9 +633,9 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 				buffer.push("\n", offset, "    ", "stream << ", name, ".size();");
 				buffer.push("\n", offset, "    ", "for (const auto& pair : ", name, ")");
 				buffer.push("\n", offset, "    ", "{");
-				std::string temp = encodePropertySerialization(offset + "    ", symbolTable, serialize, "pair.first", typenames[0]);
+				std::string temp = encodePropertySerialization(offset + "        ", symbolTable, serialize, "pair.first", typenames[0]);
 				buffer.push("\n", temp);
-				temp = encodePropertySerialization(offset + "    ", symbolTable, serialize, "pair.second", typenames[1]);
+				temp = encodePropertySerialization(offset + "        ", symbolTable, serialize, "pair.second", typenames[1]);
 				buffer.push("\n", temp);
 				buffer.push("\n", offset, "    ", "}");
 			}
@@ -737,6 +768,18 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 		}
 		break;
 	}
+	case PropertyType::T_native:
+	{
+		if (serialize)
+		{
+			buffer.push(offset, "stream << offset << \"    \" << \"\\\"", name, "\\\": \" << reflect::Type<", type, ">::to_json(type.", name, ", offset + \"    \") << \",\" << std::endl;");
+		}
+		else
+		{
+			buffer.push(offset, "if (key == \"", name, "\") reflect::Type<", type, ">::from_json(value, type.", name, ");");
+		}
+		break;
+	}
 	case PropertyType::T_template:
 	{
 		std::vector<std::string> typenames;
@@ -847,8 +890,9 @@ PropertyType Encoder::parsePropertyType(const SymbolTable& symbolTable, const st
 	{
 		switch (it->second)
 		{
-		case SymbolType::S_class: return PropertyType::T_type;
 		case SymbolType::S_enum: return PropertyType::T_enum;
+		case SymbolType::S_nativeClass: return PropertyType::T_native;
+		case SymbolType::S_class: return PropertyType::T_type;
 		default: return PropertyType::T_unknown;
 		}
 	}
@@ -904,6 +948,7 @@ std::string Encoder::toString(const PropertyType type)
 	case PropertyType::T_enum: return "reflect::PropertyType::Type::T_enum";
 	case PropertyType::T_float: return "reflect::PropertyType::Type::T_float";
 	case PropertyType::T_int: return "reflect::PropertyType::Type::T_int";
+	case PropertyType::T_native: return "reflect::PropertyType::Type::T_native";
 	case PropertyType::T_string: return "reflect::PropertyType::Type::T_string";
 	case PropertyType::T_template: return "reflect::PropertyType::Type::T_template";
 	case PropertyType::T_type: return "reflect::PropertyType::Type::T_type";

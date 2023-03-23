@@ -244,7 +244,80 @@ bool Parser::parseEnum(TypeCollection& collection, SymbolTable& symbolTable, Sym
 
 bool Parser::parseNativeClass(TypeCollection& collection, SymbolTable& symbolTable, SymbolList& symbolList, const std::vector<std::string>& tokens, size_t& index)
 {
-	return true;
+	bool isStruct = false;
+
+	const size_t startingIndex = index;
+	if (index + 3 >= tokens.size()) return false;
+	if (tokens[index + 1] != "(" || tokens[index + 3] != ")") return false;
+	const std::string nativeTypeName = tokens[index + 2];
+
+	index += 4;
+
+	TypeClass* element = nullptr;
+	while (index + 1 < tokens.size())
+	{
+		if (tokens[index] == "class" || tokens[index] == "struct")
+		{
+			isStruct = tokens[index] == "struct";
+			element = collection.addClass(nativeTypeName);
+			element->isStruct = isStruct;
+			break;
+		}
+		++index;
+	}
+
+	if (element == nullptr) return false;
+	symbolTable.insert(std::make_pair(element->name, SymbolType::S_nativeClass));
+	symbolList.push_back(element->name);
+
+	int openGraphs = 0;
+	while (index < tokens.size())
+	{
+		std::string token = tokens[index++];
+		if (token == ";" && openGraphs == 0 && element != nullptr)
+		{
+			return true;
+		}
+
+		if (token == "{")
+		{
+			++openGraphs;
+		}
+		else if (token == "}")
+		{
+			if (--openGraphs < 0) return false;
+		}
+		else if (token == "PROPERTY")
+		{
+			const std::size_t startingPropertyIndex = index - 1;
+			while (index + 1 < tokens.size())
+			{
+				if (tokens[++index] == ")") break;
+			}
+
+			if (index + 2 >= tokens.size()) return false;
+
+			std::string propertyType = tokens[++index];
+			if (propertyType.find('<') != std::string::npos)
+			{
+				while (propertyType.find('>') == std::string::npos && index + 1 < tokens.size())
+				{
+					propertyType += tokens[++index];
+					if (propertyType.back() == ',')
+					{
+						propertyType += " ";
+					}
+				}
+				if (propertyType.find('>') == std::string::npos) return false;
+			}
+			std::string propertyName = tokens[++index];
+			meta_t propertyMeta;
+			parseMeta(tokens, startingPropertyIndex, propertyMeta);
+			element->addProperty(propertyName, propertyType, propertyMeta);
+		}
+	}
+
+	return false;
 }
 
 bool Parser::parseMeta(const std::vector<std::string>& tokens, size_t index, meta_t& meta)

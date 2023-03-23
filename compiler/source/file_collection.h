@@ -8,6 +8,7 @@
 enum class SymbolType
 {
 	S_class,
+	S_nativeClass,
 	S_enum,
 };
 

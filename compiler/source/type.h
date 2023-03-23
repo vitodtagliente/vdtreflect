@@ -18,6 +18,7 @@ enum class PropertyType
 	T_enum,
 	T_float,
 	T_int,
+	T_native,
 	T_string,
 	T_template,
 	T_type,

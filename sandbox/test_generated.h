@@ -5,7 +5,7 @@
 #include <vdtreflect/runtime.h>
 
 template <>
-struct reflect::Enum<enum class TestEnum> : reflect::RegisteredInEnumFactory<enum class TestEnum>
+struct reflect::Enum<enum class ApplicationMode> : reflect::RegisteredInEnumFactory<enum class ApplicationMode>
 {
     static const char* const name();
     static const reflect::enum_values_t& values();
@@ -14,12 +14,17 @@ struct reflect::Enum<enum class TestEnum> : reflect::RegisteredInEnumFactory<enu
 };
 
 template <>
-struct reflect::Enum<enum class ApplicationMode> : reflect::RegisteredInEnumFactory<enum class ApplicationMode>
+struct reflect::Type<struct vec3>
 {
+    static const reflect::meta_t& meta();
     static const char* const name();
-    static const reflect::enum_values_t& values();
-    
-    static bool registered() { return value; };
+    static const reflect::properties_t& properties();
+    static std::size_t size();
+
+    static void from_string(const std::string& str, vec3& type);
+    static std::string to_string(const vec3& type);
+    static void from_json(const std::string& json, vec3& type);
+    static std::string to_json(const vec3& type, const std::string& offset = "");
 };
 
 template <>
