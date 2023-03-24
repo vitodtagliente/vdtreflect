@@ -50,6 +50,7 @@ struct Poo : public Foo
 	PROPERTY() std::vector<std::shared_ptr<Foo>> shared_foos;
 	PROPERTY() std::vector<std::unique_ptr<Foo>> unique_foos;	
 	PROPERTY() Foo type;
+	PROPERTY() std::vector<Foo> foos;
 	PROPERTY() std::shared_ptr<Foo> s_type;
 	PROPERTY() std::unique_ptr<Foo> u_type;
 

@@ -315,6 +315,9 @@ const reflect::properties_t& Type<Poo>::properties()
             }, reflect::PropertyType::DecoratorType::D_raw, sizeof(std::unique_ptr<Foo>), reflect::PropertyType::Type::T_template },
         }, reflect::PropertyType::DecoratorType::D_raw, sizeof(std::vector<std::unique_ptr<Foo>>), reflect::PropertyType::Type::T_template } } },
         { "type", reflect::Property{ offsetof(Poo, type), reflect::meta_t { }, "type", reflect::PropertyType{ "Foo", {  }, reflect::PropertyType::DecoratorType::D_raw, sizeof(Foo), reflect::PropertyType::Type::T_type } } },
+        { "foos", reflect::Property{ offsetof(Poo, foos), reflect::meta_t { }, "foos", reflect::PropertyType{ "std::vector<Foo>", { 
+            reflect::PropertyType{ "Foo", {  }, reflect::PropertyType::DecoratorType::D_raw, sizeof(Foo), reflect::PropertyType::Type::T_type },
+        }, reflect::PropertyType::DecoratorType::D_raw, sizeof(std::vector<Foo>), reflect::PropertyType::Type::T_template } } },
         { "s_type", reflect::Property{ offsetof(Poo, s_type), reflect::meta_t { }, "s_type", reflect::PropertyType{ "std::shared_ptr<Foo>", { 
             reflect::PropertyType{ "Foo", {  }, reflect::PropertyType::DecoratorType::D_raw, sizeof(Foo), reflect::PropertyType::Type::T_type },
         }, reflect::PropertyType::DecoratorType::D_raw, sizeof(std::shared_ptr<Foo>), reflect::PropertyType::Type::T_template } } },
@@ -419,6 +422,21 @@ void reflect::Type<Poo>::from_string(const std::string& str, Poo& type)
         stream >> pack;
         type.type.from_string(pack);
     }
+    {
+        std::size_t size;
+        stream >> size;
+        type.foos.resize(size);
+        for (int i = 0; i < type.foos.size(); ++i)
+        {
+            Foo element;
+            {
+                std::string pack;
+                stream >> pack;
+                element.from_string(pack);
+            }
+            type.foos.push_back(std::move(element));
+        }
+    }
     type.s_type = std::make_shared<Foo>();
     {
         std::string pack;
@@ -476,6 +494,13 @@ std::string reflect::Type<Poo>::to_string(const Poo& type)
         }
     }
     stream << static_cast<std::string>(type.type);
+    {
+        stream << type.foos.size();
+        for (const auto& element : type.foos)
+        {
+            stream << static_cast<std::string>(element);
+        }
+    }
     if(type.s_type) stream << static_cast<std::string>(*type.s_type);
     if(type.u_type) stream << static_cast<std::string>(*type.u_type);
     
@@ -508,6 +533,7 @@ void reflect::Type<Poo>::from_json(const std::string& json, Poo& type)
             if (key == "shared_foos") reflect::encoding::json::Deserializer::parse(value, type.shared_foos);
             if (key == "unique_foos") reflect::encoding::json::Deserializer::parse(value, type.unique_foos);
             if (key == "type") type.type.from_json(value);
+            if (key == "foos") reflect::encoding::json::Deserializer::parse(value, type.foos);
             if (key == "s_type") reflect::encoding::json::Deserializer::parse(value, type.s_type);
             if (key == "u_type") reflect::encoding::json::Deserializer::parse(value, type.u_type);
             src = src.substr(index + 1);
@@ -533,6 +559,7 @@ std::string reflect::Type<Poo>::to_json(const Poo& type, const std::string& offs
     stream << offset << "    " << "\"shared_foos\": " << reflect::encoding::json::Serializer::to_string(type.shared_foos) << "," << std::endl;
     stream << offset << "    " << "\"unique_foos\": " << reflect::encoding::json::Serializer::to_string(type.unique_foos) << "," << std::endl;
     stream << offset << "    " << "\"type\": " << type.type.to_json(offset + "    ") << "," << std::endl;
+    stream << offset << "    " << "\"foos\": " << reflect::encoding::json::Serializer::to_string(type.foos) << "," << std::endl;
     stream << offset << "    " << "\"s_type\": " << reflect::encoding::json::Serializer::to_string(type.s_type) << "," << std::endl;
     stream << offset << "    " << "\"u_type\": " << reflect::encoding::json::Serializer::to_string(type.u_type) << "," << std::endl;
     stream << offset << "}";

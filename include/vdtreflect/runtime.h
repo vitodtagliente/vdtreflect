@@ -190,7 +190,7 @@ namespace reflect
 	{
 		Type() = delete;
 
-		static const meta_t& meta() 
+		static const meta_t& meta()
 		{
 			static meta_t s_meta;
 			return s_meta;
@@ -473,7 +473,14 @@ namespace reflect
 				template <typename T>
 				static std::string to_string(const T value)
 				{
-					return std::to_string(value);
+					if constexpr (std::is_base_of<IType, T>::value)
+					{
+						return value.to_json();
+					}
+					else
+					{
+						return std::to_string(value);
+					}
 				}
 
 				static std::string to_string(const bool value)
@@ -574,7 +581,14 @@ namespace reflect
 				template <typename T>
 				static void parse(const std::string& source, T& value)
 				{
-					value = static_cast<T>(std::stod(source));
+					if constexpr (std::is_base_of<IType, T>::value)
+					{
+						value.from_json(source);
+					}
+					else
+					{
+						value = static_cast<T>(std::stod(source));
+					}
 				}
 
 				static void parse(const std::string& source, bool& value)
