@@ -13,30 +13,30 @@ const reflect::enum_values_t& reflect::Enum<ApplicationMode>::values()
     return s_values;
 }
 
-const reflect::meta_t& reflect::Type<math::vec3>::meta()
+const reflect::meta_t& reflect::Type<math::vec2>::meta()
 {
     static reflect::meta_t s_meta {
+        { "forward_declaration", "namespace math { typedef struct vector2_t<float> vec2 ; }" },
     };
     return s_meta;
 }
-const char* const reflect::Type<math::vec3>::name() { return "math::vec3"; }
+const char* const reflect::Type<math::vec2>::name() { return "math::vec2"; }
 
-const reflect::properties_t& Type<math::vec3>::properties()
+const reflect::properties_t& Type<math::vec2>::properties()
 {
     static reflect::properties_t s_properties {
-        { "x", reflect::Property{ offsetof(math::vec3, x), reflect::meta_t { }, "x", reflect::PropertyType{ "float", {  }, reflect::PropertyType::DecoratorType::D_raw, sizeof(float), reflect::PropertyType::Type::T_float } } },
-        { "y", reflect::Property{ offsetof(math::vec3, y), reflect::meta_t { }, "y", reflect::PropertyType{ "float", {  }, reflect::PropertyType::DecoratorType::D_raw, sizeof(float), reflect::PropertyType::Type::T_float } } },
-        { "z", reflect::Property{ offsetof(math::vec3, z), reflect::meta_t { }, "z", reflect::PropertyType{ "float", {  }, reflect::PropertyType::DecoratorType::D_raw, sizeof(float), reflect::PropertyType::Type::T_float } } },
+        { "x", reflect::Property{ offsetof(math::vec2, x), reflect::meta_t { }, "x", reflect::PropertyType{ "float", {  }, reflect::PropertyType::DecoratorType::D_raw, sizeof(float), reflect::PropertyType::Type::T_float } } },
+        { "y", reflect::Property{ offsetof(math::vec2, y), reflect::meta_t { }, "y", reflect::PropertyType{ "float", {  }, reflect::PropertyType::DecoratorType::D_raw, sizeof(float), reflect::PropertyType::Type::T_float } } },
     };
     return s_properties;
 }
 
-std::size_t reflect::Type<math::vec3>::size()
+std::size_t reflect::Type<math::vec2>::size()
 {
-    return sizeof(math::vec3);
+    return sizeof(math::vec2);
 }
 
-void reflect::Type<math::vec3>::from_string(const std::string& str, math::vec3& type)
+void reflect::Type<math::vec2>::from_string(const std::string& str, math::vec2& type)
 {
     reflect::encoding::ByteBuffer buffer;
     std::transform(
@@ -56,10 +56,9 @@ void reflect::Type<math::vec3>::from_string(const std::string& str, math::vec3& 
     
     stream >> type.x;
     stream >> type.y;
-    stream >> type.z;
 }
 
-std::string reflect::Type<math::vec3>::to_string(const math::vec3& type)
+std::string reflect::Type<math::vec2>::to_string(const math::vec2& type)
 {
     reflect::encoding::ByteBuffer buffer;
     reflect::encoding::OutputByteStream stream(buffer);
@@ -67,12 +66,11 @@ std::string reflect::Type<math::vec3>::to_string(const math::vec3& type)
     
     stream << type.x;
     stream << type.y;
-    stream << type.z;
     
     return std::string(reinterpret_cast<const char*>(&stream.getBuffer()[0]), stream.getBuffer().size());
 }
 
-void reflect::Type<math::vec3>::from_json(const std::string& json, math::vec3& type)
+void reflect::Type<math::vec2>::from_json(const std::string& json, math::vec2& type)
 {
     std::string src{ reflect::encoding::json::Deserializer::trim(json, reflect::encoding::json::Deserializer::space) };
     
@@ -88,21 +86,19 @@ void reflect::Type<math::vec3>::from_json(const std::string& json, math::vec3& t
         {
             if (key == "x") reflect::encoding::json::Deserializer::parse(value, type.x);
             if (key == "y") reflect::encoding::json::Deserializer::parse(value, type.y);
-            if (key == "z") reflect::encoding::json::Deserializer::parse(value, type.z);
             src = src.substr(index + 1);
         }
         else break;
     };
 }
 
-std::string reflect::Type<math::vec3>::to_json(const math::vec3& type, const std::string& offset)
+std::string reflect::Type<math::vec2>::to_json(const math::vec2& type, const std::string& offset)
 {
     std::stringstream stream;
     stream << "{" << std::endl;
-    stream << offset << "    " << "\"type_id\": " << "math::vec3" << "," << std::endl;
+    stream << offset << "    " << "\"type_id\": " << "math::vec2" << "," << std::endl;
     stream << offset << "    " << "\"x\": " << reflect::encoding::json::Serializer::to_string(type.x) << "," << std::endl;
     stream << offset << "    " << "\"y\": " << reflect::encoding::json::Serializer::to_string(type.y) << "," << std::endl;
-    stream << offset << "    " << "\"z\": " << reflect::encoding::json::Serializer::to_string(type.z) << "," << std::endl;
     stream << offset << "}";
     return stream.str();
 }
@@ -131,7 +127,7 @@ const reflect::properties_t& Type<Foo>::properties()
             reflect::PropertyType{ "std::string", {  }, reflect::PropertyType::DecoratorType::D_raw, sizeof(std::string), reflect::PropertyType::Type::T_string },
             reflect::PropertyType{ "int", {  }, reflect::PropertyType::DecoratorType::D_raw, sizeof(int), reflect::PropertyType::Type::T_int },
         }, reflect::PropertyType::DecoratorType::D_raw, sizeof(std::map<std::string, int>), reflect::PropertyType::Type::T_template } } },
-        { "position", reflect::Property{ offsetof(Foo, position), reflect::meta_t { }, "position", reflect::PropertyType{ "math::vec3", {  }, reflect::PropertyType::DecoratorType::D_raw, sizeof(math::vec3), reflect::PropertyType::Type::T_native } } },
+        { "position", reflect::Property{ offsetof(Foo, position), reflect::meta_t { }, "position", reflect::PropertyType{ "math::vec2", {  }, reflect::PropertyType::DecoratorType::D_raw, sizeof(math::vec2), reflect::PropertyType::Type::T_native } } },
     };
     return s_properties;
 }
@@ -188,7 +184,7 @@ void reflect::Type<Foo>::from_string(const std::string& str, Foo& type)
     {
         std::string pack;
         stream >> pack;
-        reflect::Type<math::vec3>::from_string(pack, type.position);
+        reflect::Type<math::vec2>::from_string(pack, type.position);
     }
 }
 
@@ -216,7 +212,7 @@ std::string reflect::Type<Foo>::to_string(const Foo& type)
             stream << pair.second;
         }
     }
-    stream << reflect::Type<math::vec3>::to_string(type.position);
+    stream << reflect::Type<math::vec2>::to_string(type.position);
     
     return std::string(reinterpret_cast<const char*>(&stream.getBuffer()[0]), stream.getBuffer().size());
 }
@@ -240,7 +236,7 @@ void reflect::Type<Foo>::from_json(const std::string& json, Foo& type)
             if (key == "m_string") reflect::encoding::json::Deserializer::parse(value, type.m_string);
             if (key == "list") reflect::encoding::json::Deserializer::parse(value, type.list);
             if (key == "dictionary") reflect::encoding::json::Deserializer::parse(value, type.dictionary);
-            if (key == "position") reflect::Type<math::vec3>::from_json(value, type.position);
+            if (key == "position") reflect::Type<math::vec2>::from_json(value, type.position);
             src = src.substr(index + 1);
         }
         else break;
@@ -257,7 +253,7 @@ std::string reflect::Type<Foo>::to_json(const Foo& type, const std::string& offs
     stream << offset << "    " << "\"m_string\": " << reflect::encoding::json::Serializer::to_string(type.m_string) << "," << std::endl;
     stream << offset << "    " << "\"list\": " << reflect::encoding::json::Serializer::to_string(type.list) << "," << std::endl;
     stream << offset << "    " << "\"dictionary\": " << reflect::encoding::json::Serializer::to_string(type.dictionary) << "," << std::endl;
-    stream << offset << "    " << "\"position\": " << reflect::Type<math::vec3>::to_json(type.position, offset + "    ") << "," << std::endl;
+    stream << offset << "    " << "\"position\": " << reflect::Type<math::vec2>::to_json(type.position, offset + "    ") << "," << std::endl;
     stream << offset << "}";
     return stream.str();
 }
@@ -293,7 +289,7 @@ const reflect::properties_t& Type<Poo>::properties()
             reflect::PropertyType{ "std::string", {  }, reflect::PropertyType::DecoratorType::D_raw, sizeof(std::string), reflect::PropertyType::Type::T_string },
             reflect::PropertyType{ "int", {  }, reflect::PropertyType::DecoratorType::D_raw, sizeof(int), reflect::PropertyType::Type::T_int },
         }, reflect::PropertyType::DecoratorType::D_raw, sizeof(std::map<std::string, int>), reflect::PropertyType::Type::T_template } } },
-        { "position", reflect::Property{ offsetof(Poo, position), reflect::meta_t { }, "position", reflect::PropertyType{ "math::vec3", {  }, reflect::PropertyType::DecoratorType::D_raw, sizeof(math::vec3), reflect::PropertyType::Type::T_native } } },
+        { "position", reflect::Property{ offsetof(Poo, position), reflect::meta_t { }, "position", reflect::PropertyType{ "math::vec2", {  }, reflect::PropertyType::DecoratorType::D_raw, sizeof(math::vec2), reflect::PropertyType::Type::T_native } } },
         // Properties
         { "c", reflect::Property{ offsetof(Poo, c), reflect::meta_t { }, "c", reflect::PropertyType{ "int", {  }, reflect::PropertyType::DecoratorType::D_raw, sizeof(int), reflect::PropertyType::Type::T_int } } },
         { "tuple", reflect::Property{ offsetof(Poo, tuple), reflect::meta_t { }, "tuple", reflect::PropertyType{ "std::tuple<int, float, bool, double>", { 
@@ -382,7 +378,7 @@ void reflect::Type<Poo>::from_string(const std::string& str, Poo& type)
     {
         std::string pack;
         stream >> pack;
-        reflect::Type<math::vec3>::from_string(pack, type.position);
+        reflect::Type<math::vec2>::from_string(pack, type.position);
     }
     // Properties
     stream >> type.c;
@@ -462,7 +458,7 @@ std::string reflect::Type<Poo>::to_string(const Poo& type)
             stream << pair.second;
         }
     }
-    stream << reflect::Type<math::vec3>::to_string(type.position);
+    stream << reflect::Type<math::vec2>::to_string(type.position);
     // Properties
     stream << type.c;
     {
@@ -506,7 +502,7 @@ void reflect::Type<Poo>::from_json(const std::string& json, Poo& type)
             if (key == "m_string") reflect::encoding::json::Deserializer::parse(value, type.m_string);
             if (key == "list") reflect::encoding::json::Deserializer::parse(value, type.list);
             if (key == "dictionary") reflect::encoding::json::Deserializer::parse(value, type.dictionary);
-            if (key == "position") reflect::Type<math::vec3>::from_json(value, type.position);
+            if (key == "position") reflect::Type<math::vec2>::from_json(value, type.position);
             // Properties
             if (key == "c") reflect::encoding::json::Deserializer::parse(value, type.c);
             if (key == "shared_foos") reflect::encoding::json::Deserializer::parse(value, type.shared_foos);
@@ -531,7 +527,7 @@ std::string reflect::Type<Poo>::to_json(const Poo& type, const std::string& offs
     stream << offset << "    " << "\"m_string\": " << reflect::encoding::json::Serializer::to_string(type.m_string) << "," << std::endl;
     stream << offset << "    " << "\"list\": " << reflect::encoding::json::Serializer::to_string(type.list) << "," << std::endl;
     stream << offset << "    " << "\"dictionary\": " << reflect::encoding::json::Serializer::to_string(type.dictionary) << "," << std::endl;
-    stream << offset << "    " << "\"position\": " << reflect::Type<math::vec3>::to_json(type.position, offset + "    ") << "," << std::endl;
+    stream << offset << "    " << "\"position\": " << reflect::Type<math::vec2>::to_json(type.position, offset + "    ") << "," << std::endl;
     // Properties
     stream << offset << "    " << "\"c\": " << reflect::encoding::json::Serializer::to_string(type.c) << "," << std::endl;
     stream << offset << "    " << "\"shared_foos\": " << reflect::encoding::json::Serializer::to_string(type.shared_foos) << "," << std::endl;
@@ -550,4 +546,3 @@ Poo::operator std::string() const { return reflect::Type<Poo>::to_string(*this);
 void Poo::from_string(const std::string& str) { reflect::Type<Poo>::from_string(str, *this); }
 void Poo::from_json(const std::string& json) { reflect::Type<Poo>::from_json(json, *this); }
 std::string Poo::to_json(const std::string& offset) const { return reflect::Type<Poo>::to_json(*this, offset); }
-

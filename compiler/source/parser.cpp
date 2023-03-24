@@ -248,10 +248,32 @@ bool Parser::parseNativeClass(TypeCollection& collection, SymbolTable& symbolTab
 
 	const size_t startingIndex = index;
 	if (index + 3 >= tokens.size()) return false;
-	if (tokens[index + 1] != "(" || tokens[index + 3] != ")") return false;
-	const std::string nativeTypeName = tokens[index + 2];
+	if (tokens[++index] != "(") return false;
+	const std::string nativeTypeName = tokens[(++index)++];
 
-	index += 4;
+	std::string forwardDeclaration;
+	if (tokens[index] == ",")
+	{
+		bool found = false;
+		while (index + 1 < tokens.size())
+		{
+			if (tokens[++index] == ")")
+			{
+				found = true;
+				break;
+			}
+
+			forwardDeclaration.append((forwardDeclaration.empty() ? "" : " ") + tokens[index]);
+		}
+
+		if (!found) return false;
+		++index;
+	}
+	else if (tokens[index] == ")")
+	{
+		++index;
+	}
+	else return false;
 
 	TypeClass* element = nullptr;
 	while (index + 1 < tokens.size())
@@ -261,6 +283,10 @@ bool Parser::parseNativeClass(TypeCollection& collection, SymbolTable& symbolTab
 			isStruct = tokens[index] == "struct";
 			element = collection.addClass(nativeTypeName);
 			element->isStruct = isStruct;
+			if (!forwardDeclaration.empty())
+			{
+				element->meta.insert(std::make_pair("forward_declaration", forwardDeclaration));
+			}
 			break;
 		}
 		++index;

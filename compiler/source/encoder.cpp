@@ -121,7 +121,7 @@ bool Encoder::encode(const SymbolList& symbolList, const TypeCollection& collect
 	static const auto& generate = [](const EncodeBuffer& buffer, const std::string& filename) -> bool
 	{
 		std::string previousContent;
-		std::string content = buffer.string();
+		std::string content = StringUtil::rtrim(buffer.string());
 
 		if (std::filesystem::exists(filename))
 		{
@@ -155,13 +155,23 @@ bool Encoder::encode(const SymbolList& symbolList, const TypeCollection& collect
 bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, const SymbolTable& symbolTable, const TypeCollection& collection, TypeClass& type)
 {
 	const bool isNativeClass = symbolTable.find(type.name)->second == SymbolType::S_nativeClass;
+	bool hasForwardDeclaration = false;
 
 	// header
 	const std::string forward_keyword = type.isStruct ? "struct" : "class";
 	
 	if (isNativeClass)
 	{
-		if (StringUtil::contains(type.name, ":"))
+		const auto& it = type.meta.find("forward_declaration");
+		hasForwardDeclaration = it != type.meta.end();
+
+		if (hasForwardDeclaration)
+		{
+			headerBuffer.push_line(it->second);
+			headerBuffer.push_line("");
+		}
+
+		if (StringUtil::contains(type.name, ":") && !hasForwardDeclaration)
 		{
 			const std::vector<std::string> pieces = StringUtil::split(type.name, ':');
 			for (int i = 0; i < pieces.size(); ++i)
@@ -195,7 +205,14 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	}
 	else
 	{
-		headerBuffer.push_line("struct reflect::Type<", forward_keyword, " ", type.name, ">");
+		if (hasForwardDeclaration)
+		{
+			headerBuffer.push_line("struct reflect::Type<", type.name, ">");
+		}
+		else
+		{
+			headerBuffer.push_line("struct reflect::Type<", forward_keyword, " ", type.name, ">");
+		}
 	}
 	headerBuffer.push_line("{");
 	headerBuffer.push_line("    static const reflect::meta_t& meta();");
@@ -210,7 +227,7 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	if (!isNativeClass)
 	{
 		headerBuffer.push_line("");
-		headerBuffer.push_line("    static bool registered() { return value; };");
+		headerBuffer.push_line("    static bool registered() { return type_registered; };");
 	}
 	headerBuffer.push_line("};");
 	headerBuffer.push_line("");

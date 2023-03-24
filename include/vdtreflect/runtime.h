@@ -203,10 +203,10 @@ namespace reflect
 		}
 		static std::size_t size() { return sizeof(T); }
 
-		static void from_string(const std::string& str, T& type) {}
-		static std::string to_string(const T& type) { return ""; }
-		static void from_json(const std::string& json, T& type) {}
-		static std::string to_json(const T& type, const std::string& offset = "") { return ""; }
+		static void from_string(const std::string&, T&) {}
+		static std::string to_string(const T&) { return ""; }
+		static void from_json(const std::string&, T&) {}
+		static std::string to_json(const T&, const std::string&) { return ""; }
 	};
 
 	typedef std::function<IType* ()> constructor_t;
@@ -297,11 +297,11 @@ namespace reflect
 	template <typename T>
 	struct RegisteredInTypeFactory
 	{
-		static bool value;
+		static bool type_registered;
 	};
 
 	template <typename T>
-	bool RegisteredInTypeFactory<T>::value{ TypeFactory::insert(Type<T>::name(), Type<T>::meta(), []() -> IType* { return new T(); }) };
+	bool RegisteredInTypeFactory<T>::type_registered{ TypeFactory::insert(Type<T>::name(), Type<T>::meta(), []() -> IType* { return new T(); }) };
 
 	namespace encoding
 	{
@@ -858,7 +858,7 @@ namespace reflect
 
 #define ENUM(...)
 #define CLASS(...)
-#define NATIVE_CLASS(T)
+#define NATIVE_CLASS(T, ...)
 #define PROPERTY(...)
 #define FUNCTION(...)
 #define GENERATED_BODY() \

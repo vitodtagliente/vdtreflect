@@ -13,23 +13,20 @@ struct reflect::Enum<enum class ApplicationMode> : reflect::RegisteredInEnumFact
     static bool registered() { return value; };
 };
 
-namespace math
-{
-    struct vec3;
-}
+namespace math { typedef struct vector2_t<float> vec2 ; }
 
 template <>
-struct reflect::Type<struct math::vec3>
+struct reflect::Type<math::vec2>
 {
     static const reflect::meta_t& meta();
     static const char* const name();
     static const reflect::properties_t& properties();
     static std::size_t size();
 
-    static void from_string(const std::string& str, math::vec3& type);
-    static std::string to_string(const math::vec3& type);
-    static void from_json(const std::string& json, math::vec3& type);
-    static std::string to_json(const math::vec3& type, const std::string& offset = "");
+    static void from_string(const std::string& str, math::vec2& type);
+    static std::string to_string(const math::vec2& type);
+    static void from_json(const std::string& json, math::vec2& type);
+    static std::string to_json(const math::vec2& type, const std::string& offset = "");
 };
 
 template <>
@@ -45,7 +42,7 @@ struct reflect::Type<struct Foo> : reflect::RegisteredInTypeFactory<struct Foo>
     static void from_json(const std::string& json, Foo& type);
     static std::string to_json(const Foo& type, const std::string& offset = "");
 
-    static bool registered() { return value; };
+    static bool registered() { return type_registered; };
 };
 
 template <>
@@ -61,6 +58,5 @@ struct reflect::Type<struct Poo> : reflect::RegisteredInTypeFactory<struct Poo>
     static void from_json(const std::string& json, Poo& type);
     static std::string to_json(const Poo& type, const std::string& offset = "");
 
-    static bool registered() { return value; };
+    static bool registered() { return type_registered; };
 };
-

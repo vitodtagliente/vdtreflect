@@ -7,24 +7,17 @@
 #include <string>
 #include <vector>
 
+#include "vector2.h"
+
 #include "test_generated.h"
 
 using namespace reflect;
 
-namespace math
-{
-	struct vec3
-	{
-		float x{ 0.f }, y{ 0.f }, z{ 0.f };
-	};
-}
-
-NATIVE_CLASS(math::vec3)
-struct Vec3
+NATIVE_CLASS(math::vec2, namespace math { typedef struct vector2_t<float> vec2; })
+struct Vec2
 {
 	PROPERTY() float x{ 0.0f };
 	PROPERTY() float y{ 0.0f };
-	PROPERTY() float z{ 0.0f };
 };
 
 ENUM(Category = MyEnums)
@@ -43,7 +36,7 @@ struct Foo : public IType
 	PROPERTY() std::string m_string = "foo";
 	PROPERTY() std::list<int> list;
 	PROPERTY() std::map<std::string, int> dictionary;
-	PROPERTY() math::vec3 position;
+	PROPERTY() math::vec2 position;
 
 	GENERATED_BODY()
 };
