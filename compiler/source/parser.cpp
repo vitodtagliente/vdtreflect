@@ -263,7 +263,7 @@ bool Parser::parseNativeClass(TypeCollection& collection, SymbolTable& symbolTab
 				break;
 			}
 
-			forwardDeclaration.append((forwardDeclaration.empty() ? "" : " ") + tokens[index]);
+			forwardDeclaration.append((forwardDeclaration.empty() || tokens[index] == ";" ? "" : " ") + tokens[index]);
 		}
 
 		if (!found) return false;

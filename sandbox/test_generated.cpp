@@ -16,7 +16,7 @@ const reflect::enum_values_t& reflect::Enum<ApplicationMode>::values()
 const reflect::meta_t& reflect::Type<math::vec2>::meta()
 {
     static reflect::meta_t s_meta {
-        { "forward_declaration", "namespace math { typedef struct vector2_t<float> vec2 ; }" },
+        { "forward_declaration", "namespace math { typedef struct vector2_t<float> vec2; }" },
     };
     return s_meta;
 }

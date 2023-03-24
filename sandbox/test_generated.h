@@ -13,7 +13,7 @@ struct reflect::Enum<enum class ApplicationMode> : reflect::RegisteredInEnumFact
     static bool registered() { return value; };
 };
 
-namespace math { typedef struct vector2_t<float> vec2 ; }
+namespace math { typedef struct vector2_t<float> vec2; }
 
 template <>
 struct reflect::Type<math::vec2>
