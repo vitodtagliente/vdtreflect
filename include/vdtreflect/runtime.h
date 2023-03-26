@@ -448,8 +448,7 @@ namespace reflect
 				const std::size_t amount = std::min<std::size_t>(characters, getSize());
 				if (amount > 0)
 				{
-					data.reserve(amount);
-					std::memcpy(&data[0], &m_buffer[m_index], amount);
+					data = std::string(reinterpret_cast<const char*>(&m_buffer[m_index]), amount);
 					m_index += amount;
 				}
 
