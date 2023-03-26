@@ -608,7 +608,25 @@ namespace reflect
 				{
 					if (value == nullptr)
 					{
-						value = std::make_shared<T>();
+						std::string temp;
+						if (find_value(source, "type_id", temp))
+						{
+							std::string type_id;
+							parse(temp, type_id);
+							if (type_id == Type<T>::name())
+							{
+								value = std::make_shared<T>();
+							}
+							else
+							{
+								value = std::shared_ptr<T>(TypeFactory::instantiate<T>(type_id));
+								if (value == nullptr) return;
+							}
+						}
+						else
+						{
+							value = std::make_shared<T>();
+						}
 					}
 					value->from_json(source);
 				}
@@ -618,7 +636,25 @@ namespace reflect
 				{
 					if (value == nullptr)
 					{
-						value = std::make_unique<T>();
+						std::string temp;
+						if (find_value(source, "type_id", temp))
+						{
+							std::string type_id;
+							parse(temp, type_id);
+							if (type_id == Type<T>::name())
+							{
+								value = std::make_unique<T>();
+							}
+							else
+							{
+								value = std::unique_ptr<T>(TypeFactory::instantiate<T>(type_id));
+								if (value == nullptr) return;
+							}
+						}
+						else
+						{
+							value = std::make_unique<T>();
+						}
 					}
 					value->from_json(source);
 				}
@@ -853,6 +889,17 @@ namespace reflect
 
 					value = text.substr(0, pos);
 					return pos;
+				}
+
+				static bool find_value(const std::string& text, const std::string& key, std::string& value)
+				{
+					const size_t end = text.find(key + quote_equals);
+					if (end != std::string::npos)
+					{
+						std::string temp = ltrim(text.substr(end + (key + quote_equals).size() + 1), space);
+						return next_value(temp, value) != std::string::npos;
+					}
+					return false;
 				}
 
 				static constexpr char comma = ',';

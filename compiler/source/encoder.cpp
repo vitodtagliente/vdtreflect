@@ -445,7 +445,7 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	sourceBuffer.push_line("{");
 	sourceBuffer.push_line("    std::stringstream stream;");
 	sourceBuffer.push_line("    stream << \"{\" << std::endl;");
-	sourceBuffer.push_line("    stream << offset << \"    \" << \"\\\"type_id\\\": \" << \"", type.name, "\" << \",\" << std::endl;");
+	sourceBuffer.push_line("    stream << offset << \"    \" << \"\\\"type_id\\\": \" << \"\\\"", type.name, "\\\"\" << \",\" << std::endl;");
 	// look for parent classes
 	has_parent = false;
 	parent_name = type.parent;

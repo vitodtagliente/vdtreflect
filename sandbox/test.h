@@ -57,6 +57,14 @@ struct Poo : public Foo
 	GENERATED_BODY()
 };
 
+CLASS()
+struct Too : public IType
+{
+	PROPERTY() std::vector<std::unique_ptr<Foo>> types;
+
+	GENERATED_BODY()
+};
+
 ENUM()
 enum class ApplicationMode : int
 {

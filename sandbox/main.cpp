@@ -58,4 +58,21 @@ int main()
 
 		Foo foo;
 	}
+	
+	{
+		std::string json;
+		{
+			Too too;
+			too.types.push_back(std::make_unique<Foo>());
+			too.types.push_back(std::make_unique<Poo>());
+			json = too.to_json();
+		}
+
+		Too too;
+		too.from_json(json);
+		for (const auto& element : too.types)
+		{
+			cout << element->type_name() << endl;
+		}
+	}
 }

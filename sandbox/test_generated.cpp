@@ -96,7 +96,7 @@ std::string reflect::Type<math::vec2>::to_json(const math::vec2& type, const std
 {
     std::stringstream stream;
     stream << "{" << std::endl;
-    stream << offset << "    " << "\"type_id\": " << "math::vec2" << "," << std::endl;
+    stream << offset << "    " << "\"type_id\": " << "\"math::vec2\"" << "," << std::endl;
     stream << offset << "    " << "\"x\": " << reflect::encoding::json::Serializer::to_string(type.x) << "," << std::endl;
     stream << offset << "    " << "\"y\": " << reflect::encoding::json::Serializer::to_string(type.y) << "," << std::endl;
     stream << offset << "}";
@@ -247,7 +247,7 @@ std::string reflect::Type<Foo>::to_json(const Foo& type, const std::string& offs
 {
     std::stringstream stream;
     stream << "{" << std::endl;
-    stream << offset << "    " << "\"type_id\": " << "Foo" << "," << std::endl;
+    stream << offset << "    " << "\"type_id\": " << "\"Foo\"" << "," << std::endl;
     stream << offset << "    " << "\"m_int\": " << reflect::encoding::json::Serializer::to_string(type.m_int) << "," << std::endl;
     stream << offset << "    " << "\"m_bool\": " << reflect::encoding::json::Serializer::to_string(type.m_bool) << "," << std::endl;
     stream << offset << "    " << "\"m_string\": " << reflect::encoding::json::Serializer::to_string(type.m_string) << "," << std::endl;
@@ -546,7 +546,7 @@ std::string reflect::Type<Poo>::to_json(const Poo& type, const std::string& offs
 {
     std::stringstream stream;
     stream << "{" << std::endl;
-    stream << offset << "    " << "\"type_id\": " << "Poo" << "," << std::endl;
+    stream << offset << "    " << "\"type_id\": " << "\"Poo\"" << "," << std::endl;
     // Parent class Foo properties
     stream << offset << "    " << "\"m_int\": " << reflect::encoding::json::Serializer::to_string(type.m_int) << "," << std::endl;
     stream << offset << "    " << "\"m_bool\": " << reflect::encoding::json::Serializer::to_string(type.m_bool) << "," << std::endl;
@@ -573,3 +573,120 @@ Poo::operator std::string() const { return reflect::Type<Poo>::to_string(*this);
 void Poo::from_string(const std::string& str) { reflect::Type<Poo>::from_string(str, *this); }
 void Poo::from_json(const std::string& json) { reflect::Type<Poo>::from_json(json, *this); }
 std::string Poo::to_json(const std::string& offset) const { return reflect::Type<Poo>::to_json(*this, offset); }
+
+const reflect::meta_t& reflect::Type<Too>::meta()
+{
+    static reflect::meta_t s_meta {
+    };
+    return s_meta;
+}
+const char* const reflect::Type<Too>::name() { return "Too"; }
+
+const reflect::properties_t& Type<Too>::properties()
+{
+    static reflect::properties_t s_properties {
+        { "types", reflect::Property{ offsetof(Too, types), reflect::meta_t { }, "types", reflect::PropertyType{ "std::vector<std::unique_ptr<Foo>>", { 
+            reflect::PropertyType{ "std::unique_ptr<Foo>", { 
+                reflect::PropertyType{ "Foo", {  }, reflect::PropertyType::DecoratorType::D_raw, sizeof(Foo), reflect::PropertyType::Type::T_type },
+            }, reflect::PropertyType::DecoratorType::D_raw, sizeof(std::unique_ptr<Foo>), reflect::PropertyType::Type::T_template },
+        }, reflect::PropertyType::DecoratorType::D_raw, sizeof(std::vector<std::unique_ptr<Foo>>), reflect::PropertyType::Type::T_template } } },
+    };
+    return s_properties;
+}
+
+std::size_t reflect::Type<Too>::size()
+{
+    return sizeof(Too);
+}
+
+void reflect::Type<Too>::from_string(const std::string& str, Too& type)
+{
+    reflect::encoding::ByteBuffer buffer;
+    std::transform(
+        std::begin(str),
+        std::end(str),
+        std::back_inserter(buffer),
+        [](const char c)
+        {
+            return std::byte(c);
+        }
+    );
+    
+    reflect::encoding::InputByteStream stream(buffer);
+    std::string _name;
+    stream >> _name;
+    if (_name != name()) return;
+    
+    {
+        std::size_t size;
+        stream >> size;
+        type.types.resize(size);
+        for (int i = 0; i < type.types.size(); ++i)
+        {
+            std::unique_ptr<Foo> element;
+            element = std::make_unique<Foo>();
+            {
+                std::string pack;
+                stream >> pack;
+                element->from_string(pack);
+            }
+            type.types.push_back(std::move(element));
+        }
+    }
+}
+
+std::string reflect::Type<Too>::to_string(const Too& type)
+{
+    reflect::encoding::ByteBuffer buffer;
+    reflect::encoding::OutputByteStream stream(buffer);
+    stream << name();
+    
+    {
+        stream << type.types.size();
+        for (const auto& element : type.types)
+        {
+            if(element) stream << static_cast<std::string>(*element);
+        }
+    }
+    
+    return std::string(reinterpret_cast<const char*>(&stream.getBuffer()[0]), stream.getBuffer().size());
+}
+
+void reflect::Type<Too>::from_json(const std::string& json, Too& type)
+{
+    std::string src{ reflect::encoding::json::Deserializer::trim(json, reflect::encoding::json::Deserializer::space) };
+    
+    size_t index = 0;
+    std::string key;
+    while ((index = reflect::encoding::json::Deserializer::next_key(src, key)) != std::string::npos)
+    {
+        src = src.substr(index + 2);
+        src = reflect::encoding::json::Deserializer::ltrim(src, reflect::encoding::json::Deserializer::space);
+        std::string value;
+        index = reflect::encoding::json::Deserializer::next_value(src, value);
+        if (index != std::string::npos)
+        {
+            if (key == "types") reflect::encoding::json::Deserializer::parse(value, type.types);
+            src = src.substr(index + 1);
+        }
+        else break;
+    };
+}
+
+std::string reflect::Type<Too>::to_json(const Too& type, const std::string& offset)
+{
+    std::stringstream stream;
+    stream << "{" << std::endl;
+    stream << offset << "    " << "\"type_id\": " << "\"Too\"" << "," << std::endl;
+    stream << offset << "    " << "\"types\": " << reflect::encoding::json::Serializer::to_string(type.types) << "," << std::endl;
+    stream << offset << "}";
+    return stream.str();
+}
+
+const reflect::meta_t& Too::type_meta() const { return reflect::Type<Too>::meta(); }
+const char* const Too::type_name() const { return reflect::Type<Too>::name(); }
+const reflect::properties_t& Too::type_properties() const { return reflect::Type<Too>::properties(); }
+Too::operator std::string() const { return reflect::Type<Too>::to_string(*this); }
+void Too::from_string(const std::string& str) { reflect::Type<Too>::from_string(str, *this); }
+void Too::from_json(const std::string& json) { reflect::Type<Too>::from_json(json, *this); }
+std::string Too::to_json(const std::string& offset) const { return reflect::Type<Too>::to_json(*this, offset); }
