@@ -392,11 +392,23 @@ void reflect::Type<Poo>::from_string(const std::string& str, Poo& type)
         for (int i = 0; i < type.shared_foos.size(); ++i)
         {
             std::shared_ptr<Foo> element;
-            element = std::make_shared<Foo>();
             {
-                std::string pack;
-                stream >> pack;
-                element->from_string(pack);
+                reflect::encoding::InputByteStream temp_stream(buffer, stream.getIndex());
+                std::string type_id;
+                temp_stream >> type_id;
+                if (type_id == Type<Foo>::name())
+                {
+                    element = std::make_shared<Foo>();
+                }
+                else
+                {
+                    element = std::shared_ptr<Foo>(TypeFactory::instantiate<Foo>(type_id));
+                }
+                {
+                    std::string pack;
+                    stream >> pack;
+                    element->from_string(pack);
+                }
             }
             type.shared_foos.push_back(std::move(element));
         }
@@ -408,11 +420,23 @@ void reflect::Type<Poo>::from_string(const std::string& str, Poo& type)
         for (int i = 0; i < type.unique_foos.size(); ++i)
         {
             std::unique_ptr<Foo> element;
-            element = std::make_unique<Foo>();
             {
-                std::string pack;
-                stream >> pack;
-                element->from_string(pack);
+                reflect::encoding::InputByteStream temp_stream(buffer, stream.getIndex());
+                std::string type_id;
+                temp_stream >> type_id;
+                if (type_id == Type<Foo>::name())
+                {
+                    element = std::make_unique<Foo>();
+                }
+                else
+                {
+                    element = std::unique_ptr<Foo>(TypeFactory::instantiate<Foo>(type_id));
+                }
+                {
+                    std::string pack;
+                    stream >> pack;
+                    element->from_string(pack);
+                }
             }
             type.unique_foos.push_back(std::move(element));
         }
@@ -437,17 +461,41 @@ void reflect::Type<Poo>::from_string(const std::string& str, Poo& type)
             type.foos.push_back(std::move(element));
         }
     }
-    type.s_type = std::make_shared<Foo>();
     {
-        std::string pack;
-        stream >> pack;
-        type.s_type->from_string(pack);
+        reflect::encoding::InputByteStream temp_stream(buffer, stream.getIndex());
+        std::string type_id;
+        temp_stream >> type_id;
+        if (type_id == Type<Foo>::name())
+        {
+            type.s_type = std::make_shared<Foo>();
+        }
+        else
+        {
+            type.s_type = std::shared_ptr<Foo>(TypeFactory::instantiate<Foo>(type_id));
+        }
+        {
+            std::string pack;
+            stream >> pack;
+            type.s_type->from_string(pack);
+        }
     }
-    type.u_type = std::make_unique<Foo>();
     {
-        std::string pack;
-        stream >> pack;
-        type.u_type->from_string(pack);
+        reflect::encoding::InputByteStream temp_stream(buffer, stream.getIndex());
+        std::string type_id;
+        temp_stream >> type_id;
+        if (type_id == Type<Foo>::name())
+        {
+            type.u_type = std::make_unique<Foo>();
+        }
+        else
+        {
+            type.u_type = std::unique_ptr<Foo>(TypeFactory::instantiate<Foo>(type_id));
+        }
+        {
+            std::string pack;
+            stream >> pack;
+            type.u_type->from_string(pack);
+        }
     }
 }
 
@@ -624,11 +672,23 @@ void reflect::Type<Too>::from_string(const std::string& str, Too& type)
         for (int i = 0; i < type.types.size(); ++i)
         {
             std::unique_ptr<Foo> element;
-            element = std::make_unique<Foo>();
             {
-                std::string pack;
-                stream >> pack;
-                element->from_string(pack);
+                reflect::encoding::InputByteStream temp_stream(buffer, stream.getIndex());
+                std::string type_id;
+                temp_stream >> type_id;
+                if (type_id == Type<Foo>::name())
+                {
+                    element = std::make_unique<Foo>();
+                }
+                else
+                {
+                    element = std::unique_ptr<Foo>(TypeFactory::instantiate<Foo>(type_id));
+                }
+                {
+                    std::string pack;
+                    stream >> pack;
+                    element->from_string(pack);
+                }
             }
             type.types.push_back(std::move(element));
         }

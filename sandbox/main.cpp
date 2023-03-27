@@ -60,13 +60,18 @@ int main()
 	}
 	
 	{
+		std::string str;
 		std::string json;
 		{
 			Too too;
 			too.types.push_back(std::make_unique<Foo>());
 			too.types.push_back(std::make_unique<Poo>());
+			str = too.to_string();
 			json = too.to_json();
 		}
+
+		Too too1;
+		too1.from_string(str);
 
 		Too too;
 		too.from_json(json);

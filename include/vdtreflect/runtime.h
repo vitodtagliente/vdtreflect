@@ -424,6 +424,11 @@ namespace reflect
 				, m_index{ 0 }
 			{}
 
+			InputByteStream(ByteBuffer& buffer, const std::size_t index)
+				: ByteStream(buffer)
+				, m_index(index)
+			{}
+
 			template<typename T>
 			InputByteStream& operator>> (T& data)
 			{
@@ -455,6 +460,7 @@ namespace reflect
 				return *this;
 			}
 
+			inline std::size_t getIndex() const { return m_index; }
 			inline std::size_t getSize() const { return m_buffer.size() - m_index; }
 
 		private:
