@@ -646,10 +646,10 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 			}
 			else
 			{
+				buffer.push("\n", offset, "    ", name, ".clear();");
 				buffer.push("\n", offset, "    ", "std::size_t size;");
 				buffer.push("\n", offset, "    ", "stream >> size;");
-				buffer.push("\n", offset, "    ", name, ".resize(size);");
-				buffer.push("\n", offset, "    ", "for (int i = 0; i < ", name, ".size(); ++i)");
+				buffer.push("\n", offset, "    ", "for (int i = 0; i < size; ++i)");
 			}
 			buffer.push("\n", offset, "    ", "{");
 			if (serialize)
@@ -709,26 +709,34 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 
 			if (serialize)
 			{
-				buffer.push(offset, "if(", name, ") stream << static_cast<std::string>(*", name, ");");
+				buffer.push(offset, "stream << (", name, " ? true : false); ");
+				buffer.push("\n", offset, "if(", name, ") stream << static_cast<std::string>(*", name, ");");
 			}
 			else
 			{
 				buffer.push(offset, "{");
-				buffer.push("\n", offset, "    ", "reflect::encoding::InputByteStream temp_stream(buffer, stream.getIndex());");
-				buffer.push("\n", offset, "    ", "std::string type_id;");
-				buffer.push("\n", offset, "    ", "temp_stream >> type_id;");
-				buffer.push("\n", offset, "    ", "if (type_id == Type<", extractTypenames(type)[0], ">::name())");
+				buffer.push("\n", offset, "    ", "bool valid = false;");
+				buffer.push("\n", offset, "    ", "stream >> valid;");
+				buffer.push("\n", offset, "    ", "if (valid)");
 				buffer.push("\n", offset, "    ", "{");
-				buffer.push("\n", offset, "    ", "    ", name, " = std::make_shared<", extractTypenames(type)[0], ">();");
-				buffer.push("\n", offset, "    ", "}");
-				buffer.push("\n", offset, "    ", "else");
-				buffer.push("\n", offset, "    ", "{");
-				buffer.push("\n", offset, "    ", "    ", name, " = std::shared_ptr<", extractTypenames(type)[0], ">(TypeFactory::instantiate<", extractTypenames(type)[0], ">(type_id));");
-				buffer.push("\n", offset, "    ", "}");
-				buffer.push("\n", offset, "    ", "{");
-				buffer.push("\n", offset, "    ", "    ", "std::string pack;");
-				buffer.push("\n", offset, "    ", "    ", "stream >> pack;");
-				buffer.push("\n", offset, "    ", "    ", name, "->from_string(pack);");
+				buffer.push("\n", offset, "        ", "reflect::encoding::InputByteStream temp_stream(buffer, stream.getIndex());");
+				buffer.push("\n", offset, "        ", "std::size_t temp_element_size;");
+				buffer.push("\n", offset, "        ", "temp_stream >> temp_element_size;");
+				buffer.push("\n", offset, "        ", "std::string type_id;");
+				buffer.push("\n", offset, "        ", "temp_stream >> type_id;");
+				buffer.push("\n", offset, "        ", "if (type_id == Type<", extractTypenames(type)[0], ">::name())");
+				buffer.push("\n", offset, "        ", "{");
+				buffer.push("\n", offset, "        ", "    ", name, " = std::make_shared<", extractTypenames(type)[0], ">();");
+				buffer.push("\n", offset, "        ", "}");
+				buffer.push("\n", offset, "        ", "else");
+				buffer.push("\n", offset, "        ", "{");
+				buffer.push("\n", offset, "        ", "    ", name, " = std::shared_ptr<", extractTypenames(type)[0], ">(TypeFactory::instantiate<", extractTypenames(type)[0], ">(type_id));");
+				buffer.push("\n", offset, "        ", "}");
+				buffer.push("\n", offset, "        ", "{");
+				buffer.push("\n", offset, "        ", "    ", "std::string pack;");
+				buffer.push("\n", offset, "        ", "    ", "stream >> pack;");
+				buffer.push("\n", offset, "        ", "    ", name, "->from_string(pack);");
+				buffer.push("\n", offset, "        ", "}");
 				buffer.push("\n", offset, "    ", "}");
 				buffer.push("\n", offset, "}");
 			}
@@ -739,26 +747,34 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 
 			if (serialize)
 			{
-				buffer.push(offset, "if(", name, ") stream << static_cast<std::string>(*", name, ");");
+				buffer.push(offset, "stream << (", name, " ? true : false); ");
+				buffer.push("\n", offset, "if(", name, ") stream << static_cast<std::string>(*", name, ");");
 			}
 			else
 			{
 				buffer.push(offset, "{");
-				buffer.push("\n", offset, "    ", "reflect::encoding::InputByteStream temp_stream(buffer, stream.getIndex());");
-				buffer.push("\n", offset, "    ", "std::string type_id;");
-				buffer.push("\n", offset, "    ", "temp_stream >> type_id;");
-				buffer.push("\n", offset, "    ", "if (type_id == Type<", extractTypenames(type)[0], ">::name())");
+				buffer.push("\n", offset, "    ", "bool valid = false;");
+				buffer.push("\n", offset, "    ", "stream >> valid;");
+				buffer.push("\n", offset, "    ", "if (valid)");
 				buffer.push("\n", offset, "    ", "{");
-				buffer.push("\n", offset, "    ", "    ", name, " = std::make_unique<", extractTypenames(type)[0], ">();");
-				buffer.push("\n", offset, "    ", "}");
-				buffer.push("\n", offset, "    ", "else");
-				buffer.push("\n", offset, "    ", "{");
-				buffer.push("\n", offset, "    ", "    ", name, " = std::unique_ptr<", extractTypenames(type)[0], ">(TypeFactory::instantiate<", extractTypenames(type)[0], ">(type_id));");
-				buffer.push("\n", offset, "    ", "}");
-				buffer.push("\n", offset, "    ", "{");
-				buffer.push("\n", offset, "    ", "    ", "std::string pack;");
-				buffer.push("\n", offset, "    ", "    ", "stream >> pack;");
-				buffer.push("\n", offset, "    ", "    ", name, "->from_string(pack);");
+				buffer.push("\n", offset, "        ", "reflect::encoding::InputByteStream temp_stream(buffer, stream.getIndex());");
+				buffer.push("\n", offset, "        ", "std::size_t temp_element_size;");
+				buffer.push("\n", offset, "        ", "temp_stream >> temp_element_size;");
+				buffer.push("\n", offset, "        ", "std::string type_id;");
+				buffer.push("\n", offset, "        ", "temp_stream >> type_id;");
+				buffer.push("\n", offset, "        ", "if (type_id == Type<", extractTypenames(type)[0], ">::name())");
+				buffer.push("\n", offset, "        ", "{");
+				buffer.push("\n", offset, "        ", "    ", name, " = std::make_unique<", extractTypenames(type)[0], ">();");
+				buffer.push("\n", offset, "        ", "}");
+				buffer.push("\n", offset, "        ", "else");
+				buffer.push("\n", offset, "        ", "{");
+				buffer.push("\n", offset, "        ", "    ", name, " = std::unique_ptr<", extractTypenames(type)[0], ">(TypeFactory::instantiate<", extractTypenames(type)[0], ">(type_id));");
+				buffer.push("\n", offset, "        ", "}");
+				buffer.push("\n", offset, "        ", "{");
+				buffer.push("\n", offset, "        ", "    ", "std::string pack;");
+				buffer.push("\n", offset, "        ", "    ", "stream >> pack;");
+				buffer.push("\n", offset, "        ", "    ", name, "->from_string(pack);");
+				buffer.push("\n", offset, "        ", "}");
 				buffer.push("\n", offset, "    ", "}");
 				buffer.push("\n", offset, "}");
 			}

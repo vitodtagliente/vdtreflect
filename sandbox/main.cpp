@@ -60,6 +60,22 @@ int main()
 	}
 	
 	{
+		reflect::encoding::ByteBuffer buffer;
+		{
+			std::string name = "mondo";
+			int value = 4;
+			reflect::encoding::OutputByteStream out(buffer);
+			out << value;
+			out << name;
+		}
+		{
+			std::string name;
+			int value = 0;
+			reflect::encoding::InputByteStream in(buffer);
+			in >> value;
+			in >> name;
+		}
+
 		std::string str;
 		std::string json;
 		{
