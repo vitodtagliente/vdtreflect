@@ -491,8 +491,16 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 		sourceBuffer.push_line("const char* const ", type.name, "::type_name() const { return reflect::Type<", type.name, ">::name(); }");
 		sourceBuffer.push_line("const reflect::properties_t& ", type.name, "::type_properties() const { return reflect::Type<", type.name, ">::properties(); }");
 		sourceBuffer.push_line(type.name, "::operator std::string() const { return reflect::Type<", type.name, ">::to_string(*this); }");
-		sourceBuffer.push_line("void ", type.name, "::from_string(const std::string& str) { reflect::Type<", type.name, ">::from_string(str, *this); }");
-		sourceBuffer.push_line("void ", type.name, "::from_json(const std::string& json) { reflect::Type<", type.name, ">::from_json(json, *this); }");
+		sourceBuffer.push_line("void ", type.name, "::from_string(const std::string& str)");
+		sourceBuffer.push_line("{");
+		sourceBuffer.push_line("    reflect::Type<", type.name, ">::from_string(str, *this);");
+		sourceBuffer.push_line("    type_initialize();");
+		sourceBuffer.push_line("}");
+		sourceBuffer.push_line("void ", type.name, "::from_json(const std::string& json)");
+		sourceBuffer.push_line("{");
+		sourceBuffer.push_line("    reflect::Type<", type.name, ">::from_json(json, *this);");
+		sourceBuffer.push_line("    type_initialize();");
+		sourceBuffer.push_line("}");
 		sourceBuffer.push_line("std::string ", type.name, "::to_json(const std::string& offset) const { return reflect::Type<", type.name, ">::to_json(*this, offset); }");
 		sourceBuffer.push_line("");
 	}

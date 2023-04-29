@@ -262,8 +262,16 @@ const reflect::meta_t& Foo::type_meta() const { return reflect::Type<Foo>::meta(
 const char* const Foo::type_name() const { return reflect::Type<Foo>::name(); }
 const reflect::properties_t& Foo::type_properties() const { return reflect::Type<Foo>::properties(); }
 Foo::operator std::string() const { return reflect::Type<Foo>::to_string(*this); }
-void Foo::from_string(const std::string& str) { reflect::Type<Foo>::from_string(str, *this); }
-void Foo::from_json(const std::string& json) { reflect::Type<Foo>::from_json(json, *this); }
+void Foo::from_string(const std::string& str)
+{
+    reflect::Type<Foo>::from_string(str, *this);
+    type_initialize();
+}
+void Foo::from_json(const std::string& json)
+{
+    reflect::Type<Foo>::from_json(json, *this);
+    type_initialize();
+}
 std::string Foo::to_json(const std::string& offset) const { return reflect::Type<Foo>::to_json(*this, offset); }
 
 const reflect::meta_t& reflect::Type<Poo>::meta()
@@ -650,8 +658,16 @@ const reflect::meta_t& Poo::type_meta() const { return reflect::Type<Poo>::meta(
 const char* const Poo::type_name() const { return reflect::Type<Poo>::name(); }
 const reflect::properties_t& Poo::type_properties() const { return reflect::Type<Poo>::properties(); }
 Poo::operator std::string() const { return reflect::Type<Poo>::to_string(*this); }
-void Poo::from_string(const std::string& str) { reflect::Type<Poo>::from_string(str, *this); }
-void Poo::from_json(const std::string& json) { reflect::Type<Poo>::from_json(json, *this); }
+void Poo::from_string(const std::string& str)
+{
+    reflect::Type<Poo>::from_string(str, *this);
+    type_initialize();
+}
+void Poo::from_json(const std::string& json)
+{
+    reflect::Type<Poo>::from_json(json, *this);
+    type_initialize();
+}
 std::string Poo::to_json(const std::string& offset) const { return reflect::Type<Poo>::to_json(*this, offset); }
 
 const reflect::meta_t& reflect::Type<Too>::meta()
@@ -787,6 +803,14 @@ const reflect::meta_t& Too::type_meta() const { return reflect::Type<Too>::meta(
 const char* const Too::type_name() const { return reflect::Type<Too>::name(); }
 const reflect::properties_t& Too::type_properties() const { return reflect::Type<Too>::properties(); }
 Too::operator std::string() const { return reflect::Type<Too>::to_string(*this); }
-void Too::from_string(const std::string& str) { reflect::Type<Too>::from_string(str, *this); }
-void Too::from_json(const std::string& json) { reflect::Type<Too>::from_json(json, *this); }
+void Too::from_string(const std::string& str)
+{
+    reflect::Type<Too>::from_string(str, *this);
+    type_initialize();
+}
+void Too::from_json(const std::string& json)
+{
+    reflect::Type<Too>::from_json(json, *this);
+    type_initialize();
+}
 std::string Too::to_json(const std::string& offset) const { return reflect::Type<Too>::to_json(*this, offset); }
