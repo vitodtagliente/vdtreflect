@@ -174,6 +174,7 @@ namespace reflect
 		IType() = default;
 		virtual ~IType() = default;
 
+		virtual void type_initialize() {}
 		virtual const char* const type_name() const = 0;
 		virtual const meta_t& type_meta() const = 0;
 		virtual const properties_t& type_properties() const = 0;
@@ -930,7 +931,6 @@ namespace reflect
 #define GENERATED_BODY() \
 	template <typename T> \
 	friend struct Type; \
-	virtual void type_initialize() {} \
 	virtual const meta_t& type_meta() const override; \
 	virtual const char* const type_name() const override; \
 	virtual const properties_t& type_properties() const override; \
