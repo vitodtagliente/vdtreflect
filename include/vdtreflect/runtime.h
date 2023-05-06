@@ -573,6 +573,26 @@ namespace reflect
 					return result.append("}");
 				}
 
+				template <typename V>
+				static std::string to_string(const std::map<std::string, V>& object)
+				{
+
+					std::string next{};
+
+					std::string result{ "{" };
+
+					for (const auto& pair : object)
+					{
+						result.append(next)
+							.append(to_string(pair.first))
+							.append(equals)
+							.append(to_string(pair.second));
+						next = comma;
+					}
+
+					return result.append("}");
+				}
+
 				static constexpr char* comma = ",";
 				static constexpr char* equals = ":";
 				static constexpr char* quote = "\"";
