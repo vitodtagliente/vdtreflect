@@ -859,7 +859,7 @@ std::string Encoder::encodePropertySerializationToJson(const std::string& offset
 			buffer.push("\n", offset, "{");
 			buffer.push("\n", offset, "    std::string temp;");
 			buffer.push("\n", offset, "    reflect::encoding::json::Deserializer::parse(value, temp);");
-			buffer.push("\n", offset, "    stringToEnum(value, type.", name, ");");
+			buffer.push("\n", offset, "    stringToEnum(temp, type.", name, ");");
 			buffer.push("\n", offset, "}");
 		}
 		break;
