@@ -614,7 +614,7 @@ std::string Encoder::encodePropertySerialization(const std::string& offset, cons
 			buffer.push(offset, "{");
 			buffer.push("\n", offset, "    ", "int pack;");
 			buffer.push("\n", offset, "    ", "stream >> pack;");
-			buffer.push("\n", offset, "    ", name, " = static_cast<", type, ">(", name, ");");
+			buffer.push("\n", offset, "    ", name, " = static_cast<", type, ">(pack);");
 			buffer.push("\n", offset, "}");
 		}
 		break;
