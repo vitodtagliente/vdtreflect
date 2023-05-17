@@ -216,6 +216,10 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 		}
 	}
 	headerBuffer.push_line("{");
+	if (!isNativeClass) 
+	{
+		headerBuffer.push_line("    static IType* const instantiate();");
+	}
 	headerBuffer.push_line("    static const reflect::meta_t& meta();");
 	headerBuffer.push_line("    static const char* const name();");
 	headerBuffer.push_line("    static const reflect::properties_t& properties();");
@@ -234,6 +238,14 @@ bool Encoder::encode(EncodeBuffer& headerBuffer, EncodeBuffer& sourceBuffer, con
 	headerBuffer.push_line("");
 
 	// source
+	if (!isNativeClass)
+	{
+		sourceBuffer.push_line("IType* const reflect::Type<", type.name, ">::instantiate()");
+		sourceBuffer.push_line("{");
+		sourceBuffer.push_line("    return dynamic_cast<IType*>(new ", type.name, "());");
+		sourceBuffer.push_line("}");
+		sourceBuffer.push_line("");
+	}
 	sourceBuffer.push_line("const reflect::meta_t& reflect::Type<", type.name, ">::meta()");
 	sourceBuffer.push_line("{");
 	sourceBuffer.push_line("    static reflect::meta_t s_meta {");

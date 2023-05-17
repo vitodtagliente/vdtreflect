@@ -104,6 +104,11 @@ std::string reflect::Type<math::vec2>::to_json(const math::vec2& type, const std
     return stream.str();
 }
 
+IType* const reflect::Type<Foo>::instantiate()
+{
+    return dynamic_cast<IType*>(new Foo());
+}
+
 const reflect::meta_t& reflect::Type<Foo>::meta()
 {
     static reflect::meta_t s_meta {
@@ -274,6 +279,11 @@ void Foo::from_json(const std::string& json)
     type_initialize();
 }
 std::string Foo::to_json(const std::string& offset) const { return reflect::Type<Foo>::to_json(*this, offset); }
+
+IType* const reflect::Type<Poo>::instantiate()
+{
+    return dynamic_cast<IType*>(new Poo());
+}
 
 const reflect::meta_t& reflect::Type<Poo>::meta()
 {
@@ -670,6 +680,11 @@ void Poo::from_json(const std::string& json)
     type_initialize();
 }
 std::string Poo::to_json(const std::string& offset) const { return reflect::Type<Poo>::to_json(*this, offset); }
+
+IType* const reflect::Type<Too>::instantiate()
+{
+    return dynamic_cast<IType*>(new Too());
+}
 
 const reflect::meta_t& reflect::Type<Too>::meta()
 {

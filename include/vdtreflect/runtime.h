@@ -210,7 +210,7 @@ namespace reflect
 		static std::string to_json(const T&, const std::string&) { return ""; }
 	};
 
-	typedef std::function<IType* ()> constructor_t;
+	typedef std::function<IType* const()> constructor_t;
 
 	class TypeFactory final
 	{
@@ -289,7 +289,7 @@ namespace reflect
 			return s_empty_definition;
 		}
 
-		static bool insert(const std::string& name, const meta_t& meta, const constructor_t& constructor)
+		static bool insert(const std::string& name, const meta_t& meta, constructor_t&& constructor)
 		{
 			return collection().insert(std::make_pair(name, std::make_tuple(meta, constructor))), true;
 		}
@@ -300,9 +300,9 @@ namespace reflect
 	{
 		static bool type_registered;
 	};
-
+	
 	template <typename T>
-	bool RegisteredInTypeFactory<T>::type_registered{ TypeFactory::insert(Type<T>::name(), Type<T>::meta(), []() -> IType* { return new T(); }) };
+	bool RegisteredInTypeFactory<T>::type_registered{ TypeFactory::insert(Type<T>::name(), Type<T>::meta(), std::bind(&Type<T>::instantiate)) };
 
 	namespace encoding
 	{

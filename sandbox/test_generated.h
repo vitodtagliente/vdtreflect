@@ -32,6 +32,7 @@ struct reflect::Type<math::vec2>
 template <>
 struct reflect::Type<struct Foo> : reflect::RegisteredInTypeFactory<struct Foo>
 {
+    static IType* const instantiate();
     static const reflect::meta_t& meta();
     static const char* const name();
     static const reflect::properties_t& properties();
@@ -48,6 +49,7 @@ struct reflect::Type<struct Foo> : reflect::RegisteredInTypeFactory<struct Foo>
 template <>
 struct reflect::Type<struct Poo> : reflect::RegisteredInTypeFactory<struct Poo>
 {
+    static IType* const instantiate();
     static const reflect::meta_t& meta();
     static const char* const name();
     static const reflect::properties_t& properties();
@@ -64,6 +66,7 @@ struct reflect::Type<struct Poo> : reflect::RegisteredInTypeFactory<struct Poo>
 template <>
 struct reflect::Type<struct Too> : reflect::RegisteredInTypeFactory<struct Too>
 {
+    static IType* const instantiate();
     static const reflect::meta_t& meta();
     static const char* const name();
     static const reflect::properties_t& properties();
