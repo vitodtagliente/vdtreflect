@@ -15,7 +15,7 @@ endif()
 add_library(${PROJECT_NAME} INTERFACE)
 
 if(MSVC)
-	target_compile_options(${PROJECT_NAME} PRIVATE "/MP")
+	target_compile_options(${PROJECT_NAME} INTERFACE "/MP")
 endif()
 
 target_include_directories(
